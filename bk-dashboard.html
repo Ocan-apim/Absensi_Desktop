@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard BK / Kesiswaan — Absensi</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="theme.css">
+</head>
+<body class="dashboard-body">
+    <div class="bg-orb bg-orb--1" aria-hidden="true"></div>
+    <div class="bg-orb bg-orb--2" aria-hidden="true"></div>
+
+    <div class="app-shell">
+        <aside class="sidebar">
+            <div class="sidebar-brand">Absensi · BK/Kesiswaan</div>
+            <nav class="nav-menu" aria-label="Menu utama">
+                <a href="#beranda" data-view="beranda" aria-current="page">Beranda</a>
+                <a href="#laporan" data-view="laporan">Laporan</a>
+                <a href="#rekap-laporan" data-view="rekap-laporan">Rekap laporan</a>
+                <a href="bk-profil.html">Profil</a>
+            </nav>
+            <div class="sidebar-footer">
+                <button type="button" class="btn-logout" id="btn-logout">Keluar</button>
+            </div>
+        </aside>
+
+        <main class="main-area">
+            <div class="dashboard-topbar">
+                <div class="toolbar-heading">
+                    <h1 class="page-title" id="toolbar-title">Dashboard BK / Kesiswaan</h1>
+                    <p class="page-sub" id="toolbar-desc" style="margin-bottom:0">Beranda masih kosong.</p>
+                </div>
+                <a id="header-avatar-link" href="bk-profil.html" class="avatar-btn" title="Profil" aria-label="Buka profil">
+                    <img id="header-avatar-img" class="hidden" alt="">
+                    <span id="header-avatar-fallback" class="avatar-initials">BK</span>
+                </a>
+            </div>
+
+            <section id="view-beranda" class="view-panel panel" data-view-panel="beranda">
+                <h2>Beranda</h2>
+                <p class="page-sub" style="margin-top:0.35rem">Masih kosong.</p>
+            </section>
+
+            <section id="view-laporan" class="view-panel panel wide-panel is-hidden" data-view-panel="laporan" hidden>
+                <h2>Laporan masuk</h2>
+                <p class="page-sub" style="margin-top:0.35rem">Balas laporan dari walas.</p>
+                <div id="laporan-list" class="stack"></div>
+            </section>
+
+            <section id="view-rekap-laporan" class="view-panel panel wide-panel is-hidden" data-view-panel="rekap-laporan" hidden>
+                <h2>Rekap laporan</h2>
+                <div class="table-card">
+                    <div class="table-scroll">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Walas</th>
+                                    <th>Subjek</th>
+                                    <th>Status</th>
+                                    <th>Tanggal</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rekap-laporan-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="theme.js"></script>
+    <script src="auth.js"></script>
+    <script src="dashboard-avatar.js"></script>
+    <script>
+        (function () {
+            var session = AbsensiAuth.requireRoles(["bk"]);
+            if (!session) return;
+
+            document.getElementById("btn-logout").addEventListener("click", function () {
+                AbsensiAuth.logout();
+            });
+            DashboardAvatar.bind("bk-profil.html");
+            if (window.DashboardAvatar && DashboardAvatar.refresh) DashboardAvatar.refresh();
+
+            var cachedLaporan = [];
+
+            function escapeHtml(value) {
+                return String(value || "").replace(/[&<>"']/g, function (ch) {
+                    return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[ch];
+                });
+            }
+
+            function loadLaporan() {
+                return fetch("laporan_api.php?role=bk")
+                    .then(function (res) { return res.json(); })
+                    .then(function (data) {
+                        cachedLaporan = data.laporan || [];
+                        renderLaporan();
+                        renderRekap();
+                    });
+            }
+
+            function renderLaporan() {
+                var list = document.getElementById("laporan-list");
+                list.innerHTML = cachedLaporan.length ? cachedLaporan.map(function (item) {
+                    var badge = item.has_unread ? '<span class="report-badge" aria-label="Belum dibaca"></span>' : '';
+                    var replies = item.balasan && item.balasan.length ? item.balasan.map(function (b) {
+                        return '<div class="report-reply"><strong>Balasan ' + escapeHtml(b.pengirim_role) + ':</strong> ' + escapeHtml(b.isi_balasan) + ' <span>(' + escapeHtml(b.created_at) + ')</span></div>';
+                    }).join("") : '<div class="report-reply">Belum ada balasan.</div>';
+                    var canReply = item.status === "baru";
+                    var replyBlock = canReply ? (
+                        '<form class="reply-form stack" data-id="' + item.id_laporan + '" style="margin-top:0.85rem">' +
+                            '<div class="input-wrap"><textarea placeholder="Tulis balasan..."></textarea></div>' +
+                            '<div style="display:flex;justify-content:flex-end"><button type="submit" class="btn-primary">Balas</button></div>' +
+                        '</form>'
+                    ) : '<p class="status-note">Laporan sudah dibalas dan tidak bisa dibalas lagi.</p>';
+                    return '<article class="report-card report-card--wide" data-report-card data-open="false" data-id="' + item.id_laporan + '">' +
+                        badge +
+                        '<button type="button" class="report-head" data-report-toggle>' +
+                            '<span class="report-from">From: ' + escapeHtml(item.walas_nama || item.walas_npsn) + '</span>' +
+                            '<span class="report-date">' + escapeHtml(item.created_at) + '</span>' +
+                        '</button>' +
+                        '<div class="report-body">' +
+                            '<div class="report-subject">Subject: ' + escapeHtml(item.subjek) + '</div>' +
+                            '<div class="report-meta">Tujuan: ' + escapeHtml(item.tujuan_role) + ' | Status: ' + escapeHtml(item.status) + '</div>' +
+                            '<div class="report-text">' + escapeHtml(item.isi_laporan) + '</div>' +
+                            '<div class="report-replies">' + replies + '</div>' +
+                            replyBlock +
+                        '</div>' +
+                    '</article>';
+                }).join("") : '<p class="status-note">Belum ada laporan masuk.</p>';
+            }
+
+            function renderRekap() {
+                var body = document.getElementById("rekap-laporan-body");
+                body.innerHTML = cachedLaporan.length ? cachedLaporan.map(function (item) {
+                    return "<tr><td>" + escapeHtml(item.walas_nama || item.walas_npsn) + "</td><td>" + escapeHtml(item.subjek) + "</td><td>" + escapeHtml(item.status) + "</td><td>" + escapeHtml(item.created_at) + "</td></tr>";
+                }).join("") : '<tr><td class="empty-row" colspan="4">Belum ada laporan.</td></tr>';
+            }
+
+            document.getElementById("laporan-list").addEventListener("click", function (e) {
+                var toggle = e.target.closest("[data-report-toggle]");
+                if (!toggle) return;
+                var card = toggle.closest("[data-report-card]");
+                if (!card) return;
+                var open = card.getAttribute("data-open") === "true";
+                card.setAttribute("data-open", open ? "false" : "true");
+            });
+
+            document.getElementById("laporan-list").addEventListener("submit", function (e) {
+                var form = e.target.closest(".reply-form");
+                if (!form) return;
+                e.preventDefault();
+                var textarea = form.querySelector("textarea");
+                var formData = new FormData();
+                formData.append("action", "reply");
+                formData.append("id_laporan", form.getAttribute("data-id"));
+                formData.append("pengirim_role", "bk");
+                formData.append("id_bk", session.id || 0);
+                formData.append("isi_balasan", textarea.value.trim());
+
+                fetch("laporan_api.php", { method: "POST", body: formData })
+                    .then(function (res) {
+                        return res.json().then(function (data) {
+                            if (!res.ok || data.error) throw new Error(data.error || "Gagal mengirim balasan.");
+                            return data;
+                        });
+                    })
+                    .then(loadLaporan)
+                    .catch(function (err) { alert(err.message); });
+            });
+
+            var VIEW_IDS = ["beranda", "laporan", "rekap-laporan"];
+            var TOOLBAR = {
+                beranda: { title: "Dashboard BK / Kesiswaan", desc: "Beranda masih kosong." },
+                laporan: { title: "Laporan", desc: "Balas laporan yang dikirim oleh walas." },
+                "rekap-laporan": { title: "Rekap laporan", desc: "Ringkasan semua laporan walas." }
+            };
+
+            function showView(id) {
+                VIEW_IDS.forEach(function (v) {
+                    var panel = document.getElementById("view-" + v);
+                    var hide = v !== id;
+                    panel.classList.toggle("is-hidden", hide);
+                    panel.hidden = hide;
+                });
+                document.querySelectorAll(".nav-menu a[data-view]").forEach(function (a) {
+                    var cur = a.getAttribute("data-view") === id;
+                    if (cur) a.setAttribute("aria-current", "page");
+                    else a.removeAttribute("aria-current");
+                });
+                document.getElementById("toolbar-title").textContent = TOOLBAR[id].title;
+                document.getElementById("toolbar-desc").textContent = TOOLBAR[id].desc;
+                if (window.AbsensiTheme && AbsensiTheme.syncFooter) AbsensiTheme.syncFooter();
+            }
+
+            function route() {
+                var raw = (location.hash || "").replace(/^#/, "").toLowerCase().trim();
+                var id = VIEW_IDS.indexOf(raw) !== -1 ? raw : "beranda";
+                if (location.hash !== "#" + id) history.replaceState(null, "", location.pathname + location.search + "#" + id);
+                showView(id);
+            }
+
+            window.addEventListener("hashchange", route);
+            route();
+            loadLaporan();
+            setInterval(loadLaporan, 30000);
+        })();
+    </script>
+</body>
+</html>

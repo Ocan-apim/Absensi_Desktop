@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profil Siswa - Absensi</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="theme.css">
+</head>
+<body class="dashboard-body">
+    <div class="bg-orb bg-orb--1" aria-hidden="true"></div>
+    <div class="bg-orb bg-orb--2" aria-hidden="true"></div>
+
+    <div class="app-shell">
+        <aside class="sidebar">
+            <div class="sidebar-brand" id="student-sidebar-brand">Absensi - Siswa</div>
+            <nav class="nav-menu" aria-label="Menu utama">
+                <a href="user-dashboard.html#hadir">Hadir</a>
+                <a href="user-dashboard.html#pulang">Pulang</a>
+                <a href="user-dashboard.html#sakit">Sakit</a>
+                <a href="user-dashboard.html#izin">Izin</a>
+                <a href="user-dashboard.html#dispen">Dispen</a>
+                <a href="user-dashboard.html#riwayat">Riwayat</a>
+                <a href="user-profile.html" aria-current="page">Profil</a>
+            </nav>
+            <div class="sidebar-footer">
+                <button type="button" class="btn-logout" id="btn-logout">Keluar</button>
+            </div>
+        </aside>
+        <main class="main-area">
+            <div class="dashboard-topbar">
+                <div class="toolbar-heading">
+                    <h1 class="page-title">Profil</h1>
+                    <p class="page-sub" style="margin-bottom:0">Foto profil dipakai di pojok kanan atas.</p>
+                </div>
+                <a id="header-avatar-link" href="user-profile.html" class="avatar-btn" title="Profil" aria-label="Buka profil">
+                    <img id="header-avatar-img" class="hidden" alt="">
+                    <span id="header-avatar-fallback" class="avatar-initials">SW</span>
+                </a>
+            </div>
+
+            <section class="panel view-panel">
+                <div class="profile-avatar-edit">
+                    <div class="profile-avatar-large">
+                        <img id="profil-avatar-img" class="hidden" alt="">
+                        <span id="profil-avatar-ph">SW</span>
+                    </div>
+                    <div class="input-wrap">
+                        <input type="file" id="profil-foto-input" accept="image/*">
+                    </div>
+                    <button type="button" class="btn-primary" id="profil-simpan">Simpan profil</button>
+                    <p id="profil-msg" class="page-sub hidden" style="margin:0;color:var(--success)">Tersimpan.</p>
+                </div>
+                <div class="stack" style="margin-top:1.25rem">
+                    <div>
+                        <span class="field-label">Nama tampilan</span>
+                        <div class="input-wrap">
+                            <input type="text" id="profil-nama" placeholder="Nama lengkap">
+                        </div>
+                    </div>
+                    <div>
+                        <span class="field-label">Email / NIS</span>
+                        <div class="input-wrap">
+                            <input type="text" id="profil-meta" placeholder="Dari database nanti" readonly>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="theme.js"></script>
+    <script src="auth.js"></script>
+    <script src="dashboard-avatar.js"></script>
+    <script>
+        (function () {
+            var session = AbsensiAuth.requireRoles(["user"]);
+            if (!session) return;
+            var displayName = session.displayName || session.name || session.fullName || session.username || "Siswa";
+
+            function applyStudentIdentity() {
+                var title = AbsensiAuth.classTitle(session) || "Siswa";
+                document.getElementById("student-sidebar-brand").textContent = "Absensi-" + title;
+                displayName = session.displayName || session.name || session.fullName || session.username || "Siswa";
+                document.getElementById("profil-nama").value = displayName;
+                document.getElementById("profil-meta").value = [session.email, session.username].filter(Boolean).join(" / ");
+                if (window.DashboardAvatar && DashboardAvatar.refresh) DashboardAvatar.refresh();
+            }
+
+            function parseApiJson(res) {
+                return res.text().then(function (text) {
+                    var data = text ? JSON.parse(text) : {};
+                    if (!res.ok || data.error) throw new Error(data.error || "Request gagal.");
+                    return data;
+                });
+            }
+
+            function loadStudentProfile() {
+                return fetch("profile_api.php?username=" + encodeURIComponent(session.username || ""))
+                    .then(parseApiJson)
+                    .then(function (data) {
+                        if (!data.profile) return;
+                        session = AbsensiAuth.update({
+                            id: data.profile.id,
+                            username: data.profile.username || session.username,
+                            name: data.profile.displayName,
+                            fullName: data.profile.fullName,
+                            displayName: data.profile.displayName,
+                            email: data.profile.email,
+                            kelas: data.profile.kelas,
+                            jurusan: data.profile.jurusan,
+                            rombel: data.profile.rombel
+                        });
+                        applyStudentIdentity();
+                        loadAvatar();
+                    })
+                    .catch(function () {
+                        applyStudentIdentity();
+                    });
+            }
+
+            document.getElementById("btn-logout").addEventListener("click", function () {
+                AbsensiAuth.logout();
+            });
+            applyStudentIdentity();
+
+            DashboardAvatar.bind("user-profile.html");
+
+            function loadAvatar() {
+                var url = AbsensiAuth.getAvatarDataUrl();
+                var img = document.getElementById("profil-avatar-img");
+                var ph = document.getElementById("profil-avatar-ph");
+                if (url) {
+                    img.src = url;
+                    img.classList.remove("hidden");
+                    ph.classList.add("hidden");
+                } else {
+                    ph.textContent = (displayName || session.username || "S").slice(0, 2).toUpperCase();
+                }
+            }
+            loadAvatar();
+            loadStudentProfile();
+
+            document.getElementById("profil-foto-input").addEventListener("change", function () {
+                var f = this.files && this.files[0];
+                if (!f) return;
+                var reader = new FileReader();
+                reader.onload = function () {
+                    var img = document.getElementById("profil-avatar-img");
+                    img.src = reader.result;
+                    img.classList.remove("hidden");
+                    document.getElementById("profil-avatar-ph").classList.add("hidden");
+                };
+                reader.readAsDataURL(f);
+            });
+
+            document.getElementById("profil-simpan").addEventListener("click", function () {
+                var img = document.getElementById("profil-avatar-img");
+                var src = img.getAttribute("src");
+                if (src && src.indexOf("data:") === 0) {
+                    AbsensiAuth.setAvatarDataUrl(src);
+                }
+                var nextName = (document.getElementById("profil-nama").value || "").trim();
+                if (!nextName) {
+                    alert("Nama tampilan wajib diisi.");
+                    return;
+                }
+                var formData = new FormData();
+                formData.append("username", session.username || "");
+                formData.append("nama_tampilan", nextName);
+                fetch("profile_api.php", { method: "POST", body: formData })
+                    .then(parseApiJson)
+                    .then(function (data) {
+                        if (data.profile) {
+                            session = AbsensiAuth.update({
+                                name: data.profile.displayName,
+                                fullName: data.profile.fullName,
+                                displayName: data.profile.displayName,
+                                email: data.profile.email,
+                                kelas: data.profile.kelas,
+                                jurusan: data.profile.jurusan,
+                                rombel: data.profile.rombel
+                            });
+                            applyStudentIdentity();
+                        }
+                        var msg = document.getElementById("profil-msg");
+                        msg.classList.remove("hidden");
+                        setTimeout(function () {
+                            msg.classList.add("hidden");
+                        }, 2200);
+                    })
+                    .catch(function (err) {
+                        alert(err.message || "Gagal menyimpan profil.");
+                    });
+            });
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Guru — Absensi</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="theme.css">
+</head>
+<body class="dashboard-body">
+    <div class="bg-orb bg-orb--1" aria-hidden="true"></div>
+    <div class="bg-orb bg-orb--2" aria-hidden="true"></div>
+
+    <div class="app-shell">
+        <aside class="sidebar">
+            <div class="sidebar-brand">Absensi · Guru/Walas</div>
+            <nav class="nav-menu" aria-label="Menu utama">
+                <a href="#beranda" data-view="beranda" aria-current="page">Beranda</a>
+                <div class="nav-group" data-nav-group="absensi">
+                    <button type="button" class="nav-group-toggle" data-nav-parent="absensi" data-nav-default="rekap" aria-expanded="true">Absensi</button>
+                    <div class="nav-submenu">
+                        <a href="#rekap" data-view="rekap">Rekap Absensi</a>
+                        <a href="#daftar-siswa" data-view="daftar-siswa">Daftar Siswa</a>
+                    </div>
+                </div>
+                <div class="nav-group" data-nav-group="laporan">
+                    <button type="button" class="nav-group-toggle" data-nav-parent="laporan" data-nav-default="laporan-inbox" aria-expanded="true">Laporan</button>
+                    <div class="nav-submenu">
+                        <a href="#laporan-inbox" data-view="laporan-inbox">Inbox</a>
+                        <a href="#laporan-baru" data-view="laporan-baru">Laporan Baru</a>
+                        <a href="#laporan-riwayat" data-view="laporan-riwayat">Riwayat Laporan</a>
+                    </div>
+                </div>
+                <a href="teacher-profil.html">Profil</a>
+            </nav>
+            <div class="sidebar-footer">
+                <button type="button" class="btn-logout" id="btn-logout">Keluar</button>
+            </div>
+        </aside>
+        <main class="main-area">
+            <div class="dashboard-topbar">
+                <div class="toolbar-heading">
+                    <h1 class="page-title" id="toolbar-title">Dashboard guru / walas</h1>
+                    <p class="page-sub" id="toolbar-desc" style="margin-bottom:0">Halo, <span id="user-label">Guru</span>. Pantau kiriman absensi siswa hari ini.</p>
+                </div>
+                <a id="header-avatar-link" href="teacher-profil.html" class="avatar-btn" title="Profil" aria-label="Buka profil">
+                    <img id="header-avatar-img" class="hidden" alt="">
+                    <span id="header-avatar-fallback" class="avatar-initials">GU</span>
+                </a>
+            </div>
+            <section id="view-beranda" class="view-panel panel" data-view-panel="beranda">
+                <h2>Ringkasan hari ini</h2>
+                <p class="page-sub" style="margin-top:0.35rem">Data diambil dari tabel absensi di database.</p>
+                <div class="stub-grid">
+                    <div class="stub-card">Hadir: <strong id="count-hadir">0</strong></div>
+                    <div class="stub-card">Sakit/Izin/Dispen: <strong id="count-nonhadir">0</strong></div>
+                    <div class="stub-card">Selfie pulang: <strong id="count-pulang">0</strong></div>
+                </div>
+            </section>
+
+            <section id="view-rekap" class="view-panel panel wide-panel is-hidden" data-view-panel="rekap" hidden>
+                <div class="section-head section-head--rekap">
+                    <div class="section-head-main">
+                        <h2>Rekap absensi</h2>
+                        <p class="page-sub" id="rekap-date-label">Tanggal ...</p>
+                    </div>
+                    <div class="section-head-meta">
+                        <button type="button" class="btn-secondary" id="btn-print-attendance">Cetak PDF</button>
+                        <div class="class-pill" id="rekap-class-pill">XI PPLG 2</div>
+                        <div class="attendance-pill">
+                            <span class="attendance-pill-label">Kehadiran</span>
+                            <strong id="attendance-percent">0%</strong>
+                        </div>
+                    </div>
+                </div>
+                <div class="mode-tabs" role="tablist" aria-label="Mode rekap">
+                    <button type="button" class="mode-tab is-active" data-report-mode="daily">Daily</button>
+                    <button type="button" class="mode-tab" data-report-mode="weekly">Weekly</button>
+                    <button type="button" class="mode-tab" data-report-mode="monthly">Bulanan</button>
+                </div>
+                <div id="rekap-daily" class="attendance-layout report-mode-panel" data-report-panel="daily">
+                    <div>
+                        <div class="table-card">
+                            <h3>Hadir</h3>
+                            <div class="table-scroll">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Siswa</th>
+                                            <th>Waktu</th>
+                                            <th>Keterangan</th>
+                                            <th>Selfie hadir</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="hadir-table-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="table-card">
+                            <h3>Sakit / Izin / Dispen</h3>
+                            <div class="table-scroll">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Siswa</th>
+                                            <th>Status</th>
+                                            <th>Waktu</th>
+                                            <th>Dokumen</th>
+                                            <th>Keterangan</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="nonhadir-table-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-card">
+                        <h3>Selfie pulang</h3>
+                        <div class="selfie-list" id="pulang-selfie-list" style="padding:0.85rem"></div>
+                    </div>
+                </div>
+
+                <div id="rekap-weekly" class="report-mode-panel is-hidden" data-report-panel="weekly">
+                    <div class="table-card">
+                        <h3>Weekly</h3>
+                        <div class="table-scroll">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>No</th>
+                                        <th>Nama lengkap</th>
+                                        <th>NIS</th>
+                                        <th>Senin</th>
+                                        <th>Selasa</th>
+                                        <th>Rabu</th>
+                                        <th>Kamis</th>
+                                        <th>Jumat</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="weekly-table-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="rekap-monthly" class="report-mode-panel is-hidden" data-report-panel="monthly">
+                    <div class="table-card">
+                        <h3>Bulanan</h3>
+                        <div class="table-scroll">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>No</th>
+                                        <th>Nama lengkap</th>
+                                        <th>NIS</th>
+                                        <th>Minggu 1</th>
+                                        <th>Minggu 2</th>
+                                        <th>Minggu 3</th>
+                                        <th>Minggu 4</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="monthly-table-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="view-daftar-siswa" class="view-panel panel wide-panel is-hidden" data-view-panel="daftar-siswa" hidden>
+                <div class="section-head section-head--students">
+                    <div class="section-head-main">
+                        <h2>Daftar siswa</h2>
+                        <p class="page-sub" style="margin-bottom:0">Nama lengkap dan NIS siswa wali kelas.</p>
+                    </div>
+                    <div class="class-pill" id="students-class-pill">XI PPLG 2</div>
+                </div>
+                <div class="table-card">
+                    <div class="table-scroll">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>No</th>
+                                    <th>Nama lengkap</th>
+                                    <th>NIS</th>
+                                </tr>
+                            </thead>
+                            <tbody id="daftar-siswa-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section id="view-laporan-inbox" class="view-panel panel wide-panel is-hidden" data-view-panel="laporan-inbox" hidden>
+                <div class="section-head section-head--rekap">
+                    <div class="section-head-main">
+                        <h2>Inbox laporan</h2>
+                        <p class="page-sub" style="margin-bottom:0"></p>
+                    </div>
+                </div>
+                <div id="laporan-inbox-list" class="stack"></div>
+            </section>
+
+            <section id="view-laporan-baru" class="view-panel panel wide-panel is-hidden" data-view-panel="laporan-baru" hidden>
+                <div class="section-head section-head--rekap">
+                    <div class="section-head-main">
+                        <h2>Laporan baru</h2>
+                        <p class="page-sub" style="margin-bottom:0">Tulis laporan untuk BK / Kesiswaan.</p>
+                    </div>
+                </div>
+                <form id="laporan-form" class="stack laporan-form-panel">
+                    <div>
+                        <label class="field-label" for="laporan-tujuan">Tujuan</label>
+                        <div class="input-wrap">
+                            <select id="laporan-tujuan" required>
+                                <option value="bk">BK / Kesiswaan</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="field-label" for="laporan-subjek">Subjek</label>
+                        <div class="input-wrap">
+                            <input type="text" id="laporan-subjek" placeholder="Contoh: tindak lanjut absensi siswa" required>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="field-label" for="laporan-isi">Isi laporan</label>
+                        <div class="input-wrap">
+                            <textarea id="laporan-isi" placeholder="Tuliskan laporan untuk BK atau kesiswaan..." required></textarea>
+                        </div>
+                    </div>
+                    <div style="display:flex;justify-content:flex-end;gap:0.5rem;flex-wrap:wrap">
+                        <button type="submit" class="btn-primary">Kirim laporan</button>
+                    </div>
+                    <p id="laporan-msg" class="status-note hidden"></p>
+                </form>
+            </section>
+
+            <section id="view-laporan-riwayat" class="view-panel panel wide-panel is-hidden" data-view-panel="laporan-riwayat" hidden>
+                <div class="section-head section-head--rekap">
+                    <div class="section-head-main">
+                        <h2>Riwayat laporan</h2>
+                        <p class="page-sub" style="margin-bottom:0">Laporan yang sudah diselesaikan atau sedang dibuka ulang.</p>
+                    </div>
+                </div>
+                <div id="laporan-riwayat-list" class="stack"></div>
+            </section>
+        </main>
+    </div>
+
+    <div id="photo-modal" class="photo-modal" hidden>
+        <div class="photo-modal-inner" role="dialog" aria-modal="true" aria-label="Pratinjau selfie">
+            <button type="button" class="photo-modal-close" id="photo-modal-close" aria-label="Tutup">X</button>
+            <img id="photo-modal-img" alt="Pratinjau selfie">
+        </div>
+    </div>
+
+    <script src="theme.js"></script>
+    <script src="auth.js"></script>
+    <script src="dashboard-avatar.js"></script>
+    <script>
+        (function () {
+            var session = AbsensiAuth.requireRoles(["teacher"]);
+            if (!session) return;
+            var el = document.getElementById("user-label");
+            if (el) el.textContent = session.username || "Guru";
+            document.getElementById("btn-logout").addEventListener("click", function () {
+                AbsensiAuth.logout();
+            });
+            DashboardAvatar.bind("teacher-profil.html");
+            if (window.DashboardAvatar && DashboardAvatar.refresh) DashboardAvatar.refresh();
+
+            var months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+            var now = new Date();
+            var today = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0") + "-" + String(now.getDate()).padStart(2, "0");
+            var dateLabel = now.getDate() + " " + months[now.getMonth()] + " " + now.getFullYear();
+            document.getElementById("rekap-date-label").textContent = "Tanggal " + dateLabel;
+
+            var cachedRecords = [];
+            var cachedStudents = [];
+            var cachedReports = [];
+            var reportMode = "daily";
+            var reportCache = { weekly: null, monthly: null, students: null };
+
+            function mapClassLabel(kelas) {
+                if (kelas === "10") return "X";
+                if (kelas === "11") return "XI";
+                if (kelas === "12") return "XII";
+                return kelas || "XI";
+            }
+            var walasKelas = session.kelas || "11";
+            var walasJurusan = (session.jurusan || "pplg").toLowerCase();
+            var walasRombel = session.rombel || "";
+            var CLASS_LABEL = [mapClassLabel(walasKelas), (walasJurusan || "pplg").toUpperCase(), walasRombel].filter(Boolean).join(" ");
+            var CLASS_FILTER = { kelas: walasKelas, jurusan: walasJurusan, rombel: walasRombel };
+            document.getElementById("rekap-class-pill").textContent = CLASS_LABEL;
+            document.getElementById("students-class-pill").textContent = CLASS_LABEL;
+
+            function loadAbsensiRecords() {
+                return fetch("absensi_api.php?action=range&start=" + encodeURIComponent(today) + "&end=" + encodeURIComponent(today) + "&kelas=" + encodeURIComponent(CLASS_FILTER.kelas) + "&jurusan=" + encodeURIComponent(CLASS_FILTER.jurusan) + "&rombel=" + encodeURIComponent(CLASS_FILTER.rombel))
+                    .then(function (res) { return res.json(); })
+                    .then(function (data) {
+                        if (data.students) cachedStudents = data.students;
+                        cachedRecords = data.records || [];
+                        renderStudentList(cachedStudents);
+                        renderRekap();
+                        if (reportMode === "daily") updateDailyAttendancePercent();
+                    });
+            }
+
+            function loadLaporan() {
+                return fetch("laporan_api.php?username=" + encodeURIComponent(session.username || ""))
+                    .then(parseJsonResponse)
+                    .then(function (data) {
+                        cachedReports = data.laporan || [];
+                        renderLaporanViews();
+                    });
+            }
+
+            function escapeHtml(value) {
+                return String(value || "").replace(/[&<>"']/g, function (ch) {
+                    return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[ch];
+                });
+            }
+
+            function parseJsonResponse(res) {
+                return res.text().then(function (text) {
+                    var data = {};
+                    try {
+                        data = text ? JSON.parse(text) : {};
+                    } catch (e) {
+                        throw new Error("Respons server bukan JSON valid. Cek laporan_api.php atau struktur tabel laporan.");
+                    }
+                    if (!res.ok || data.error) throw new Error(data.error || "Request gagal.");
+                    return data;
+                });
+            }
+
+            function todayRecords() {
+                return cachedRecords.filter(function (r) {
+                    return r.date === today;
+                });
+            }
+
+            function emptyRow(colspan, text) {
+                return '<tr><td class="empty-row" colspan="' + colspan + '">' + text + '</td></tr>';
+            }
+
+            function pad2(n) {
+                return String(n).padStart(2, "0");
+            }
+
+            function toDate(value) {
+                return new Date(value + "T00:00:00");
+            }
+
+            function formatDateISO(date) {
+                return date.getFullYear() + "-" + pad2(date.getMonth() + 1) + "-" + pad2(date.getDate());
+            }
+
+            function monthStart(date) {
+                return new Date(date.getFullYear(), date.getMonth(), 1);
+            }
+
+            function monthEnd(date) {
+                return new Date(date.getFullYear(), date.getMonth() + 1, 0);
+            }
+
+            function addMonths(date, count) {
+                return new Date(date.getFullYear(), date.getMonth() + count, date.getDate());
+            }
+
+            function countWeekdays(start, end) {
+                var total = 0;
+                var d = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+                while (d <= end) {
+                    var day = d.getDay();
+                    if (day >= 1 && day <= 5) total += 1;
+                    d.setDate(d.getDate() + 1);
+                }
+                return total;
+            }
+
+            function getStudents() {
+                if (cachedStudents.length) return Promise.resolve(cachedStudents);
+                return fetch("absensi_api.php?action=range&start=" + encodeURIComponent(today) + "&end=" + encodeURIComponent(today) + "&kelas=" + encodeURIComponent(CLASS_FILTER.kelas) + "&jurusan=" + encodeURIComponent(CLASS_FILTER.jurusan) + "&rombel=" + encodeURIComponent(CLASS_FILTER.rombel))
+                    .then(function (res) { return res.json(); })
+                    .then(function (data) {
+                        cachedStudents = data.students || [];
+                        return cachedStudents;
+                    });
+            }
+
+            function fetchRange(start, end, key) {
+                return fetch("absensi_api.php?action=range&start=" + encodeURIComponent(start) + "&end=" + encodeURIComponent(end) + "&kelas=" + encodeURIComponent(CLASS_FILTER.kelas) + "&jurusan=" + encodeURIComponent(CLASS_FILTER.jurusan) + "&rombel=" + encodeURIComponent(CLASS_FILTER.rombel))
+                    .then(function (res) { return res.json(); })
+                    .then(function (data) {
+                        reportCache[key] = data;
+                        if (data.students) cachedStudents = data.students;
+                        return data;
+                    });
+            }
+
+            function uniquePresentDates(records, studentId) {
+                var seen = {};
+                records.forEach(function (r) {
+                    if (String(r.id_siswa) !== String(studentId)) return;
+                    if (r.mode !== "hadir") return;
+                    seen[r.date] = true;
+                });
+                return Object.keys(seen).length;
+            }
+
+            function attendancePercentForStudent(records, studentId, start, end) {
+                var totalDays = Math.max(1, countWeekdays(start, end));
+                return Math.min(100, (uniquePresentDates(records, studentId) / totalDays) * 100).toFixed(1) + "%";
+            }
+
+            function buildStudentRows(students) {
+                return (students || []).map(function (student, idx) {
+                    return "<tr><td>" + (idx + 1) + "</td><td>" + escapeHtml(student.nama_lengkap) + "</td><td>" + escapeHtml(student.nis) + "</td></tr>";
+                }).join("") || emptyRow(3, "Belum ada siswa.");
+            }
+
+            function dailyPercent(records, students) {
+                var total = (students || cachedStudents).length || 1;
+                var hadir = records.filter(function (r) { return r.mode === "hadir"; }).length;
+                return Math.min(100, (hadir / total) * 100);
+            }
+
+            function updatePercent(value) {
+                document.getElementById("attendance-percent").textContent = value.toFixed(1) + "%";
+            }
+
+            function updateDailyAttendancePercent() {
+                updatePercent(dailyPercent(todayRecords(), cachedStudents));
+            }
+
+            function weekStartDate(date) {
+                var d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+                d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+                return d;
+            }
+
+            function renderWeekly(data, startDate) {
+                var students = data.students || [];
+                var records = data.records || [];
+                var body = document.getElementById("weekly-table-body");
+                if (!students.length) {
+                    body.innerHTML = emptyRow(9, "Belum ada siswa.");
+                    updatePercent(0);
+                    return;
+                }
+                var daysInWeek = [0, 1, 2, 3, 4].map(function (offset) {
+                    var d = new Date(startDate);
+                    d.setDate(startDate.getDate() + offset);
+                    return formatDateISO(d);
+                });
+                body.innerHTML = students.map(function (student, idx) {
+                    var cols = daysInWeek.map(function (dateKey) {
+                        return records.some(function (r) {
+                            return String(r.id_siswa) === String(student.id_siswa) && r.mode === "hadir" && r.date === dateKey;
+                        }) ? "Hadir" : "-";
+                    });
+                    var totalPercent = attendancePercentForStudent(records, student.id_siswa, startDate, new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() + 4));
+                    return "<tr><td>" + (idx + 1) + "</td><td>" + escapeHtml(student.nama_lengkap) + "</td><td>" + escapeHtml(student.nis) + "</td><td>" + cols[0] + "</td><td>" + cols[1] + "</td><td>" + cols[2] + "</td><td>" + cols[3] + "</td><td>" + cols[4] + "</td><td>" + totalPercent + "</td></tr>";
+                }).join("");
+
+                var endDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() + 4);
+                var percent = (records.filter(function (r) { return r.mode === "hadir"; }).length / Math.max(1, students.length * countWeekdays(startDate, endDate))) * 100;
+                updatePercent(percent);
+            }
+
+            function renderMonthly(data) {
+                var students = data.students || [];
+                var records = data.records || [];
+                var body = document.getElementById("monthly-table-body");
+                if (!students.length) {
+                    body.innerHTML = emptyRow(8, "Belum ada siswa.");
+                    updatePercent(0);
+                    return;
+                }
+                body.innerHTML = students.map(function (student, idx) {
+                    var weeks = [1, 2, 3, 4].map(function (wk) {
+                        var present = records.filter(function (r) {
+                            if (String(r.id_siswa) !== String(student.id_siswa) || r.mode !== "hadir") return false;
+                            return Math.min(4, Math.ceil(toDate(r.date).getDate() / 7)) === wk;
+                        }).length;
+                        return present ? present + "x" : "-";
+                    });
+                    var totalPercent = attendancePercentForStudent(records, student.id_siswa, monthStart(now), monthEnd(now));
+                    return "<tr><td>" + (idx + 1) + "</td><td>" + escapeHtml(student.nama_lengkap) + "</td><td>" + escapeHtml(student.nis) + "</td><td>" + weeks[0] + "</td><td>" + weeks[1] + "</td><td>" + weeks[2] + "</td><td>" + weeks[3] + "</td><td>" + totalPercent + "</td></tr>";
+                }).join("");
+
+                var percent = (records.filter(function (r) { return r.mode === "hadir"; }).length / Math.max(1, students.length * countWeekdays(monthStart(now), monthEnd(now)))) * 100;
+                updatePercent(percent);
+            }
+
+            function renderStudentList(students) {
+                var body = document.getElementById("daftar-siswa-body");
+                body.innerHTML = buildStudentRows(students);
+            }
+
+            function refreshModeData(mode) {
+                if (mode === "daily") {
+                    updateDailyAttendancePercent();
+                    return Promise.resolve();
+                }
+                if (mode === "weekly") {
+                    var startWeek = weekStartDate(now);
+                    var endWeek = new Date(startWeek.getFullYear(), startWeek.getMonth(), startWeek.getDate() + 4);
+                    return fetchRange(formatDateISO(startWeek), formatDateISO(endWeek), "weekly").then(function (data) {
+                        renderWeekly(data, startWeek);
+                        renderStudentList(data.students || []);
+                    });
+                }
+                if (mode === "monthly") {
+                    var start = formatDateISO(monthStart(now));
+                    var end = formatDateISO(monthEnd(now));
+                    return fetchRange(start, end, "monthly").then(function (data) {
+                        renderMonthly(data);
+                        renderStudentList(data.students || []);
+                    });
+                }
+                if (mode === "students") {
+                    return getStudents().then(function (students) {
+                        renderStudentList(students);
+                    });
+                }
+                return Promise.resolve();
+            }
+
+            function setReportMode(mode) {
+                reportMode = mode;
+                document.querySelectorAll("[data-report-mode]").forEach(function (btn) {
+                    btn.classList.toggle("is-active", btn.getAttribute("data-report-mode") === mode);
+                });
+                document.querySelectorAll(".report-mode-panel").forEach(function (panel) {
+                    panel.classList.toggle("is-hidden", panel.getAttribute("data-report-panel") !== mode);
+                });
+                refreshModeData(mode);
+            }
+
+            function renderRekap() {
+                var records = todayRecords();
+                var hadir = records.filter(function (r) { return r.mode === "hadir"; });
+                var nonhadir = records.filter(function (r) { return ["sakit", "izin", "dispen"].indexOf(r.mode) !== -1; });
+                var pulang = records.filter(function (r) { return r.mode === "pulang"; });
+
+                document.getElementById("count-hadir").textContent = hadir.length;
+                document.getElementById("count-nonhadir").textContent = nonhadir.length;
+                document.getElementById("count-pulang").textContent = pulang.length;
+
+                document.getElementById("hadir-table-body").innerHTML = hadir.length ? hadir.map(function (r) {
+                    var selfieLink = r.hadirSelfie ? '<button type="button" class="btn-secondary js-photo-preview" data-photo="' + escapeHtml(r.hadirSelfie) + '">Lihat selfie</button>' : "-";
+                    return "<tr><td>" + escapeHtml(r.name || r.user) + "</td><td>" + escapeHtml(r.time) + "</td><td>" + escapeHtml(r.keterangan) + "</td><td>" + selfieLink + "</td></tr>";
+                }).join("") : emptyRow(4, "Belum ada siswa yang mengirim hadir.");
+
+                document.getElementById("nonhadir-table-body").innerHTML = nonhadir.length ? nonhadir.map(function (r) {
+                    return "<tr><td>" + escapeHtml(r.name || r.user) + "</td><td>" + escapeHtml(r.status) + "</td><td>" + escapeHtml(r.time) + "</td><td>" + escapeHtml(r.dokumen || "-") + "</td><td>" + escapeHtml(r.keterangan) + "</td></tr>";
+                }).join("") : emptyRow(5, "Belum ada pengajuan sakit, izin, atau dispen.");
+
+                document.getElementById("pulang-selfie-list").innerHTML = pulang.length ? pulang.map(function (r) {
+                    var image = r.pulangSelfie ? '<img src="' + r.pulangSelfie + '" alt="Selfie pulang ' + escapeHtml(r.name || r.user) + '">' : "";
+                    return '<div class="selfie-card">' + image + '<strong>' + escapeHtml(r.name || r.user) + '</strong><span>' + escapeHtml(r.time) + '</span></div>';
+                }).join("") : '<p class="status-note">Belum ada selfie pulang hari ini.</p>';
+            }
+
+            function renderReportCard(item, mode) {
+                var canReply = mode === "history" || item.status !== "diselesaikan";
+                var badge = item.has_unread ? '<span class="report-badge" aria-label="Perlu tindak lanjut"></span>' : '';
+                var replies = item.balasan && item.balasan.length ? item.balasan.map(function (b) {
+                    return '<div class="report-reply"><strong>' + escapeHtml((b.pengirim_role || "").toUpperCase()) + ':</strong> ' + escapeHtml(b.isi_balasan) + ' <span>(' + escapeHtml(b.created_at) + ')</span></div>';
+                }).join("") : '<div class="report-reply">Belum ada balasan.</div>';
+                var actions = '';
+                if (mode === "inbox" && item.status !== "diselesaikan") {
+                    actions += '<div style="display:flex;justify-content:flex-end;gap:0.5rem;flex-wrap:wrap;margin-top:0.5rem"><button type="button" class="btn-secondary js-report-approve" data-id="' + item.id_laporan + '">Selesaikan</button></div>';
+                }
+                if (canReply) {
+                    actions += '<div class="input-wrap" style="margin-top:0.75rem"><textarea class="js-report-reply-text" data-id="' + item.id_laporan + '" placeholder="Tulis balasan ulang..."></textarea></div>' +
+                        '<div style="display:flex;justify-content:flex-end;gap:0.5rem;flex-wrap:wrap;margin-top:0.5rem"><button type="button" class="btn-primary js-report-reply-send" data-id="' + item.id_laporan + '" data-role="walas">' + (mode === "history" ? "Kirim ulang ke BK" : "Balas lagi") + '</button></div>';
+                } else {
+                    actions += '<p class="status-note">Laporan sudah diselesaikan.</p>';
+                }
+                return '<article class="report-card report-card--wide" data-report-card data-open="false" data-id="' + item.id_laporan + '">' +
+                    badge +
+                    '<button type="button" class="report-head" data-report-toggle>' +
+                        '<span class="report-from">From: ' + escapeHtml(item.walas_nama || item.walas_npsn || "Walas") + '</span>' +
+                        '<span class="report-date">' + escapeHtml(item.created_at) + '</span>' +
+                    '</button>' +
+                    '<div class="report-body">' +
+                        '<div class="report-subject">Subject: ' + escapeHtml(item.subjek) + '</div>' +
+                        '<div class="report-meta">Status: ' + escapeHtml(item.status) + '</div>' +
+                        '<div class="report-text">' + escapeHtml(item.isi_laporan) + '</div>' +
+                        '<div class="report-replies">' + replies + '</div>' +
+                        actions +
+                    '</div>' +
+                '</article>';
+            }
+
+            function renderReportList(targetId, items, mode, emptyText) {
+                var list = document.getElementById(targetId);
+                if (!list) return;
+                list.innerHTML = items.length ? items.map(function (item) {
+                    return renderReportCard(item, mode);
+                }).join("") : '<p class="status-note">' + emptyText + '</p>';
+            }
+
+            function renderLaporanViews() {
+                renderReportList("laporan-inbox-list", cachedReports.filter(function (item) {
+                    return item.status === "dibalas";
+                }), "inbox", "Belum ada inbox laporan.");
+                renderReportList("laporan-riwayat-list", cachedReports.filter(function (item) {
+                    return item.status === "diselesaikan";
+                }), "history", "Belum ada riwayat laporan.");
+            }
+
+            function submitWalasReply(reportId, textarea) {
+                var isi = (textarea.value || "").trim();
+                if (!isi) {
+                    alert("Isi balasan dulu ya.");
+                    return;
+                }
+                var formData = new FormData();
+                formData.append("action", "reply");
+                formData.append("id_laporan", reportId);
+                formData.append("pengirim_role", "walas");
+                formData.append("id_walas", session.id || 0);
+                formData.append("isi_balasan", isi);
+
+                fetch("laporan_api.php", { method: "POST", body: formData })
+                    .then(parseJsonResponse)
+                    .then(function () {
+                        textarea.value = "";
+                        loadLaporan();
+                    })
+                    .catch(function (err) {
+                        alert(err.message);
+                    });
+            }
+
+            function approveLaporan(reportId) {
+                var formData = new FormData();
+                formData.append("action", "approve");
+                formData.append("id_laporan", reportId);
+                formData.append("pengirim_role", "walas");
+                formData.append("id_walas", session.id || 0);
+
+                fetch("laporan_api.php", { method: "POST", body: formData })
+                    .then(parseJsonResponse)
+                    .then(function () {
+                        location.hash = "#laporan-riwayat";
+                        return loadLaporan();
+                    })
+                    .catch(function (err) {
+                        alert(err.message);
+                    });
+            }
+
+            var VIEW_IDS = ["beranda", "rekap", "daftar-siswa", "laporan-inbox", "laporan-baru", "laporan-riwayat"];
+            var TOOLBAR = {
+                beranda: { title: "Dashboard guru / walas", desc: "Halo, " + (session.username || "Guru") + ". Pantau kiriman absensi siswa hari ini." },
+                rekap: { title: "Rekap absensi", desc: "Lihat rekap daily, weekly, atau bulanan." },
+                "daftar-siswa": { title: "Daftar siswa", desc: "Daftar siswa dalam kelas wali." },
+                "laporan-inbox": { title: "Inbox laporan", desc: "Balasan BK yang sudah masuk dan menunggu tindak lanjut." },
+                "laporan-baru": { title: "Laporan baru", desc: "Buat laporan baru ke BK atau kesiswaan." },
+                "laporan-riwayat": { title: "Riwayat laporan", desc: "Laporan yang sudah diselesaikan." }
+            };
+
+            function showView(id) {
+                VIEW_IDS.forEach(function (v) {
+                    var panel = document.getElementById("view-" + v);
+                    var hide = v !== id;
+                    panel.classList.toggle("is-hidden", hide);
+                    panel.hidden = hide;
+                    panel.setAttribute("aria-hidden", hide ? "true" : "false");
+                });
+                document.querySelectorAll(".nav-menu a[data-view]").forEach(function (a) {
+                    var cur = a.getAttribute("data-view") === id;
+                    if (cur) a.setAttribute("aria-current", "page");
+                    else a.removeAttribute("aria-current");
+                });
+                document.querySelectorAll("[data-nav-parent]").forEach(function (btn) {
+                    var group = btn.getAttribute("data-nav-parent");
+                    var isActive = (group === "absensi" && (id === "rekap" || id === "daftar-siswa")) || (group === "laporan" && (id.indexOf("laporan-") === 0));
+                    btn.classList.toggle("is-active", isActive);
+                    btn.setAttribute("aria-expanded", isActive ? "true" : "false");
+                });
+                document.querySelectorAll(".nav-group").forEach(function (groupEl) {
+                    var groupName = groupEl.getAttribute("data-nav-group");
+                    var open = (groupName === "absensi" && (id === "rekap" || id === "daftar-siswa")) || (groupName === "laporan" && id.indexOf("laporan-") === 0);
+                    groupEl.classList.toggle("is-open", open);
+                });
+                document.getElementById("toolbar-title").textContent = TOOLBAR[id].title;
+                document.getElementById("toolbar-desc").textContent = TOOLBAR[id].desc;
+                renderRekap();
+                if (id.indexOf("laporan-") === 0) loadLaporan();
+                if (id === "rekap") setReportMode(reportMode);
+                if (id === "daftar-siswa") refreshModeData("students");
+                if (window.AbsensiTheme && AbsensiTheme.syncFooter) AbsensiTheme.syncFooter();
+            }
+
+            function route() {
+                var raw = (location.hash || "").replace(/^#/, "").toLowerCase().trim();
+                var alias = { laporan: "laporan-inbox" };
+                raw = alias[raw] || raw;
+                var id = VIEW_IDS.indexOf(raw) !== -1 ? raw : "beranda";
+                if (location.hash !== "#" + id) {
+                    history.replaceState(null, "", location.pathname + location.search + "#" + id);
+                }
+                showView(id);
+            }
+
+            window.addEventListener("hashchange", route);
+
+            document.querySelectorAll("[data-report-mode]").forEach(function (btn) {
+                btn.addEventListener("click", function () {
+                    setReportMode(btn.getAttribute("data-report-mode"));
+                });
+            });
+
+            document.querySelectorAll("[data-nav-parent]").forEach(function (btn) {
+                btn.addEventListener("click", function () {
+                    var target = btn.getAttribute("data-nav-default") || "beranda";
+                    location.hash = "#" + target;
+                });
+            });
+
+            function activeAttendanceTableHtml() {
+                if (reportMode === "daily") {
+                    return document.getElementById("rekap-daily").innerHTML;
+                }
+                if (reportMode === "weekly") {
+                    return document.getElementById("rekap-weekly").innerHTML;
+                }
+                return document.getElementById("rekap-monthly").innerHTML;
+            }
+
+            function printAttendanceReport() {
+                refreshModeData(reportMode).then(function () {
+                    var titleMap = { daily: "Harian", weekly: "Mingguan", monthly: "Bulanan" };
+                    var title = "Laporan Kehadiran " + titleMap[reportMode] + " Kelas " + CLASS_LABEL;
+                    var printedAt = new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
+                    var win = window.open("", "_blank");
+                    if (!win) {
+                        alert("Pop-up diblokir. Izinkan pop-up untuk mencetak laporan.");
+                        return;
+                    }
+                    win.document.write("<!doctype html><html><head><title>" + title + "</title><style>body{font-family:Arial,sans-serif;color:#111;margin:32px}h1{font-size:20px;text-align:center;margin:0 0 8px}p{line-height:1.5}.meta{margin:18px 0}.table-card{border:0}.selfie-list,img,button,a{display:none!important}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{border:1px solid #333;padding:7px;font-size:12px;text-align:left}th{background:#eee}.ttd{margin-top:48px;width:260px;margin-left:auto;text-align:center}@page{size:A4;margin:18mm}</style></head><body>");
+                    win.document.write("<h1>" + title + "</h1>");
+                    win.document.write("<p class='meta'>Dengan hormat, berikut disampaikan rekapitulasi kehadiran peserta didik kelas " + CLASS_LABEL + " untuk periode " + titleMap[reportMode].toLowerCase() + ". Laporan ini dicetak pada " + printedAt + " dan digunakan sebagai dokumen administrasi wali kelas.</p>");
+                    win.document.write(activeAttendanceTableHtml());
+                    win.document.write("<div class='ttd'><p>Wali Kelas</p><br><br><p>" + escapeHtml(session.name || session.username || "Walas") + "</p></div>");
+                    win.document.write("</body></html>");
+                    win.document.close();
+                    win.focus();
+                    win.print();
+                });
+            }
+
+            document.getElementById("btn-print-attendance").addEventListener("click", printAttendanceReport);
+
+            document.addEventListener("click", function (e) {
+                var replyBtn = e.target.closest(".js-report-reply-send");
+                if (replyBtn) {
+                    var id = replyBtn.getAttribute("data-id");
+                    var textarea = document.querySelector('.js-report-reply-text[data-id="' + id + '"]');
+                    if (textarea) submitWalasReply(id, textarea);
+                    return;
+                }
+                var approveBtn = e.target.closest(".js-report-approve");
+                if (approveBtn) {
+                    approveLaporan(approveBtn.getAttribute("data-id"));
+                    return;
+                }
+                var toggle = e.target.closest("[data-report-toggle]");
+                if (toggle) {
+                    var card = toggle.closest("[data-report-card]");
+                    if (!card) return;
+                    var open = card.getAttribute("data-open") === "true";
+                    card.setAttribute("data-open", open ? "false" : "true");
+                }
+            });
+
+            route();
+            getStudents().then(function () {
+                loadAbsensiRecords();
+                if (reportMode === "daily") updateDailyAttendancePercent();
+            });
+            setInterval(loadAbsensiRecords, 30000);
+
+            document.getElementById("laporan-form").addEventListener("submit", function (e) {
+                e.preventDefault();
+                var msg = document.getElementById("laporan-msg");
+                var formData = new FormData();
+                formData.append("action", "create");
+                formData.append("username", session.username || "");
+                formData.append("tujuan_role", document.getElementById("laporan-tujuan").value);
+                formData.append("subjek", document.getElementById("laporan-subjek").value.trim());
+                formData.append("isi_laporan", document.getElementById("laporan-isi").value.trim());
+
+                fetch("laporan_api.php", { method: "POST", body: formData })
+                    .then(parseJsonResponse)
+                    .then(function () {
+                        document.getElementById("laporan-subjek").value = "";
+                        document.getElementById("laporan-isi").value = "";
+                        msg.textContent = "Laporan terkirim.";
+                        msg.classList.remove("hidden");
+                        loadLaporan();
+                    })
+                    .catch(function (err) {
+                        msg.textContent = err.message;
+                        msg.classList.remove("hidden");
+                    });
+            });
+
+            var modal = document.getElementById("photo-modal");
+            var modalImg = document.getElementById("photo-modal-img");
+            document.addEventListener("click", function (e) {
+                var btn = e.target.closest(".js-photo-preview");
+                if (!btn) return;
+                modalImg.src = btn.getAttribute("data-photo");
+                modal.hidden = false;
+            });
+            document.getElementById("photo-modal-close").addEventListener("click", function () {
+                modal.hidden = true;
+                modalImg.src = "";
+            });
+            modal.addEventListener("click", function (e) {
+                if (e.target === modal) {
+                    modal.hidden = true;
+                    modalImg.src = "";
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

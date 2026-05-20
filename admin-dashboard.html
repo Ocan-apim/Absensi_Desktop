@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Admin - Absensi</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="theme.css">
+</head>
+<body class="dashboard-body">
+    <div class="bg-orb bg-orb--1" aria-hidden="true"></div>
+    <div class="bg-orb bg-orb--2" aria-hidden="true"></div>
+
+    <div class="app-shell">
+        <aside class="sidebar">
+            <div class="sidebar-brand">Absensi - Admin</div>
+            <nav class="nav-menu" aria-label="Menu utama">
+                <a href="#beranda" data-view="beranda" aria-current="page">Beranda</a>
+                <div class="nav-group" data-nav-group="data">
+                    <button type="button" class="nav-group-toggle" data-nav-parent="data" data-nav-default="data-staff" aria-expanded="false">Data</button>
+                    <div class="nav-submenu">
+                        <a href="#data-staff" data-view="data-staff">Data Staff</a>
+                        <a href="#data-murid" data-view="data-murid">Data Murid</a>
+                    </div>
+                </div>
+                <a href="#laporan" data-view="laporan">Laporan</a>
+                <a href="register.html">Membuat Akun Baru</a>
+                <a href="admin-profil.html">Profil</a>
+            </nav>
+            <div class="sidebar-footer">
+                <button type="button" class="btn-logout" id="btn-logout">Keluar</button>
+            </div>
+        </aside>
+
+        <main class="main-area">
+            <div class="dashboard-topbar">
+                <div class="toolbar-heading">
+                    <h1 class="page-title" id="toolbar-title">Dashboard admin</h1>
+                    <p class="page-sub" id="toolbar-desc" style="margin-bottom:0">Halo, <span id="user-label">Admin</span>. Grafik di bawah memakai data MySQL.</p>
+                </div>
+                <button type="button" class="theme-toggle theme-toggle--inline" data-theme-toggle aria-label="Tema"></button>
+                <a id="header-avatar-link" href="admin-profil.html" class="avatar-btn" title="Profil" aria-label="Buka profil">
+                    <img id="header-avatar-img" class="hidden" alt="">
+                    <span id="header-avatar-fallback" class="avatar-initials">AD</span>
+                </a>
+            </div>
+
+            <section id="view-beranda" class="view-panel" data-view-panel="beranda">
+                <div class="admin-data-board">
+                    <div class="admin-data-head">
+                        <div>
+                            <h2>Data Dashboard</h2>
+                            <p class="page-sub">Kehadiran guru vs siswa dan distribusi jurusan</p>
+                        </div>
+                        <div class="admin-calendar-wrap">
+                            <button type="button" class="admin-week-button" id="admin-week-button" aria-expanded="false">
+                                <span aria-hidden="true">□</span>
+                                <strong>This week</strong>
+                                <span id="admin-chart-period">Memuat...</span>
+                                <span aria-hidden="true">⌄</span>
+                            </button>
+                            <div class="admin-calendar-popover" id="admin-calendar-popover" hidden>
+                                <div class="admin-calendar-head">
+                                    <strong id="admin-calendar-title">Bulan</strong>
+                                    <div>
+                                        <button type="button" id="admin-cal-prev" aria-label="Bulan sebelumnya">‹</button>
+                                        <button type="button" id="admin-cal-next" aria-label="Bulan berikutnya">›</button>
+                                    </div>
+                                </div>
+                                <div class="admin-calendar-weekdays">
+                                    <span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span><span>Su</span>
+                                </div>
+                                <div class="admin-calendar-grid" id="admin-calendar-grid"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-card chart-card--area">
+                        <div class="chart-card-top">
+                            <div class="chart-legend" aria-label="Legenda chart">
+                                <span><i style="background:#5b5ff0"></i>Guru</span>
+                                <span><i style="background:#facc15"></i>Siswa</span>
+                            </div>
+                            <p class="page-sub" id="admin-area-caption">Jumlah entri hadir per minggu.</p>
+                        </div>
+                        <canvas id="admin-area-chart" height="260"></canvas>
+                    </div>
+                    <div class="admin-chart-grid">
+                        <div class="chart-card">
+                            <h3>Guru</h3>
+                            <canvas id="admin-guru-bar" height="220"></canvas>
+                        </div>
+                        <div class="chart-card">
+                            <h3>Murid</h3>
+                            <canvas id="admin-siswa-bar" height="220"></canvas>
+                        </div>
+                        <div class="chart-card">
+                            <h3>Distribusi jurusan</h3>
+                            <canvas id="admin-jurusan-pie" height="320"></canvas>
+                            <div id="admin-pie-legend" class="chart-legend chart-legend--wrap"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="view-data-staff" class="view-panel panel wide-panel is-hidden" data-view-panel="data-staff" hidden>
+                <div class="section-head section-head--students">
+                    <div class="section-head-main">
+                        <h2>Data Staff</h2>
+                        <p class="page-sub" style="margin-bottom:0">Pilih jenis staff lalu kelola akun.</p>
+                    </div>
+                    <div class="input-wrap" style="max-width:220px">
+                        <select id="staff-type">
+                            <option value="bk">BK / Kesiswaan</option>
+                            <option value="walas">Walas</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="table-card">
+                    <div class="table-scroll">
+                        <table class="data-table">
+                            <thead><tr><th>No</th><th>Nama</th><th>NPSN</th><th>Kelas</th><th>Jurusan</th><th>Tempat lahir</th><th>Tanggal lahir</th><th>Dibuat</th><th>Aksi</th></tr></thead>
+                            <tbody id="staff-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section id="view-data-murid" class="view-panel panel wide-panel is-hidden" data-view-panel="data-murid" hidden>
+                <div class="section-head section-head--students">
+                    <div class="section-head-main">
+                        <h2>Data Murid</h2>
+                        <p class="page-sub" style="margin-bottom:0">Filter kelas dan jurusan untuk melihat akun murid.</p>
+                    </div>
+                    <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+                        <div class="input-wrap"><select id="murid-kelas"><option value="10">Kelas 10</option><option value="11" selected>Kelas 11</option><option value="12">Kelas 12</option></select></div>
+                        <div class="input-wrap"><select id="murid-jurusan"><option value="pplg">PPLG</option><option value="mplb">MPLB</option><option value="dkv">DKV</option><option value="tjkt">TJKT</option><option value="pm">PM</option><option value="ph">PH</option></select></div>
+                    </div>
+                </div>
+                <div class="table-card">
+                    <div class="table-scroll">
+                        <table class="data-table">
+                            <thead><tr><th>No</th><th>Nama</th><th>NIS</th><th>Email</th><th>Kelas</th><th>Jurusan</th><th>Tempat lahir</th><th>Tanggal lahir</th><th>Aksi</th></tr></thead>
+                            <tbody id="murid-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section id="view-laporan" class="view-panel panel wide-panel is-hidden" data-view-panel="laporan" hidden>
+                <div class="section-head section-head--students">
+                    <div class="section-head-main">
+                        <h2>Laporan aktivitas</h2>
+                        <p class="page-sub" style="margin-bottom:0">Riwayat akun yang diedit atau dihapus oleh admin.</p>
+                    </div>
+                </div>
+                <div id="admin-log-list" class="stack"></div>
+            </section>
+
+            <section id="admin-edit-panel" class="panel wide-panel is-hidden" hidden>
+                <h2 id="edit-title">Edit data</h2>
+                <form id="admin-edit-form" class="stack"></form>
+            </section>
+        </main>
+    </div>
+
+    <script src="theme.js"></script>
+    <script src="auth.js"></script>
+    <script src="dashboard-avatar.js"></script>
+    <script>
+        (function () {
+            var session = AbsensiAuth.requireRoles(["admin"]);
+            if (!session) return;
+
+            var state = {
+                staff: [],
+                murid: [],
+                currentEdit: null,
+                chartData: null,
+                selectedWeekDate: new Date(),
+                calendarMonth: new Date()
+            };
+            var VIEW_IDS = ["beranda", "data-staff", "data-murid", "laporan"];
+            var TOOLBAR = {
+                beranda: { title: "Dashboard admin", desc: "Halo, " + (session.username || "Admin") + ". Grafik di bawah memakai data MySQL." },
+                "data-staff": { title: "Data staff", desc: "Kelola akun BK/Kesiswaan dan walas." },
+                "data-murid": { title: "Data murid", desc: "Kelola akun murid berdasarkan kelas dan jurusan." },
+                laporan: { title: "Laporan", desc: "Catatan perubahan akun oleh admin." }
+            };
+
+            document.getElementById("user-label").textContent = session.username || "Admin";
+            document.getElementById("btn-logout").addEventListener("click", function () { AbsensiAuth.logout(); });
+            DashboardAvatar.bind("admin-profil.html");
+            if (window.DashboardAvatar && DashboardAvatar.refresh) DashboardAvatar.refresh();
+
+            function escapeHtml(value) {
+                return String(value || "").replace(/[&<>"']/g, function (ch) {
+                    return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[ch];
+                });
+            }
+
+            function classTitle(row) {
+                return [row.kelas, String(row.jurusan || "").toUpperCase(), row.rombel].filter(Boolean).join(" ");
+            }
+
+            function parseJson(res) {
+                return res.text().then(function (text) {
+                    var data = text ? JSON.parse(text) : {};
+                    if (!res.ok || data.error) throw new Error(data.error || "Request gagal.");
+                    return data;
+                });
+            }
+
+            function pad2(n) {
+                return String(n).padStart(2, "0");
+            }
+
+            function isoDate(date) {
+                return date.getFullYear() + "-" + pad2(date.getMonth() + 1) + "-" + pad2(date.getDate());
+            }
+
+            function weekStart(date) {
+                var d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+                d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+                return d;
+            }
+
+            function weekEnd(date) {
+                var d = weekStart(date);
+                d.setDate(d.getDate() + 6);
+                return d;
+            }
+
+            function dateLabel(date) {
+                return date.toLocaleDateString("id-ID", { day: "numeric", month: "short" });
+            }
+
+            function renderAdminCalendar() {
+                var title = document.getElementById("admin-calendar-title");
+                var grid = document.getElementById("admin-calendar-grid");
+                var month = state.calendarMonth;
+                title.textContent = month.toLocaleDateString("id-ID", { month: "long", year: "numeric" });
+                var first = new Date(month.getFullYear(), month.getMonth(), 1);
+                var last = new Date(month.getFullYear(), month.getMonth() + 1, 0);
+                var lead = (first.getDay() + 6) % 7;
+                var selectedIso = isoDate(state.selectedWeekDate);
+                var ws = weekStart(state.selectedWeekDate);
+                var we = weekEnd(state.selectedWeekDate);
+                var html = "";
+                for (var i = 0; i < lead; i++) html += '<span class="admin-calendar-empty"></span>';
+                for (var day = 1; day <= last.getDate(); day++) {
+                    var date = new Date(month.getFullYear(), month.getMonth(), day);
+                    var inWeek = date >= ws && date <= we;
+                    var cls = "admin-calendar-day" + (isoDate(date) === selectedIso ? " is-selected" : "") + (inWeek ? " is-week" : "");
+                    html += '<button type="button" class="' + cls + '" data-calendar-day="' + isoDate(date) + '">' + day + '</button>';
+                }
+                grid.innerHTML = html;
+            }
+
+            function apiUrl(type) {
+                if (type === "murid") {
+                    return "admin_data_api.php?type=murid&kelas=" + encodeURIComponent(document.getElementById("murid-kelas").value) + "&jurusan=" + encodeURIComponent(document.getElementById("murid-jurusan").value);
+                }
+                return "admin_data_api.php?type=" + encodeURIComponent(document.getElementById("staff-type").value);
+            }
+
+            function actionButtons(type, id) {
+                return '<div style="display:flex;gap:0.4rem;flex-wrap:wrap">' +
+                    '<button type="button" class="btn-secondary js-detail" data-type="' + type + '" data-id="' + id + '">Detail</button>' +
+                    '<button type="button" class="btn-secondary js-edit" data-type="' + type + '" data-id="' + id + '">Edit</button>' +
+                    '<button type="button" class="btn-ghost js-delete" data-type="' + type + '" data-id="' + id + '">Hapus</button>' +
+                    '</div>';
+            }
+
+            function loadStaff() {
+                var type = document.getElementById("staff-type").value;
+                var body = document.getElementById("staff-table-body");
+                body.innerHTML = '<tr><td colspan="9" class="empty-row">Memuat data...</td></tr>';
+                fetch(apiUrl("staff")).then(parseJson).then(function (data) {
+                    state.staff = data.records || [];
+                    body.innerHTML = state.staff.length ? state.staff.map(function (r, idx) {
+                        return "<tr><td>" + (idx + 1) + "</td><td>" + escapeHtml(r.nama_lengkap) + "</td><td>" + escapeHtml(r.npsn) + "</td><td>" + escapeHtml(classTitle(r) || r.kelas || "") + "</td><td>" + escapeHtml((r.jurusan || "").toUpperCase()) + "</td><td>" + escapeHtml(r.tempat_lahir) + "</td><td>" + escapeHtml(r.tanggal_lahir) + "</td><td>" + escapeHtml(r.created_at) + "</td><td>" + actionButtons(type, r.id_bk || r.id_walas) + "</td></tr>";
+                    }).join("") : '<tr><td colspan="9" class="empty-row">Belum ada data staff.</td></tr>';
+                }).catch(function (err) { body.innerHTML = '<tr><td colspan="9" class="empty-row">' + escapeHtml(err.message) + '</td></tr>'; });
+            }
+
+            function loadMurid() {
+                var body = document.getElementById("murid-table-body");
+                body.innerHTML = '<tr><td colspan="9" class="empty-row">Memuat data...</td></tr>';
+                fetch(apiUrl("murid")).then(parseJson).then(function (data) {
+                    state.murid = data.records || [];
+                    body.innerHTML = state.murid.length ? state.murid.map(function (r, idx) {
+                        return "<tr><td>" + (idx + 1) + "</td><td>" + escapeHtml(r.nama_lengkap) + "</td><td>" + escapeHtml(r.nis) + "</td><td>" + escapeHtml(r.email) + "</td><td>" + escapeHtml(classTitle(r) || r.kelas) + "</td><td>" + escapeHtml(String(r.jurusan).toUpperCase()) + "</td><td>" + escapeHtml(r.tempat_lahir) + "</td><td>" + escapeHtml(r.tanggal_lahir) + "</td><td>" + actionButtons("murid", r.id_siswa) + "</td></tr>";
+                    }).join("") : '<tr><td colspan="9" class="empty-row">Belum ada data murid untuk filter ini.</td></tr>';
+                }).catch(function (err) { body.innerHTML = '<tr><td colspan="9" class="empty-row">' + escapeHtml(err.message) + '</td></tr>'; });
+            }
+
+            function findRecord(type, id) {
+                var list = type === "murid" ? state.murid : state.staff;
+                var key = type === "murid" ? "id_siswa" : (type === "bk" ? "id_bk" : "id_walas");
+                return list.find(function (r) { return String(r[key]) === String(id); });
+            }
+
+            function showDetail(type, id) {
+                var r = findRecord(type, id);
+                if (!r) return;
+                alert(Object.keys(r).map(function (k) { return k + ": " + (r[k] || "-"); }).join("\n"));
+            }
+
+            function input(name, label, value, type) {
+                return '<div><label class="field-label" for="edit-' + name + '">' + label + '</label><div class="input-wrap"><input id="edit-' + name + '" name="' + name + '" type="' + (type || "text") + '" value="' + escapeHtml(value) + '"></div></div>';
+            }
+
+            function selectField(name, label, options, selectedValue) {
+                var html = '<div><label class="field-label" for="edit-' + name + '">' + label + '</label><div class="input-wrap"><select id="edit-' + name + '" name="' + name + '">';
+                options.forEach(function (option) {
+                    var selected = String(option.value).toLowerCase() === String(selectedValue || "").toLowerCase() ? ' selected' : '';
+                    html += '<option value="' + escapeHtml(option.value) + '"' + selected + '>' + escapeHtml(option.label) + '</option>';
+                });
+                html += '</select></div></div>';
+                return html;
+            }
+
+            function openEdit(type, id) {
+                var r = findRecord(type, id);
+                if (!r) return;
+                state.currentEdit = { type: type, id: id };
+                var form = document.getElementById("admin-edit-form");
+                document.getElementById("edit-title").textContent = "Edit " + (type === "murid" ? "murid" : "staff");
+                if (type === "murid") {
+                    form.innerHTML = input("nama_lengkap", "Nama lengkap", r.nama_lengkap) + input("nis", "NIS", r.nis) + input("email", "Email", r.email) + selectField("kelas", "Kelas", [
+                        { value: "10", label: "Kelas 10" },
+                        { value: "11", label: "Kelas 11" },
+                        { value: "12", label: "Kelas 12" }
+                    ], r.kelas) + selectField("jurusan", "Jurusan", [
+                        { value: "pplg", label: "PPLG" },
+                        { value: "mplb", label: "MPLB" },
+                        { value: "dkv", label: "DKV" },
+                        { value: "tjkt", label: "TJKT" },
+                        { value: "pm", label: "PM" },
+                        { value: "ph", label: "PH" }
+                    ], r.jurusan) + selectField("rombel", "Rombel", [
+                        { value: "", label: "Tanpa rombel" },
+                        { value: "1", label: "Kelas 1" },
+                        { value: "2", label: "Kelas 2" }
+                    ], r.rombel) + input("tempat_lahir", "Tempat lahir", r.tempat_lahir) + input("tanggal_lahir", "Tanggal lahir", r.tanggal_lahir, "date") + input("password", "Password baru (opsional)", "", "password");
+                } else {
+                    form.innerHTML = input("nama_lengkap", "Nama lengkap", r.nama_lengkap) + input("npsn", "NPSN", r.npsn);
+                    if (type === "walas") {
+                        form.innerHTML += selectField("kelas", "Kelas", [
+                            { value: "10", label: "Kelas 10" },
+                            { value: "11", label: "Kelas 11" },
+                            { value: "12", label: "Kelas 12" }
+                        ], r.kelas) + selectField("jurusan", "Jurusan", [
+                            { value: "pplg", label: "PPLG" },
+                            { value: "mplb", label: "MPLB" },
+                            { value: "dkv", label: "DKV" },
+                            { value: "tjkt", label: "TJKT" },
+                            { value: "pm", label: "PM" },
+                            { value: "ph", label: "PH" }
+                        ], r.jurusan) + selectField("rombel", "Rombel", [
+                            { value: "", label: "Tanpa rombel" },
+                            { value: "1", label: "Kelas 1" },
+                            { value: "2", label: "Kelas 2" }
+                        ], r.rombel);
+                    }
+                    form.innerHTML += input("tempat_lahir", "Tempat lahir", r.tempat_lahir) + input("tanggal_lahir", "Tanggal lahir", r.tanggal_lahir, "date") + input("password", "Password baru (opsional)", "", "password");
+                }
+                form.innerHTML += '<div style="display:flex;justify-content:flex-end;gap:0.5rem;flex-wrap:wrap"><button type="button" class="btn-secondary" id="edit-cancel">Batal</button><button type="submit" class="btn-primary">Simpan perubahan</button></div><p id="edit-msg" class="status-note hidden"></p>';
+                document.getElementById("admin-edit-panel").hidden = false;
+                document.getElementById("admin-edit-panel").classList.remove("is-hidden");
+                document.getElementById("edit-cancel").addEventListener("click", closeEdit);
+            }
+
+            function closeEdit() {
+                document.getElementById("admin-edit-panel").hidden = true;
+                document.getElementById("admin-edit-panel").classList.add("is-hidden");
+                state.currentEdit = null;
+            }
+
+            function submitEdit(e) {
+                e.preventDefault();
+                if (!state.currentEdit) return;
+                var formData = new FormData(e.currentTarget);
+                formData.append("action", "update");
+                formData.append("type", state.currentEdit.type);
+                formData.append("id", state.currentEdit.id);
+                formData.append("admin_username", session.username || "");
+                fetch("admin_data_api.php", { method: "POST", body: formData }).then(parseJson).then(function () {
+                    closeEdit();
+                    state.currentEdit.type === "murid" ? loadMurid() : loadStaff();
+                    loadLogs();
+                }).catch(function (err) {
+                    var msg = document.getElementById("edit-msg");
+                    msg.textContent = err.message;
+                    msg.classList.remove("hidden");
+                });
+            }
+
+            function deleteRecord(type, id) {
+                if (!confirm("Hapus akun ini?")) return;
+                var formData = new FormData();
+                formData.append("action", "delete");
+                formData.append("type", type);
+                formData.append("id", id);
+                formData.append("admin_username", session.username || "");
+                fetch("admin_data_api.php", { method: "POST", body: formData }).then(parseJson).then(function () {
+                    type === "murid" ? loadMurid() : loadStaff();
+                    loadLogs();
+                }).catch(function (err) { alert(err.message); });
+            }
+
+            function loadLogs() {
+                var list = document.getElementById("admin-log-list");
+                if (!list) return;
+                fetch("admin_data_api.php?action=logs").then(parseJson).then(function (data) {
+                    var logs = data.logs || [];
+                    list.innerHTML = logs.length ? logs.map(function (log) {
+                        return '<article class="report-card" data-report-card data-open="false"><button type="button" class="report-head" data-report-toggle><span class="report-from">' + escapeHtml(log.target_label || log.target_type) + '</span><span class="report-date">' + escapeHtml(log.created_at) + '</span></button><div class="report-body"><div class="report-subject">Akun ' + (log.action === "edited" ? "diedit" : "dihapus") + '</div><div class="report-meta">Admin: ' + escapeHtml(log.admin_username || "-") + ' | Jenis: ' + escapeHtml(log.target_type) + ' | ID: ' + escapeHtml(log.target_id) + '</div><div class="report-text">' + escapeHtml(log.details || "Tidak ada detail.") + '</div></div></article>';
+                    }).join("") : '<p class="status-note">Belum ada laporan aktivitas.</p>';
+                });
+            }
+
+            function setupCanvas(canvas) {
+                var dpr = window.devicePixelRatio || 1;
+                var rect = canvas.getBoundingClientRect();
+                var h = Number(canvas.getAttribute("height")) || 220;
+                canvas.width = Math.max(320, Math.floor(rect.width * dpr));
+                canvas.height = h * dpr;
+                var ctx = canvas.getContext("2d");
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                return { ctx: ctx, width: canvas.width / dpr, height: h };
+            }
+
+            function drawAxes(ctx, w, h, pad, maxValue) {
+                ctx.clearRect(0, 0, w, h);
+                ctx.strokeStyle = "rgba(148,163,184,0.28)";
+                ctx.lineWidth = 1;
+                ctx.font = "12px Plus Jakarta Sans, Arial";
+                ctx.fillStyle = "#64748b";
+                for (var i = 0; i <= 4; i++) {
+                    var y = pad.top + ((h - pad.top - pad.bottom) * i / 4);
+                    ctx.beginPath();
+                    ctx.moveTo(pad.left, y);
+                    ctx.lineTo(w - pad.right, y);
+                    ctx.stroke();
+                    var label = Math.round(maxValue - (maxValue * i / 4));
+                    ctx.fillText(label, 8, y + 4);
+                }
+            }
+
+            function drawAreaChart(rows) {
+                var canvas = document.getElementById("admin-area-chart");
+                var box = setupCanvas(canvas);
+                var ctx = box.ctx, w = box.width, h = box.height;
+                var pad = { left: 42, right: 18, top: 20, bottom: 34 };
+                var maxValue = Math.max(1, ...rows.map(function (r) { return Math.max(r.guru, r.siswa); }));
+                drawAxes(ctx, w, h, pad, maxValue);
+
+                function point(row, idx, key) {
+                    var step = (w - pad.left - pad.right) / Math.max(1, rows.length - 1);
+                    var x = pad.left + idx * step;
+                    var y = h - pad.bottom - (row[key] / maxValue) * (h - pad.top - pad.bottom);
+                    return [x, y];
+                }
+
+                function drawSeries(key, stroke, fill) {
+                    var pts = rows.map(function (row, idx) { return point(row, idx, key); });
+                    ctx.beginPath();
+                    pts.forEach(function (p, idx) { idx ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]); });
+                    ctx.lineTo(pts[pts.length - 1][0], h - pad.bottom);
+                    ctx.lineTo(pts[0][0], h - pad.bottom);
+                    ctx.closePath();
+                    ctx.fillStyle = fill;
+                    ctx.fill();
+                    ctx.beginPath();
+                    pts.forEach(function (p, idx) { idx ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]); });
+                    ctx.strokeStyle = stroke;
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+
+                drawSeries("siswa", "#eab308", "rgba(250,204,21,0.22)");
+                drawSeries("guru", "#5b5ff0", "rgba(91,95,240,0.2)");
+                ctx.fillStyle = "#64748b";
+                rows.forEach(function (row, idx) {
+                    var p = point(row, idx, "siswa");
+                    ctx.fillText(row.label, p[0] - 10, h - 10);
+                });
+            }
+
+            function drawBarChart(canvasId, rows, color) {
+                var canvas = document.getElementById(canvasId);
+                var box = setupCanvas(canvas);
+                var ctx = box.ctx, w = box.width, h = box.height;
+                var pad = { left: 34, right: 16, top: 14, bottom: 30 };
+                var maxValue = Math.max(1, ...rows.map(function (r) { return r.count; }));
+                drawAxes(ctx, w, h, pad, maxValue);
+                var gap = 14;
+                var barW = (w - pad.left - pad.right - gap * (rows.length - 1)) / rows.length;
+                rows.forEach(function (row, idx) {
+                    var x = pad.left + idx * (barW + gap);
+                    var barH = (row.count / maxValue) * (h - pad.top - pad.bottom);
+                    var y = h - pad.bottom - barH;
+                    ctx.fillStyle = color;
+                    ctx.fillRect(x, y, barW, barH);
+                    ctx.fillStyle = "#64748b";
+                    ctx.fillText(row.label, x + barW / 2 - 10, h - 10);
+                });
+            }
+
+            function drawPieChart(rows) {
+                var canvas = document.getElementById("admin-jurusan-pie");
+                var box = setupCanvas(canvas);
+                var ctx = box.ctx, w = box.width, h = box.height;
+                ctx.clearRect(0, 0, w, h);
+                var colors = { PPLG: "#5b5ff0", MPLB: "#e84f7a", TJKT: "#3ba35b", DKV: "#f59e0b", PM: "#60a5fa", PH: "#84cc16" };
+                var totalCount = rows.reduce(function (sum, row) { return sum + Number(row.count || 0); }, 0);
+                var total = totalCount || 1;
+                var cx = w / 2, cy = h / 2, r = Math.min(w, h) * 0.42;
+                var start = -Math.PI / 2;
+                if (!rows.length || totalCount < 1) {
+                    ctx.fillStyle = "#64748b";
+                    ctx.font = "13px Plus Jakarta Sans, Arial";
+                    ctx.textAlign = "center";
+                    ctx.fillText("Belum ada data jurusan", cx, cy);
+                    document.getElementById("admin-pie-legend").innerHTML = "";
+                    return;
+                }
+                rows.forEach(function (row) {
+                    var angle = (Number(row.count || 0) / total) * Math.PI * 2;
+                    ctx.beginPath();
+                    ctx.moveTo(cx, cy);
+                    ctx.arc(cx, cy, r, start, start + angle);
+                    ctx.closePath();
+                    ctx.fillStyle = colors[row.name] || "#94a3b8";
+                    ctx.fill();
+                    if (angle > 0.18) {
+                        var mid = start + angle / 2;
+                        var tx = cx + Math.cos(mid) * (r * 0.64);
+                        var ty = cy + Math.sin(mid) * (r * 0.64);
+                        ctx.fillStyle = "#fff";
+                        ctx.font = "700 12px Plus Jakarta Sans, Arial";
+                        ctx.textAlign = "center";
+                        ctx.textBaseline = "middle";
+                        ctx.fillText(row.name, tx, ty);
+                    }
+                    start += angle;
+                });
+                var legend = document.getElementById("admin-pie-legend");
+                legend.innerHTML = rows.map(function (row) {
+                    return '<span><i style="background:' + (colors[row.name] || "#94a3b8") + '"></i>' + escapeHtml(row.name) + ' ' + escapeHtml(row.value) + '%</span>';
+                }).join("");
+            }
+
+            function renderAdminCharts(data) {
+                state.chartData = data;
+                var weeklyRows = (data.weekBars.siswa || []).map(function (row, idx) {
+                    return { label: row.label, siswa: row.count || 0, guru: (data.weekBars.guru[idx] || {}).count || 0 };
+                });
+                var start = weekStart(state.selectedWeekDate);
+                var end = weekEnd(state.selectedWeekDate);
+                document.getElementById("admin-chart-period").textContent = dateLabel(start) + " - " + dateLabel(end);
+                document.getElementById("admin-area-caption").textContent = "Minggu " + data.meta.week_range.start + " s/d " + data.meta.week_range.end + " - jumlah entri hadir per hari.";
+                renderAdminCalendar();
+                drawAreaChart(weeklyRows);
+                drawBarChart("admin-guru-bar", data.weekBars.guru || [], "#75a7e6");
+                drawBarChart("admin-siswa-bar", data.weekBars.siswa || [], "#5b8fd9");
+                drawPieChart(data.jurusan || []);
+            }
+
+            function loadAdminCharts() {
+                var selected = state.selectedWeekDate;
+                var y = selected.getFullYear();
+                var m = pad2(selected.getMonth() + 1);
+                var d = pad2(selected.getDate());
+                var url = "admin_stats_api.php?username=" + encodeURIComponent(session.username || "") + "&chart_month=" + y + "-" + m + "&week_start=" + y + "-" + m + "-" + d;
+                fetch(url).then(parseJson).then(renderAdminCharts).catch(function (err) {
+                    document.getElementById("admin-chart-period").textContent = err.message;
+                    var empty = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"].map(function (label) { return { label: label, count: 0 }; });
+                    renderAdminCharts({ meta: { week_range: { start: "-", end: "-" } }, weekBars: { guru: empty, siswa: empty }, jurusan: [] });
+                });
+            }
+
+            function showView(id) {
+                VIEW_IDS.forEach(function (v) {
+                    var panel = document.getElementById("view-" + v);
+                    var hide = v !== id;
+                    panel.classList.toggle("is-hidden", hide);
+                    panel.hidden = hide;
+                });
+                document.querySelectorAll(".nav-menu a[data-view]").forEach(function (a) {
+                    a.toggleAttribute("aria-current", a.getAttribute("data-view") === id);
+                });
+                var openData = id === "data-staff" || id === "data-murid";
+                document.querySelector('[data-nav-group="data"]').classList.toggle("is-open", openData);
+                document.querySelector("[data-nav-parent='data']").classList.toggle("is-active", openData);
+                document.getElementById("toolbar-title").textContent = TOOLBAR[id].title;
+                document.getElementById("toolbar-desc").textContent = TOOLBAR[id].desc;
+                document.querySelector(".dashboard-topbar").classList.toggle("dashboard-topbar--admin-home", id === "beranda");
+                closeEdit();
+                if (id === "beranda") loadAdminCharts();
+                if (id === "data-staff") loadStaff();
+                if (id === "data-murid") loadMurid();
+                if (id === "laporan") loadLogs();
+                if (window.AbsensiTheme && AbsensiTheme.syncFooter) AbsensiTheme.syncFooter();
+            }
+
+            function route() {
+                var id = (location.hash || "#beranda").replace("#", "");
+                if (VIEW_IDS.indexOf(id) === -1) id = "beranda";
+                if (location.hash !== "#" + id) history.replaceState(null, "", location.pathname + location.search + "#" + id);
+                showView(id);
+            }
+
+            document.querySelector("[data-nav-parent='data']").addEventListener("click", function () {
+                location.hash = "#data-staff";
+            });
+            document.getElementById("staff-type").addEventListener("change", loadStaff);
+            document.getElementById("murid-kelas").addEventListener("change", loadMurid);
+            document.getElementById("murid-jurusan").addEventListener("change", loadMurid);
+            document.getElementById("admin-edit-form").addEventListener("submit", submitEdit);
+            document.getElementById("admin-week-button").addEventListener("click", function () {
+                var popover = document.getElementById("admin-calendar-popover");
+                var open = popover.hidden;
+                popover.hidden = !open;
+                document.getElementById("admin-week-button").setAttribute("aria-expanded", open ? "true" : "false");
+                renderAdminCalendar();
+            });
+            document.getElementById("admin-cal-prev").addEventListener("click", function () {
+                state.calendarMonth = new Date(state.calendarMonth.getFullYear(), state.calendarMonth.getMonth() - 1, 1);
+                renderAdminCalendar();
+            });
+            document.getElementById("admin-cal-next").addEventListener("click", function () {
+                state.calendarMonth = new Date(state.calendarMonth.getFullYear(), state.calendarMonth.getMonth() + 1, 1);
+                renderAdminCalendar();
+            });
+            document.getElementById("admin-calendar-grid").addEventListener("click", function (e) {
+                var btn = e.target.closest("[data-calendar-day]");
+                if (!btn) return;
+                var parts = btn.getAttribute("data-calendar-day").split("-");
+                state.selectedWeekDate = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+                state.calendarMonth = new Date(state.selectedWeekDate.getFullYear(), state.selectedWeekDate.getMonth(), 1);
+                document.getElementById("admin-calendar-popover").hidden = true;
+                document.getElementById("admin-week-button").setAttribute("aria-expanded", "false");
+                loadAdminCharts();
+            });
+            document.addEventListener("click", function (e) {
+                var detail = e.target.closest(".js-detail");
+                var edit = e.target.closest(".js-edit");
+                var del = e.target.closest(".js-delete");
+                var toggle = e.target.closest("[data-report-toggle]");
+                if (!e.target.closest(".admin-calendar-wrap")) {
+                    var popover = document.getElementById("admin-calendar-popover");
+                    if (popover) {
+                        popover.hidden = true;
+                        document.getElementById("admin-week-button").setAttribute("aria-expanded", "false");
+                    }
+                }
+                if (detail) showDetail(detail.getAttribute("data-type"), detail.getAttribute("data-id"));
+                if (edit) openEdit(edit.getAttribute("data-type"), edit.getAttribute("data-id"));
+                if (del) deleteRecord(del.getAttribute("data-type"), del.getAttribute("data-id"));
+                if (toggle) {
+                    var card = toggle.closest("[data-report-card]");
+                    card.setAttribute("data-open", card.getAttribute("data-open") === "true" ? "false" : "true");
+                }
+            });
+            window.addEventListener("hashchange", route);
+            window.addEventListener("resize", function () {
+                if (state.chartData && !document.getElementById("view-beranda").hidden) renderAdminCharts(state.chartData);
+            });
+            route();
+        })();
+    </script>
+</body>
+</html>

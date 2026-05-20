@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Siswa — Absensi</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="theme.css">
+</head>
+<body class="dashboard-body">
+    <div class="bg-orb bg-orb--1" aria-hidden="true"></div>
+    <div class="bg-orb bg-orb--2" aria-hidden="true"></div>
+
+    <div class="app-shell">
+        <aside class="sidebar">
+            <div class="sidebar-brand">Absensi · Siswa</div>
+            <nav class="nav-menu" aria-label="Menu utama">
+                <a id="attendance-nav" href="#hadir" data-view="hadir"><span id="attendance-nav-label">Hadir</span></a>
+                <a href="#sakit" data-view="sakit">Sakit</a>
+                <a href="#izin" data-view="izin">Izin</a>
+                <a href="#dispen" data-view="dispen">Dispen</a>
+                <a href="#riwayat" data-view="riwayat">Riwayat</a>
+                <a href="#profil" data-view="profil">Profil</a>
+            </nav>
+            <div class="sidebar-footer">
+                <button type="button" class="btn-logout" id="btn-logout">Keluar</button>
+            </div>
+        </aside>
+
+        <main class="main-area">
+            <div class="dashboard-topbar">
+                <div class="toolbar-heading">
+                    <h1 class="page-title" id="toolbar-title">Hadir</h1>
+                    <p class="page-sub" id="toolbar-desc">Selfie di lokasi, lalu kirim ke wali kelas.</p>
+                </div>
+                <a id="header-avatar-link" href="#profil" class="avatar-btn" title="Profil" aria-label="Buka profil">
+                    <img id="header-avatar-img" class="hidden" alt="">
+                    <span id="header-avatar-fallback" class="avatar-initials">SW</span>
+                </a>
+            </div>
+
+            <div id="weekend-banner" class="banner-info banner-warn hidden" role="status">
+                Hari ini bukan hari sekolah (Senin–Jumat). Pengisian absensi dinonaktifkan; Riwayat dan Profil tetap bisa dibuka.
+            </div>
+
+            <!-- Hadir -->
+            <section id="view-hadir" class="view-panel panel is-hidden" data-view-panel="hadir">
+                <h2 class="hidden">Absensi hadir</h2>
+                <p class="page-sub" style="margin-top:0;margin-bottom:1rem" id="hari-line-hadir"></p>
+                <div data-weekday-only="true">
+                    <div class="selfie-box">
+                        <span class="field-label">Selfie kehadiran</span>
+                        <div class="selfie-frame">
+                            <video id="hadir-video" class="selfie-video hidden" playsinline muted autoplay></video>
+                            <canvas id="hadir-canvas" class="hidden" width="1280" height="720"></canvas>
+                            <img id="hadir-preview" class="selfie-preview-img" alt="Pratinjau selfie">
+                            <button type="button" class="selfie-shutter hidden" id="hadir-snap" disabled aria-label="Ambil foto"></button>
+                        </div>
+                        <p id="hadir-status" class="selfie-status" aria-live="polite"></p>
+                        <div class="selfie-actions">
+                            <button type="button" class="btn-secondary" id="hadir-open">Buka kamera</button>
+                            <button type="button" class="btn-ghost" id="hadir-retake" disabled>Tolak &amp; ambil ulang</button>
+                        </div>
+                        <input type="file" id="hadir-fallback" class="selfie-fallback-input" accept="image/*" capture="user" tabindex="-1" aria-hidden="true">
+                    </div>
+                    <p id="hadir-foto-error" class="error-text hidden">Ambil selfie terlebih dahulu sebelum kirim.</p>
+                    <button type="button" class="btn-primary js-submit-absensi" id="hadir-submit">Kirim </button>
+                </div>
+            </section>
+
+            <!-- Pulang -->
+            <section id="view-pulang" class="view-panel panel is-hidden" data-view-panel="pulang">
+                <h2 class="hidden">Absensi pulang</h2>
+                <p class="page-sub" style="margin-top:0;margin-bottom:1rem" id="hari-line-pulang"></p>
+                <div id="pulang-time-banner" class="banner-info banner-warn hidden" role="status">
+                    Absensi pulang baru bisa dikirim mulai pukul 14:00.
+                </div>
+                <div data-weekday-only="true">
+                    <div class="selfie-box">
+                        <span class="field-label">Selfie pulang</span>
+                        <div class="selfie-frame">
+                            <video id="pulang-video" class="selfie-video hidden" playsinline muted autoplay></video>
+                            <canvas id="pulang-canvas" class="hidden" width="1280" height="720"></canvas>
+                            <img id="pulang-preview" class="selfie-preview-img" alt="Pratinjau selfie pulang">
+                            <button type="button" class="selfie-shutter hidden" id="pulang-snap" disabled aria-label="Ambil foto pulang"></button>
+                        </div>
+                        <p id="pulang-status" class="selfie-status" aria-live="polite"></p>
+                        <div class="selfie-actions">
+                            <button type="button" class="btn-secondary" id="pulang-open">Buka kamera</button>
+                            <button type="button" class="btn-ghost" id="pulang-retake" disabled>Tolak &amp; ambil ulang</button>
+                        </div>
+                        <input type="file" id="pulang-fallback" class="selfie-fallback-input" accept="image/*" capture="user" tabindex="-1" aria-hidden="true">
+                    </div>
+                    <p id="pulang-foto-error" class="error-text hidden">Ambil selfie pulang terlebih dahulu sebelum kirim.</p>
+                    <button type="button" class="btn-primary js-submit-absensi" id="pulang-submit">Kirim</button>
+                </div>
+            </section>
+
+            <!-- Sakit -->
+            <section id="view-sakit" class="view-panel panel is-hidden" data-view-panel="sakit">
+                <h2 class="hidden">Ketidakhadiran — sakit</h2>
+                <p class="page-sub" style="margin-top:0;margin-bottom:1rem" id="hari-line-sakit"></p>
+                <div data-weekday-only="true" class="stack">
+                    <div>
+                        <label class="field-label" for="sakit-dokumen">Dokumen pendukung</label>
+                        <div class="input-wrap">
+                            <input type="file" id="sakit-dokumen" accept=".pdf,.jpg,.jpeg,.png,image/*,application/pdf">
+                        </div>
+                        <p id="sakit-dokumen-error" class="error-text hidden">Unggah dokumen (mis. surat dokter).</p>
+                    </div>
+                    <div>
+                        <label class="field-label" for="sakit-keterangan">Keterangan</label>
+                        <div class="input-wrap">
+                            <textarea id="sakit-keterangan" placeholder="Jelaskan kondisi atau catatan untuk wali kelas…"></textarea>
+                        </div>
+                        <p id="sakit-ket-error" class="error-text hidden">Isi keterangan minimal 10 karakter.</p>
+                    </div>
+                    <button type="button" class="btn-primary js-submit-absensi" id="sakit-submit">Kirim</button>
+                </div>
+            </section>
+
+            <!-- Izin -->
+            <section id="view-izin" class="view-panel panel is-hidden" data-view-panel="izin">
+                <h2 class="hidden">Ketidakhadiran — izin</h2>
+                <p class="page-sub" style="margin-top:0;margin-bottom:1rem" id="hari-line-izin"></p>
+                <div data-weekday-only="true" class="stack">
+                    <div>
+                        <label class="field-label" for="izin-dokumen">Dokumen pendukung</label>
+                        <div class="input-wrap">
+                            <input type="file" id="izin-dokumen" accept=".pdf,.jpg,.jpeg,.png,image/*,application/pdf">
+                        </div>
+                        <p id="izin-dokumen-error" class="error-text hidden">Unggah dokumen (surat izin orang tua, dll.).</p>
+                    </div>
+                    <div>
+                        <label class="field-label" for="izin-keterangan">Keterangan</label>
+                        <div class="input-wrap">
+                            <textarea id="izin-keterangan" placeholder="Alasan izin dan detail untuk wali kelas…"></textarea>
+                        </div>
+                        <p id="izin-ket-error" class="error-text hidden">Isi keterangan minimal 10 karakter.</p>
+                    </div>
+                    <button type="button" class="btn-primary js-submit-absensi" id="izin-submit">Kirim</button>
+                </div>
+            </section>
+
+            <!-- Dispen -->
+            <section id="view-dispen" class="view-panel panel is-hidden" data-view-panel="dispen">
+                <h2 class="hidden">Ketidakhadiran — dispen</h2>
+                <p class="page-sub" style="margin-top:0;margin-bottom:1rem" id="hari-line-dispen"></p>
+                <div data-weekday-only="true" class="stack">
+                    <div class="stack" style="grid-template-columns:repeat(2,minmax(0,1fr));display:grid;gap:1rem">
+                        <div>
+                            <label class="field-label" for="dispen-jam-mulai">Dari jam</label>
+                            <div class="input-wrap">
+                                <input type="time" id="dispen-jam-mulai">
+                            </div>
+                            <p id="dispen-jam-mulai-error" class="error-text hidden">Pilih jam mulai.</p>
+                        </div>
+                        <div>
+                            <label class="field-label" for="dispen-jam-selesai">Sampai jam</label>
+                            <div class="input-wrap">
+                                <input type="time" id="dispen-jam-selesai">
+                            </div>
+                            <p id="dispen-jam-selesai-error" class="error-text hidden">Pilih jam selesai.</p>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="field-label" for="dispen-dokumen">Dokumen pendukung</label>
+                        <div class="input-wrap">
+                            <input type="file" id="dispen-dokumen" accept=".pdf,.jpg,.jpeg,.png,image/*,application/pdf">
+                        </div>
+                        <p id="dispen-dokumen-error" class="error-text hidden">Unggah dokumen pendukung.</p>
+                    </div>
+                    <div>
+                        <label class="field-label" for="dispen-keterangan">Keterangan</label>
+                        <div class="input-wrap">
+                            <textarea id="dispen-keterangan" placeholder="Keperluan dispensasi, waktu, dan penjelasan…"></textarea>
+                        </div>
+                        <p id="dispen-ket-error" class="error-text hidden">Isi keterangan minimal 10 karakter.</p>
+                    </div>
+                    <button type="button" class="btn-primary js-submit-absensi" id="dispen-submit">Kirim</button>
+                </div>
+            </section>
+
+            <!-- Riwayat -->
+            <section id="view-riwayat" class="view-panel panel is-hidden" data-view-panel="riwayat">
+                <h2>Riwayat absensi</h2>
+                <p class="page-sub" style="margin-top:0.35rem">Daftar hadir yang sudah dikirim ke wali kelas.</p>
+                <div class="table-card">
+                    <div class="table-scroll">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>No</th>
+                                    <th>Nama</th>
+                                    <th>Waktu hadir</th>
+                                    <th>Selfie hadir</th>
+                                    <th>Waktu pulang</th>
+                                    <th>Selfie pulang</th>
+                                    <th>Tanggal</th>
+                                </tr>
+                            </thead>
+                            <tbody id="riwayat-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Profil -->
+            <section id="view-profil" class="view-panel panel is-hidden" data-view-panel="profil">
+                <h2>Profil</h2>
+                <p class="page-sub" style="margin-top:0.35rem">Foto profil dipakai di pojok kanan atas. Disimpan lokal (demo) sampai ada API.</p>
+                <div class="profile-avatar-edit">
+                    <div id="profil-avatar-wrap" class="profile-avatar-large">
+                        <img id="profil-avatar-img" class="hidden" alt="">
+                        <span id="profil-avatar-ph">SW</span>
+                    </div>
+                    <div class="input-wrap">
+                        <input type="file" id="profil-foto-input" accept="image/*">
+                    </div>
+                    <button type="button" class="btn-primary" id="profil-simpan-avatar">Simpan profil</button>
+                    <p id="profil-msg" class="page-sub hidden" style="margin:0;color:var(--success)">Tersimpan.</p>
+                </div>
+                <div class="stack" style="margin-top:1.25rem">
+                    <div>
+                        <span class="field-label">Nama tampilan (placeholder)</span>
+                        <div class="input-wrap">
+                            <input type="text" id="profil-nama" placeholder="Nama lengkap">
+                        </div>
+                    </div>
+                    <div>
+                        <span class="field-label">Email / NISN (placeholder)</span>
+                        <div class="input-wrap">
+                            <input type="text" id="profil-meta" placeholder="Nanti dari database">
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div id="photo-modal" class="photo-modal" hidden>
+        <div class="photo-modal-inner" role="dialog" aria-modal="true" aria-label="Pratinjau selfie">
+            <button type="button" class="photo-modal-close" id="photo-modal-close" aria-label="Tutup">X</button>
+            <img id="photo-modal-img" alt="Pratinjau selfie">
+        </div>
+    </div>
+
+    <script src="theme.js"></script>
+    <script src="auth.js"></script>
+    <script src="dashboard-avatar.js"></script>
+    <script>
+        (function () {
+            var session = AbsensiAuth.requireRoles(["user"]);
+            if (!session) return;
+
+            var USER_LABEL = session.username || "Siswa";
+            var displayName = session.displayName || session.name || session.fullName || USER_LABEL;
+
+            function applyStudentIdentity() {
+                var title = AbsensiAuth.classTitle(session) || "Siswa";
+                var brand = document.querySelector(".sidebar-brand");
+                if (brand) brand.textContent = "Absensi-" + title;
+
+                displayName = session.displayName || session.name || session.fullName || USER_LABEL;
+                var namaInput = document.getElementById("profil-nama");
+                var metaInput = document.getElementById("profil-meta");
+                if (namaInput) namaInput.value = displayName;
+                if (metaInput) {
+                    metaInput.value = [session.email, session.username].filter(Boolean).join(" / ");
+                }
+                if (window.DashboardAvatar && DashboardAvatar.refresh) DashboardAvatar.refresh();
+            }
+
+            function loadStudentProfile() {
+                return fetch("profile_api.php?username=" + encodeURIComponent(USER_LABEL))
+                    .then(parseApiJson)
+                    .then(function (data) {
+                        if (!data.profile) return;
+                        session = AbsensiAuth.update({
+                            id: data.profile.id,
+                            username: data.profile.username || session.username,
+                            name: data.profile.displayName,
+                            fullName: data.profile.fullName,
+                            displayName: data.profile.displayName,
+                            email: data.profile.email,
+                            kelas: data.profile.kelas,
+                            jurusan: data.profile.jurusan,
+                            rombel: data.profile.rombel
+                        });
+                        USER_LABEL = session.username || USER_LABEL;
+                        applyStudentIdentity();
+                        profilRefreshPreview();
+                    })
+                    .catch(function () {
+                        applyStudentIdentity();
+                    });
+            }
+            document.getElementById("btn-logout").addEventListener("click", function () {
+                AbsensiAuth.logout();
+            });
+
+            DashboardAvatar.bind("#profil");
+            if (window.DashboardAvatar && DashboardAvatar.refresh) DashboardAvatar.refresh();
+
+            var days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+            var months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+            var now = new Date();
+            var dow = now.getDay();
+            var isWeekday = dow >= 1 && dow <= 5;
+            var dateStr = days[dow] + ", " + now.getDate() + " " + months[now.getMonth()] + " " + now.getFullYear();
+
+            ["hadir", "pulang", "sakit", "izin", "dispen"].forEach(function (id) {
+                var el = document.getElementById("hari-line-" + id);
+                if (el) el.textContent = dateStr;
+            });
+
+            var weekendBanner = document.getElementById("weekend-banner");
+            if (!isWeekday) weekendBanner.classList.remove("hidden");
+
+            function applyWeekendLock() {
+                var lock = !isWeekday;
+                document.querySelectorAll("[data-weekday-only]").forEach(function (wrap) {
+                    wrap.querySelectorAll("button, input, textarea, select").forEach(function (el) {
+                        el.disabled = lock;
+                    });
+                });
+            }
+            applyWeekendLock();
+
+            var VIEW_IDS = ["hadir", "pulang", "sakit", "izin", "dispen", "riwayat", "profil"];
+            var TOOLBAR = {
+                hadir: { title: "Hadir", desc: "Buka kamera, isi keterangan, lalu kirim ke wali kelas." },
+                pulang: { title: "Pulang", desc: "Selfie pulang baru bisa dikirim mulai pukul 14:00." },
+                sakit: { title: "Sakit", desc: "Unggah dokumen dan isi keterangan untuk wali kelas." },
+                izin: { title: "Izin", desc: "Unggah dokumen dan isi keterangan untuk wali kelas." },
+                dispen: { title: "Dispen", desc: "Pilih jam dispensasi, unggah dokumen, dan tetap isi hadir." },
+                riwayat: { title: "Riwayat", desc: "Riwayat hadir dan pulang yang sudah dikirim." },
+                profil: { title: "Profil", desc: "Kelola foto profil dan data tampilan." }
+            };
+
+            function showView(id) {
+                VIEW_IDS.forEach(function (v) {
+                    var panel = document.getElementById("view-" + v);
+                    if (!panel) return;
+                    var hide = v !== id;
+                    panel.classList.toggle("is-hidden", hide);
+                    panel.hidden = hide;
+                    panel.setAttribute("aria-hidden", hide ? "true" : "false");
+                });
+                document.querySelectorAll(".nav-menu a[data-view]").forEach(function (a) {
+                    var cur = a.getAttribute("data-view") === id;
+                    if (cur) a.setAttribute("aria-current", "page");
+                    else a.removeAttribute("aria-current");
+                });
+                var t = TOOLBAR[id];
+                if (t) {
+                    document.getElementById("toolbar-title").textContent = t.title;
+                    document.getElementById("toolbar-desc").textContent = t.desc;
+                }
+                if (id === "riwayat") loadRiwayat();
+                if (window.AbsensiTheme && AbsensiTheme.syncFooter) AbsensiTheme.syncFooter();
+            }
+
+            function route() {
+                var raw = (location.hash || "").replace(/^#/, "").toLowerCase().trim();
+                var defaultView = hasTodayMode("pulang") ? "riwayat" : (hasTodayMode("hadir") ? "pulang" : "hadir");
+                var id = VIEW_IDS.indexOf(raw) !== -1 ? raw : defaultView;
+                if (isLockedView(id)) id = hasTodayMode("pulang") ? "riwayat" : defaultView;
+                
+                showView(id);
+            }
+
+            window.addEventListener("hashchange", route);
+
+            /* Pastikan ganti halaman saat klik menu (hashchange tidak selalu dipicu di semua kasus). */
+            document.querySelectorAll(".nav-menu a[data-view]").forEach(function (anchor) {
+                anchor.addEventListener("click", function (e) {
+                    var vid = anchor.getAttribute("data-view");
+                    if (isLockedView(vid)) {
+                        e.preventDefault();
+                        return;
+                    }
+                    if (!vid || VIEW_IDS.indexOf(vid) === -1) return;
+                    showView(vid);
+                });
+            });
+
+            /* --- Selfie factory --- */
+            function createSelfie(prefix) {
+                var video = document.getElementById(prefix + "-video");
+                var canvas = document.getElementById(prefix + "-canvas");
+                var preview = document.getElementById(prefix + "-preview");
+                var btnOpen = document.getElementById(prefix + "-open");
+                var btnSnap = document.getElementById(prefix + "-snap");
+                var btnRetake = document.getElementById(prefix + "-retake");
+                var fallback = document.getElementById(prefix + "-fallback");
+                var statusEl = document.getElementById(prefix + "-status");
+                var stream = null;
+                var confirmedBlob = null;
+                var previewUrl = null;
+
+                function setStatus(t) {
+                    if (statusEl) statusEl.textContent = t || "";
+                }
+
+                function stopStream() {
+                    if (stream) {
+                        stream.getTracks().forEach(function (t) {
+                            t.stop();
+                        });
+                        stream = null;
+                    }
+                    if (video) {
+                        video.srcObject = null;
+                        video.classList.add("hidden");
+                    }
+                    if (btnSnap) btnSnap.classList.add("hidden");
+                }
+
+                function clearPreview() {
+                    if (previewUrl) {
+                        try {
+                            URL.revokeObjectURL(previewUrl);
+                        } catch (e) {}
+                        previewUrl = null;
+                    }
+                    if (preview) {
+                        preview.src = "";
+                        preview.classList.remove("is-visible");
+                    }
+                    confirmedBlob = null;
+                }
+
+                function updateButtonsAfterSnap() {
+                    btnSnap.disabled = true;
+                    btnSnap.classList.add("hidden");
+                    btnRetake.disabled = false;
+                }
+
+                function updateButtonsIdle() {
+                    btnSnap.disabled = !stream;
+                    btnSnap.classList.toggle("hidden", !stream);
+                    btnRetake.disabled = true;
+                }
+
+                btnOpen.addEventListener("click", function () {
+                    if (!window.isSecureContext) {
+                        setStatus("Kamera browser hanya aktif di HTTPS atau localhost. Buka lewat http://localhost/Absensi/ atau pilih foto dari file.");
+                        fallback.click();
+                        return;
+                    }
+                    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                        setStatus("Peramban tidak mendukung kamera langsung — memilih dari file.");
+                        fallback.click();
+                        return;
+                    }
+                    clearPreview();
+                    stopStream();
+                    setStatus("Membuka kamera…");
+                    navigator.mediaDevices
+                        .getUserMedia({ video: { facingMode: "user" }, audio: false })
+                        .then(function (s) {
+                            stream = s;
+                            video.srcObject = stream;
+                            video.classList.remove("hidden");
+                            return video.play();
+                        })
+                        .then(function () {
+                            btnSnap.disabled = false;
+                            btnSnap.classList.remove("hidden");
+                            btnRetake.disabled = true;
+                            setStatus("Posisikan wajah di frame, lalu ambil foto.");
+                        })
+                        .catch(function () {
+                            setStatus("Kamera ditolak atau tidak tersedia — pilih foto dari file.");
+                            fallback.click();
+                        });
+                });
+
+                btnSnap.addEventListener("click", function () {
+                    if (!video.videoWidth) return;
+                    var ctx = canvas.getContext("2d");
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    ctx.drawImage(video, 0, 0);
+                    stopStream();
+                    canvas.toBlob(function (blob) {
+                        confirmedBlob = blob;
+                        if (previewUrl) URL.revokeObjectURL(previewUrl);
+                        previewUrl = URL.createObjectURL(blob);
+                        preview.src = previewUrl;
+                        preview.classList.add("is-visible");
+                        updateButtonsAfterSnap();
+                        setStatus("Foto dipilih. Siap dikirim ke wali kelas.");
+                    }, "image/jpeg", 0.88);
+                });
+
+                btnRetake.addEventListener("click", function () {
+                    clearPreview();
+                    stopStream();
+                    updateButtonsIdle();
+                    btnSnap.disabled = true;
+                    setStatus("Buka kamera lagi untuk selfie baru.");
+                });
+
+                fallback.addEventListener("change", function () {
+                    var f = fallback.files && fallback.files[0];
+                    if (!f) return;
+                    clearPreview();
+                    stopStream();
+                    confirmedBlob = f;
+                    if (previewUrl) URL.revokeObjectURL(previewUrl);
+                    previewUrl = URL.createObjectURL(f);
+                    preview.src = previewUrl;
+                    preview.classList.add("is-visible");
+                    updateButtonsAfterSnap();
+                    setStatus("Foto dipilih. Siap dikirim ke wali kelas.");
+                });
+
+                return {
+                    getBlob: function () {
+                        return confirmedBlob;
+                    },
+                    reset: function () {
+                        clearPreview();
+                        stopStream();
+                        updateButtonsIdle();
+                        btnSnap.disabled = true;
+                        setStatus("");
+                    }
+                };
+            }
+
+            var selfieHadir = createSelfie("hadir");
+            var selfiePulang = createSelfie("pulang");
+
+            function showErr(id, show) {
+                var e = document.getElementById(id);
+                if (e) e.classList.toggle("hidden", !show);
+            }
+
+            function todayKey() {
+                var y = now.getFullYear();
+                var m = String(now.getMonth() + 1).padStart(2, "0");
+                var d = String(now.getDate()).padStart(2, "0");
+                return y + "-" + m + "-" + d;
+            }
+
+            var attendanceStatus = { hasHadir: false, hasPulang: false, loaded: false };
+            var riwayatLoaded = false;
+
+            function parseApiJson(res) {
+                return res.text().then(function (text) {
+                    var data = {};
+                    if (text) {
+                        try {
+                            data = JSON.parse(text);
+                        } catch (err) {
+                            throw new Error("Server mengirim respons tidak valid: " + text.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim().slice(0, 180));
+                        }
+                    }
+                    if (!res.ok || data.error) {
+                        throw new Error(data.error || "Gagal memproses permintaan.");
+                    }
+                    return data;
+                });
+            }
+
+            function hasTodayMode(mode) {
+                if (!attendanceStatus) return false;
+                if (mode === "hadir") return attendanceStatus.hasHadir;
+                if (mode === "pulang") return attendanceStatus.hasPulang;
+                return false;
+            }
+
+            function isLockedAfterPulang(view) {
+                return hasTodayMode("pulang") && ["hadir", "pulang", "sakit", "izin", "dispen"].indexOf(view) !== -1;
+            }
+
+            function isLockedView(view) {
+                if (attendanceStatus && !attendanceStatus.loaded && ["hadir", "pulang", "sakit", "izin", "dispen"].indexOf(view) !== -1) {
+                    return true;
+                }
+                return isLockedAfterPulang(view) || (hasTodayMode("hadir") && ["hadir", "sakit", "izin"].indexOf(view) !== -1);
+            }
+
+            function loadAttendanceStatus() {
+                fetch("absensi_api.php?action=status&username=" + encodeURIComponent(USER_LABEL) + "&tanggal=" + encodeURIComponent(todayKey()))
+                    .then(parseApiJson)
+                    .then(function (data) {
+                        attendanceStatus.hasHadir = !!data.hasHadir;
+                        attendanceStatus.hasPulang = !!data.hasPulang;
+                        attendanceStatus.loaded = true;
+                        updateAttendanceNav();
+                        route();
+                    })
+                    .catch(function (err) {
+                        console.error(err);
+                        attendanceStatus.loaded = true;
+                        updateAttendanceNav();
+                        route();
+                    });
+            }
+
+            function submitAbsensi(formData) {
+                return fetch("absensi_api.php", {
+                    method: "POST",
+                    body: formData
+                }).then(parseApiJson);
+            }
+
+            function updateAttendanceNav() {
+                var nav = document.getElementById("attendance-nav");
+                var label = document.getElementById("attendance-nav-label");
+                if (!nav || !label) return;
+                if (hasTodayMode("pulang")) {
+                    nav.href = "#hadir";
+                    nav.setAttribute("data-view", "hadir");
+                    label.textContent = "Hadir";
+                } else if (hasTodayMode("hadir")) {
+                    nav.href = "#pulang";
+                    nav.setAttribute("data-view", "pulang");
+                    label.textContent = "Pulang";
+                } else {
+                    nav.href = "#hadir";
+                    nav.setAttribute("data-view", "hadir");
+                    label.textContent = "Hadir";
+                }
+                updatePostPulangNavLock();
+            }
+
+            function updatePostPulangNavLock() {
+                var afterHadir = hasTodayMode("hadir");
+                var locked = hasTodayMode("pulang");
+                document.querySelectorAll(".nav-menu a[data-view]").forEach(function (anchor) {
+                    var view = anchor.getAttribute("data-view");
+                    var shouldLock = (locked && ["hadir", "pulang", "sakit", "izin", "dispen"].indexOf(view) !== -1) || (afterHadir && ["hadir", "sakit", "izin"].indexOf(view) !== -1);
+                    anchor.classList.toggle("is-disabled", shouldLock);
+                    if (shouldLock) {
+                        anchor.setAttribute("aria-disabled", "true");
+                        anchor.setAttribute("tabindex", "-1");
+                    } else {
+                        anchor.removeAttribute("aria-disabled");
+                        anchor.removeAttribute("tabindex");
+                    }
+                });
+            }
+
+            function canSubmitPulang() {
+                var check = new Date();
+                return check.getHours() >= 14;
+            }
+
+            function updatePulangLock() {
+                var submit = document.getElementById("pulang-submit");
+                var banner = document.getElementById("pulang-time-banner");
+                var locked = !isWeekday || !canSubmitPulang();
+                if (submit) submit.disabled = locked;
+                if (banner) banner.classList.toggle("hidden", !locked);
+            }
+
+            updateAttendanceNav();
+            updatePulangLock();
+            setInterval(updatePulangLock, 30000);
+            loadAttendanceStatus();
+
+            function formatTanggal(value) {
+                if (!value) return "-";
+                var parts = String(value).split("-");
+                if (parts.length !== 3) return value;
+                return parts[2] + "-" + parts[1] + "-" + parts[0];
+            }
+
+            function escapeHtml(value) {
+                return String(value || "").replace(/[&<>"']/g, function (ch) {
+                    return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[ch];
+                });
+            }
+
+            function renderPhotoButton(src, label) {
+                return src ? '<button type="button" class="btn-secondary js-photo-preview" data-photo="' + escapeHtml(src) + '">' + label + '</button>' : "-";
+            }
+
+            function photoUrl(src) {
+                return new URL(src, window.location.href).href;
+            }
+
+            function openWalasWhatsapp(data, ket) {
+                var selfie = data && data.selfie ? photoUrl(data.selfie) : "";
+                var message = [
+                    "Absensi hadir siswa",
+                    "Nama/NIS: " + USER_LABEL,
+                    "Keterangan: " + ket,
+                    selfie ? "Foto: " + selfie : ""
+                ].filter(Boolean).join("\n");
+                var url = "https://wa.me/6283811595696?text=" + encodeURIComponent(message);
+                location.href = url;
+            }
+
+            function loadRiwayat() {
+                var body = document.getElementById("riwayat-table-body");
+                if (!body) return;
+                body.innerHTML = '<tr><td class="empty-row" colspan="7">Memuat riwayat...</td></tr>';
+                fetch("absensi_api.php?action=history&username=" + encodeURIComponent(USER_LABEL))
+                    .then(parseApiJson)
+                    .then(function (data) {
+                        var records = data.records || [];
+                        riwayatLoaded = true;
+                        body.innerHTML = records.length ? records.map(function (r, idx) {
+                            return "<tr><td>" + (idx + 1) + "</td><td>" + escapeHtml(r.name || USER_LABEL) + "</td><td>" + escapeHtml(r.time || "-") + "</td><td>" + renderPhotoButton(r.hadirSelfie, "Lihat") + "</td><td>" + escapeHtml(r.jamPulang || "-") + "</td><td>" + renderPhotoButton(r.pulangSelfie, "Lihat") + "</td><td>" + escapeHtml(formatTanggal(r.date)) + "</td></tr>";
+                        }).join("") : '<tr><td class="empty-row" colspan="7">Belum ada riwayat hadir.</td></tr>';
+                    })
+                    .catch(function () {
+                        body.innerHTML = '<tr><td class="empty-row" colspan="7">Gagal memuat riwayat.</td></tr>';
+                    });
+            }
+
+            document.getElementById("hadir-submit").addEventListener("click", function () {
+                showErr("hadir-foto-error", false);
+                showErr("hadir-ket-error", false);
+                if (hasTodayMode("hadir")) {
+                    alert("Absensi hadir hari ini sudah terkirim. Lanjutkan ke absensi pulang.");
+                    location.hash = "#pulang";
+                    return;
+                }
+                var blob = selfieHadir.getBlob();
+                var ket = (document.getElementById("hadir-keterangan").value || "").trim();
+
+                if (!blob) {
+                    showErr("hadir-foto-error", true);
+                    return;
+                }
+                if (ket.length < 5) {
+                    showErr("hadir-ket-error", true);
+                    return;
+                }
+
+                var formData = new FormData();
+                formData.append("username", USER_LABEL);
+                formData.append("mode", "hadir");
+                formData.append("keterangan", ket);
+                formData.append("selfie", blob, "hadir.jpg");
+
+                submitAbsensi(formData).then(function (data) {
+                    attendanceStatus.hasHadir = true;
+                    riwayatLoaded = false;
+                    if (confirm("Absensi hadir tersimpan. Buka chat WhatsApp walas sekarang?")) {
+                        openWalasWhatsapp(data, ket);
+                    }
+                    document.getElementById("hadir-keterangan").value = "";
+                    selfieHadir.reset();
+                    updateAttendanceNav();
+                    location.hash = "#pulang";
+                }).catch(function (err) {
+                    alert(err.message);
+                });
+            });
+
+            document.getElementById("pulang-submit").addEventListener("click", function () {
+                showErr("pulang-foto-error", false);
+                updatePulangLock();
+                if (!canSubmitPulang()) return;
+                if (!hasTodayMode("hadir")) {
+                    alert("Isi absensi hadir terlebih dahulu sebelum pulang.");
+                    location.hash = "#hadir";
+                    return;
+                }
+                var blob = selfiePulang.getBlob();
+                if (!blob) {
+                    showErr("pulang-foto-error", true);
+                    return;
+                }
+
+                var formData = new FormData();
+                formData.append("username", USER_LABEL);
+                formData.append("mode", "pulang");
+                formData.append("selfie", blob, "pulang.jpg");
+
+                submitAbsensi(formData).then(function () {
+                    attendanceStatus.hasPulang = true;
+                    riwayatLoaded = false;
+                    alert("Absensi pulang terkirim ke walas.");
+                    selfiePulang.reset();
+                    updateAttendanceNav();
+                    location.hash = "#riwayat";
+                }).catch(function (err) {
+                    alert(err.message);
+                });
+            });
+
+            function bindAbsensiNonHadir(prefix, mode) {
+                document.getElementById(prefix + "-submit").addEventListener("click", function () {
+                    showErr(prefix + "-dokumen-error", false);
+                    showErr(prefix + "-ket-error", false);
+                    var dok = document.getElementById(prefix + "-dokumen").files;
+                    var dokOk = dok && dok.length > 0;
+                    showErr(prefix + "-dokumen-error", !dokOk);
+                    if (mode === "dispen") {
+                        showErr("dispen-jam-mulai-error", false);
+                        showErr("dispen-jam-selesai-error", false);
+                    }
+                    var ket = (document.getElementById(prefix + "-keterangan").value || "").trim();
+                    var ketOk = ket.length >= 10;
+                    showErr(prefix + "-ket-error", !ketOk);
+                    var jamMulai = "";
+                    var jamSelesai = "";
+                    if (mode === "dispen") {
+                        jamMulai = document.getElementById("dispen-jam-mulai").value || "";
+                        jamSelesai = document.getElementById("dispen-jam-selesai").value || "";
+                        showErr("dispen-jam-mulai-error", !jamMulai);
+                        showErr("dispen-jam-selesai-error", !jamSelesai || (jamMulai && jamSelesai <= jamMulai));
+                        if (!jamMulai || !jamSelesai || jamSelesai <= jamMulai) return;
+                    }
+                    if (!dokOk || !ketOk) return;
+                    var formData = new FormData();
+                    formData.append("username", USER_LABEL);
+                    formData.append("mode", mode);
+                    formData.append("keterangan", ket);
+                    formData.append("dokumen", dok[0], dok[0].name);
+                    if (mode === "dispen") {
+                        formData.append("jam_mulai", jamMulai);
+                        formData.append("jam_selesai", jamSelesai);
+                    }
+
+                    submitAbsensi(formData).then(function () {
+                        alert("Pengajuan " + mode + " terkirim ke walas. Selfie hadir dan pulang tidak diperlukan.");
+                        document.getElementById(prefix + "-keterangan").value = "";
+                        document.getElementById(prefix + "-dokumen").value = "";
+                        if (mode === "dispen") {
+                            document.getElementById("dispen-jam-mulai").value = "";
+                            document.getElementById("dispen-jam-selesai").value = "";
+                        }
+                    }).catch(function (err) {
+                        alert(err.message);
+                    });
+                });
+            }
+
+            bindAbsensiNonHadir("sakit", "sakit");
+            bindAbsensiNonHadir("izin", "izin");
+            bindAbsensiNonHadir("dispen", "dispen");
+
+            var photoModal = document.getElementById("photo-modal");
+            var photoModalImg = document.getElementById("photo-modal-img");
+
+            function closePhotoModal() {
+                photoModal.hidden = true;
+                photoModalImg.removeAttribute("data-photo-src");
+                photoModalImg.removeAttribute("src");
+            }
+
+            document.addEventListener("click", function (e) {
+                var btn = e.target.closest(".js-photo-preview");
+                if (!btn) return;
+                e.preventDefault();
+                var src = btn.getAttribute("data-photo");
+                photoModalImg.src = src;
+                photoModalImg.dataset.photoSrc = src;
+                photoModal.hidden = false;
+            });
+
+            photoModalImg.addEventListener("error", function () {
+                if (photoModal.hidden || !photoModalImg.dataset.photoSrc) return;
+                closePhotoModal();
+                alert("Foto tidak bisa dimuat. Coba buka ulang dari riwayat.");
+            });
+
+            photoModalImg.addEventListener("click", function () {
+                closePhotoModal();
+            });
+
+            document.getElementById("photo-modal-close").addEventListener("click", closePhotoModal);
+            photoModal.addEventListener("click", function (e) {
+                if (e.target === photoModal) closePhotoModal();
+            });
+
+            /* Profil */
+            function profilRefreshPreview() {
+                var url = AbsensiAuth.getAvatarDataUrl();
+                var img = document.getElementById("profil-avatar-img");
+                var ph = document.getElementById("profil-avatar-ph");
+                if (url) {
+                    img.src = url;
+                    img.classList.remove("hidden");
+                    ph.classList.add("hidden");
+                } else {
+                    img.classList.add("hidden");
+                    ph.classList.remove("hidden");
+                    ph.textContent = (displayName || USER_LABEL || "?").slice(0, 2).toUpperCase();
+                }
+            }
+
+            profilRefreshPreview();
+            applyStudentIdentity();
+            loadStudentProfile();
+
+            document.getElementById("profil-foto-input").addEventListener("change", function () {
+                var f = this.files && this.files[0];
+                if (!f) return;
+                var reader = new FileReader();
+                reader.onload = function () {
+                    document.getElementById("profil-avatar-img").src = reader.result;
+                    document.getElementById("profil-avatar-img").classList.remove("hidden");
+                    document.getElementById("profil-avatar-ph").classList.add("hidden");
+                };
+                reader.readAsDataURL(f);
+            });
+
+            document.getElementById("profil-simpan-avatar").addEventListener("click", function () {
+                var img = document.getElementById("profil-avatar-img");
+                var src = img.getAttribute("src");
+                if (src && src.indexOf("data:") === 0) {
+                    AbsensiAuth.setAvatarDataUrl(src);
+                }
+                var nextName = (document.getElementById("profil-nama").value || "").trim();
+                var msg = document.getElementById("profil-msg");
+                if (!nextName) {
+                    alert("Nama tampilan wajib diisi.");
+                    return;
+                }
+                var formData = new FormData();
+                formData.append("username", USER_LABEL);
+                formData.append("nama_tampilan", nextName);
+
+                fetch("profile_api.php", { method: "POST", body: formData })
+                    .then(parseApiJson)
+                    .then(function (data) {
+                        if (data.profile) {
+                            session = AbsensiAuth.update({
+                                name: data.profile.displayName,
+                                fullName: data.profile.fullName,
+                                displayName: data.profile.displayName,
+                                email: data.profile.email,
+                                kelas: data.profile.kelas,
+                                jurusan: data.profile.jurusan,
+                                rombel: data.profile.rombel
+                            });
+                            applyStudentIdentity();
+                        }
+                        msg.classList.remove("hidden");
+                        setTimeout(function () {
+                            msg.classList.add("hidden");
+                        }, 2500);
+                    })
+                    .catch(function (err) {
+                        alert(err.message || "Gagal menyimpan profil.");
+                    });
+                
+            });
+        })();
+    </script>
+</body>
+</html>

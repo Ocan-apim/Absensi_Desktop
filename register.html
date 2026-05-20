@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Absensi Sekolah</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: radial-gradient(circle at top right, #0d1b2a, #010409);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+        html[data-theme="light"] body {
+            background: linear-gradient(180deg, #f8fbff 0%, #eef4fb 100%);
+            color: #102133;
+        }
+        .glass-card {
+            background: rgba(13, 25, 41, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        html[data-theme="light"] .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            border-color: rgba(15, 23, 42, 0.12);
+            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+        }
+        .glow-input:focus {
+            outline: none;
+            border-color: #22d3ee;
+            box-shadow: 0 0 10px rgba(34, 211, 238, 0.3);
+        }
+        .active-tab {
+            background: rgba(34, 211, 238, 0.1);
+            border: 1px solid #22d3ee !important;
+            color: #22d3ee;
+        }
+        #regForm input,
+        #regForm select,
+        #regForm textarea {
+            color: #f1f5f9;
+        }
+        html[data-theme="light"] #regForm input,
+        html[data-theme="light"] #regForm select,
+        html[data-theme="light"] #regForm textarea {
+            background: rgba(255, 255, 255, 0.96) !important;
+            color: #102133;
+            border-color: rgba(15, 23, 42, 0.12) !important;
+        }
+        html[data-theme="light"] #btn-siswa,
+        html[data-theme="light"] #btn-bk,
+        html[data-theme="light"] #btn-walas {
+            color: #5b6b7f !important;
+        }
+        html[data-theme="light"] #btn-siswa.active-tab,
+        html[data-theme="light"] #btn-bk.active-tab,
+        html[data-theme="light"] #btn-walas.active-tab {
+            color: #0f766e !important;
+        }
+        html[data-theme="light"] #staff-only input {
+            background: rgba(236, 253, 245, 0.9) !important;
+            color: #0f766e;
+        }
+        .register-shell {
+            width: 100%;
+            transition: transform 0.36s ease;
+        }
+        body.sidebar-open .register-shell {
+            transform: translateX(140px);
+        }
+        .back-toggle {
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 50;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            border: 1px solid rgba(34, 211, 238, 0.45);
+            border-radius: 999px;
+            background: rgba(13, 25, 41, 0.88);
+            color: #cffafe;
+            font-weight: 700;
+            padding: 0.65rem 0.95rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transition: background 0.2s, border-color 0.2s, transform 0.2s;
+        }
+        html[data-theme="light"] .back-toggle {
+            background: rgba(255, 255, 255, 0.9);
+            color: #102133;
+        }
+        .back-toggle:hover {
+            background: rgba(34, 211, 238, 0.12);
+            border-color: rgba(34, 211, 238, 0.8);
+            transform: translateX(2px);
+        }
+        .sidebar-return {
+            position: fixed;
+            inset: 0 auto 0 0;
+            z-index: 40;
+            width: min(80vw, 260px);
+            padding: 1.25rem 1rem;
+            background: rgba(7, 11, 20, 0.96);
+            border-right: 1px solid rgba(148, 163, 184, 0.16);
+            transform: translateX(-105%);
+            transition: transform 0.36s ease;
+        }
+        html[data-theme="light"] .sidebar-return {
+            background: rgba(255, 255, 255, 0.96);
+        }
+        .sidebar-return.is-visible {
+            transform: translateX(0);
+        }
+        .sidebar-brand {
+            font-weight: 700;
+            color: #e2e8f0;
+            padding: 0.35rem 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .nav-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+        .nav-menu a {
+            display: flex;
+            padding: 0.7rem 0.75rem;
+            border-radius: 0.65rem;
+            color: #94a3b8;
+            font-weight: 700;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+        html[data-theme="light"] .nav-menu a {
+            color: #5b6b7f;
+        }
+        .nav-menu a:hover,
+        .nav-menu a[aria-current="page"] {
+            background: rgba(34, 211, 238, 0.14);
+            color: white;
+        }
+        html[data-theme="light"] .nav-menu a:hover,
+        html[data-theme="light"] .nav-menu a[aria-current="page"] {
+            color: #0f766e;
+        }
+        .sidebar-footer {
+            padding-top: 0.5rem;
+            border-top: 1px solid rgba(148, 163, 184, 0.16);
+            margin-top: 0.75rem;
+        }
+        .btn-logout {
+            width: 100%;
+            padding: 0.6rem 0.75rem;
+            border-radius: 0.65rem;
+            border: 1px solid rgba(148, 163, 184, 0.16);
+            background: rgba(7, 11, 20, 0.5);
+            color: #94a3b8;
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        html[data-theme="light"] .btn-logout {
+            background: rgba(255, 255, 255, 0.9);
+            color: #5b6b7f;
+        }
+        .btn-logout:hover {
+            color: #f1f5f9;
+            border-color: rgba(248, 113, 113, 0.35);
+        }
+        html[data-theme="light"] .btn-logout:hover {
+            color: #b91c1c;
+        }
+        @media (max-width: 640px) {
+            body.sidebar-open .register-shell {
+                transform: translateX(76px);
+            }
+            .back-toggle span:last-child {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button type="button" id="btn-back-admin" class="back-toggle" aria-controls="return-sidebar" aria-expanded="false">
+        <span aria-hidden="true">&larr;</span>
+        <span>Kembali</span>
+    </button>
+
+    <aside id="return-sidebar" class="sidebar-return" aria-hidden="true">
+        <div class="sidebar-brand">Absensi · Admin</div>
+        <nav class="nav-menu" aria-label="Menu kembali">
+            <a href="admin-dashboard.html">Beranda</a>
+            <a href="#">Data siswa <span style="opacity:0.5">(nanti)</span></a>
+            <a href="#">Laporan <span style="opacity:0.5">(nanti)</span></a>
+            <a href="register.html" aria-current="page">Membuat Akun Baru</a>
+            <a href="admin-profil.html">Profil</a>
+        </nav>
+        <div class="sidebar-footer">
+            <button type="button" class="btn-logout" id="btn-logout">Keluar</button>
+        </div>
+    </aside>
+
+    <div class="register-shell max-auto max-w-md p-6">
+        <div class="text-center mb-8">
+            <div class="inline-block p-3 rounded-xl bg-cyan-900/30 mb-4 border border-cyan-500/50 shadow-[0_0_15px_rgba(6,182,212,0.5)]">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                </svg>
+            </div>
+            <h1 class="text-2xl font-bold">Absensi Sekolah</h1>
+            <p class="text-gray-400 text-sm">Daftar Akun Baru</p>
+        </div>
+
+        <div class="glass-card rounded-2xl p-8 shadow-2xl">
+            <div class="flex bg-gray-900/50 rounded-lg p-1 mb-6 border border-gray-700">
+                <button onclick="setRole('siswa')" id="btn-siswa" class="flex-1 py-2 text-sm font-medium rounded-md transition-all active-tab">Siswa</button>
+                <button onclick="setRole('bk')" id="btn-bk" class="flex-1 py-2 text-sm font-medium rounded-md transition-all text-gray-400">BK</button>
+                <button onclick="setRole('walas')" id="btn-walas" class="flex-1 py-2 text-sm font-medium rounded-md transition-all text-gray-400">Walas</button>
+            </div>
+
+            <form id="regForm" class="space-y-4">
+                <input type="hidden" name="type" id="reg-type" value="siswa">
+                <div id="common-fields">
+                    <div class="space-y-1">
+                        <label class="text-xs text-gray-400 ml-1">Nama Lengkap</label>
+                        <input name="nama_lengkap" type="text" placeholder="Masukkan nama" class="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-3 text-sm glow-input">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 mt-3">
+                        <div class="space-y-1">
+                            <label class="text-xs text-gray-400 ml-1">Tempat Lahir</label>
+                            <input name="tempat_lahir" type="text" placeholder="Jakarta" class="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-3 text-sm glow-input">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-xs text-gray-400 ml-1">Tanggal Lahir</label>
+                            <input name="tanggal_lahir" type="date" class="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-3 text-sm glow-input">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="siswa-only" class="space-y-4">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="space-y-1">
+                            <label class="text-xs text-gray-400 ml-1">Kelas</label>
+                            <select name="kelas" id="reg-kelas" class="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-3 text-sm glow-input">
+                                <option value="10">Kelas 10</option>
+                                <option value="11">Kelas 11</option>
+                                <option value="12">Kelas 12</option>
+                            </select>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-xs text-gray-400 ml-1">Jurusan</label>
+                            <select name="jurusan" id="reg-jurusan" class="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-3 text-sm glow-input">
+                                <option value="pplg">PPLG</option>
+                                <option value="mplb">MPLB</option>
+                                <option value="dkv">DKV</option>
+                                <option value="tjkt">TJKT</option>
+                                <option value="pm">PM</option>
+                                <option value="ph">PH</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs text-gray-400 ml-1">Rombel</label>
+                        <select name="rombel" id="reg-rombel" class="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-3 text-sm glow-input">
+                            <option value="">Tanpa rombel</option>
+                            <option value="1">Kelas 1</option>
+                            <option value="2">Kelas 2</option>
+                        </select>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs text-gray-400 ml-1">NIS</label>
+                        <input name="nis" type="number" placeholder="Nomor Induk Siswa" class="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-3 text-sm glow-input">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs text-gray-400 ml-1">Email</label>
+                        <input name="email" type="email" placeholder="contoh@sekolah.id" class="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-3 text-sm glow-input">
+                    </div>
+                </div>
+
+                <div id="staff-only" class="hidden">
+                    <div class="space-y-1 mt-3">
+                        <label class="text-xs text-cyan-400 ml-1 font-semibold">NPSN (Generated Automatically)</label>
+                        <input name="npsn" type="text" id="npsn-field" readonly class="w-full bg-cyan-900/20 border border-cyan-500/30 rounded-lg px-4 py-3 text-sm text-cyan-200 cursor-not-allowed">
+                    </div>
+                    <div id="walas-assignment" class="hidden space-y-4 mt-4">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="space-y-1">
+                                <label class="text-xs text-gray-400 ml-1">Kelas</label>
+                                <select name="kelas" id="walas-kelas" class="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-3 text-sm glow-input">
+                                    <option value="10">Kelas 10</option>
+                                    <option value="11">Kelas 11</option>
+                                    <option value="12">Kelas 12</option>
+                                </select>
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-xs text-gray-400 ml-1">Jurusan</label>
+                                <select name="jurusan" id="walas-jurusan" class="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-3 text-sm glow-input">
+                                    <option value="pplg">PPLG</option>
+                                    <option value="mplb">MPLB</option>
+                                    <option value="dkv">DKV</option>
+                                    <option value="tjkt">TJKT</option>
+                                    <option value="pm">PM</option>
+                                    <option value="ph">PH</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-xs text-gray-400 ml-1">Rombel</label>
+                            <select name="rombel" id="walas-rombel" class="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-3 text-sm glow-input">
+                                <option value="">Tanpa rombel</option>
+                                <option value="1">Kelas 1</option>
+                                <option value="2">Kelas 2</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-xs text-gray-400 ml-1">Kata Sandi</label>
+                    <input name="password" type="password" placeholder="••••••••" class="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-3 text-sm glow-input">
+                </div>
+
+                <button type="submit" class="w-full bg-cyan-500 hover:bg-cyan-400 text-gray-950 font-bold py-3 rounded-lg mt-6 transition-all shadow-[0_0_20px_rgba(6,182,212,0.3)]">
+                    Daftar Sekarang
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script src="theme.js"></script>
+    <script src="auth.js"></script>
+    <script>
+        const adminSession = AbsensiAuth.requireRoles(["admin"]);
+        if (!adminSession) {
+            throw new Error("Register hanya untuk admin.");
+        }
+
+        document.getElementById("btn-back-admin").addEventListener("click", function () {
+            const sidebar = document.getElementById("return-sidebar");
+            document.body.classList.add("sidebar-open");
+            sidebar.classList.add("is-visible");
+            sidebar.setAttribute("aria-hidden", "false");
+            this.setAttribute("aria-expanded", "true");
+        });
+
+        document.getElementById("btn-logout").addEventListener("click", function () {
+            AbsensiAuth.logout();
+        });
+
+        function setRole(role) {
+            document.getElementById('btn-siswa').classList.remove('active-tab');
+            document.getElementById('btn-bk').classList.remove('active-tab');
+            document.getElementById('btn-walas').classList.remove('active-tab');
+            document.getElementById('btn-siswa').classList.add('text-gray-400');
+            document.getElementById('btn-bk').classList.add('text-gray-400');
+            document.getElementById('btn-walas').classList.add('text-gray-400');
+
+            const activeBtn = document.getElementById('btn-' + role);
+            activeBtn.classList.add('active-tab');
+            activeBtn.classList.remove('text-gray-400');
+
+            const siswaSection = document.getElementById('siswa-only');
+            const staffSection = document.getElementById('staff-only');
+            const npsnField = document.getElementById('npsn-field');
+
+            var walasAssignment = document.getElementById('walas-assignment');
+            if (role === 'siswa') {
+                siswaSection.classList.remove('hidden');
+                staffSection.classList.add('hidden');
+                if (walasAssignment) walasAssignment.classList.add('hidden');
+            } else {
+                siswaSection.classList.add('hidden');
+                staffSection.classList.remove('hidden');
+                const prefix = "202044";
+                const suffix = (role === 'bk') ? "01" : "02";
+                npsnField.value = prefix + suffix;
+                if (walasAssignment) {
+                    walasAssignment.classList.toggle('hidden', role !== 'walas');
+                }
+            }
+            var typeField = document.getElementById('reg-type');
+            if (typeField) typeField.value = role;
+            document.querySelectorAll('#siswa-only input, #siswa-only select').forEach(function (field) {
+                field.disabled = role !== 'siswa';
+            });
+            document.querySelectorAll('#staff-only input, #staff-only select').forEach(function (field) {
+                field.disabled = role === 'siswa';
+            });
+            document.querySelectorAll('#walas-assignment select').forEach(function (field) {
+                field.disabled = role !== 'walas';
+            });
+        }
+
+        setRole('siswa');
+
+        document.getElementById('regForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            var form = e.currentTarget;
+            var formData = new FormData(form);
+            formData.append('action', 'create');
+            var s = AbsensiAuth.get();
+            formData.append('admin_username', (s && s.username) ? s.username : '');
+
+            fetch('admin_data_api.php', { method: 'POST', body: formData }).then(function (res) {
+                return res.text().then(function (text) {
+                    var data = {};
+                    try {
+                        data = text ? JSON.parse(text) : {};
+                    } catch (parseErr) {
+                        throw new Error('Respons server bukan JSON valid: ' + text.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 180));
+                    }
+                    if (!res.ok || data.error) throw new Error(data.error || 'Request gagal.');
+                    return data;
+                });
+            }).then(function (data) {
+                alert('Akun berhasil dibuat.');
+                window.location.href = 'admin-dashboard.html';
+            }).catch(function (err) {
+                alert('Gagal membuat akun: ' + err.message);
+            });
+        });
+    </script>
+</body>
+</html>
