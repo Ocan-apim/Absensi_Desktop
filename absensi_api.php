@@ -1,6 +1,5 @@
 <?php
 require_once __DIR__ . "/db.php";
-require_once __DIR__ . "/cloudinary-upload.php";
 
 $conn = db();
 ensureStudentProfileColumns($conn);
@@ -290,10 +289,6 @@ if (!$siswa) {
 $idSiswa = (int) $siswa["id_siswa"];
 
 if ($mode === "hadir") {
-    if ($keterangan === "") {
-        jsonResponse(["error" => "Keterangan wajib diisi"], 422);
-    }
-
     $stmt = $conn->prepare("SELECT id_hadir FROM hadir WHERE id_siswa = ? AND tanggal = ? LIMIT 1");
     $stmt->bind_param("is", $idSiswa, $today);
     $stmt->execute();
@@ -304,7 +299,7 @@ if ($mode === "hadir") {
         jsonResponse(["error" => "Absensi hadir hari ini sudah terkirim. Silakan lanjut ke absensi pulang."], 409);
     }
 
-    $selfie = saveUploadWithCloudinary("selfie", "uploads/absensi", "hadir_" . $siswa["nis"]);
+    $selfie = saveUpload("selfie", "uploads/absensi", "hadir_" . $siswa["nis"]);
     if (!$selfie) {
         jsonResponse(["error" => "Selfie hadir wajib diunggah"], 422);
     }
@@ -317,7 +312,7 @@ if ($mode === "hadir") {
     $stmt->execute();
     $stmt->close();
 
-    jsonResponse(["ok" => true, "mode" => "hadir", "selfie" => $selfie, "keterangan" => $keterangan]);
+    jsonResponse(["ok" => true, "mode" => "hadir", "selfie" => $selfie]);
 }
 
 if ($mode === "pulang") {
@@ -325,7 +320,7 @@ if ($mode === "pulang") {
         jsonResponse(["error" => "Absensi pulang baru bisa dikirim mulai pukul 14:00"], 422);
     }
 
-    $selfie = saveUploadWithCloudinary("selfie", "uploads/absensi", "pulang_" . $siswa["nis"]);
+    $selfie = saveUpload("selfie", "uploads/absensi", "pulang_" . $siswa["nis"]);
     if (!$selfie) {
         jsonResponse(["error" => "Selfie pulang wajib diunggah"], 422);
     }
@@ -357,7 +352,7 @@ if (in_array($mode, ["sakit", "izin", "dispen"], true)) {
         $keterangan = "Waktu dispen: " . $jamMulai . "-" . $jamSelesai . ". " . $keterangan;
     }
 
-    $dokumen = saveUploadWithCloudinary("dokumen", "uploads/dokumen", $mode . "_" . $siswa["nis"]);
+    $dokumen = saveUpload("dokumen", "uploads/dokumen", $mode . "_" . $siswa["nis"]);
     if (!$dokumen) {
         jsonResponse(["error" => "Dokumen wajib diunggah"], 422);
     }

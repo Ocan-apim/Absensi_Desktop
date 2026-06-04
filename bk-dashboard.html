@@ -18,8 +18,13 @@
             <div class="sidebar-brand">Absensi · BK/Kesiswaan</div>
             <nav class="nav-menu" aria-label="Menu utama">
                 <a href="#beranda" data-view="beranda" aria-current="page">Beranda</a>
-                <a href="#laporan" data-view="laporan">Laporan</a>
-                <a href="#rekap-laporan" data-view="rekap-laporan">Rekap laporan</a>
+                <div class="nav-group" data-nav-group="laporan">
+                    <button type="button" class="nav-group-toggle" data-nav-parent="laporan" data-nav-default="laporan-inbox" aria-expanded="true">Laporan</button>
+                    <div class="nav-submenu">
+                        <a href="#laporan-inbox" data-view="laporan-inbox">Inbox</a>
+                        <a href="#rekap-laporan" data-view="rekap-laporan">Rekap laporan</a>
+                    </div>
+                </div>
                 <a href="bk-profil.html">Profil</a>
             </nav>
             <div class="sidebar-footer">
@@ -44,8 +49,8 @@
                 <p class="page-sub" style="margin-top:0.35rem">Masih kosong.</p>
             </section>
 
-            <section id="view-laporan" class="view-panel panel wide-panel is-hidden" data-view-panel="laporan" hidden>
-                <h2>Laporan masuk</h2>
+            <section id="view-laporan-inbox" class="view-panel panel wide-panel is-hidden" data-view-panel="laporan-inbox" hidden>
+                <h2>Inbox laporan</h2>
                 <p class="page-sub" style="margin-top:0.35rem">Balas laporan dari walas.</p>
                 <div id="laporan-list" class="stack"></div>
             </section>
@@ -106,17 +111,18 @@
             function renderLaporan() {
                 var list = document.getElementById("laporan-list");
                 list.innerHTML = cachedLaporan.length ? cachedLaporan.map(function (item) {
-                    var badge = item.has_unread ? '<span class="report-badge" aria-label="Belum dibaca"></span>' : '';
+                    var hasNewReplyFromWalas = item.latest_reply_role === "walas";
+                    var badge = hasNewReplyFromWalas ? '<span class="report-badge" aria-label="Balasan baru dari walas"></span>' : '';
                     var replies = item.balasan && item.balasan.length ? item.balasan.map(function (b) {
                         return '<div class="report-reply"><strong>Balasan ' + escapeHtml(b.pengirim_role) + ':</strong> ' + escapeHtml(b.isi_balasan) + ' <span>(' + escapeHtml(b.created_at) + ')</span></div>';
                     }).join("") : '<div class="report-reply">Belum ada balasan.</div>';
-                    var canReply = item.status === "baru";
+                    var canReply = item.latest_reply_role !== "bk" && item.status !== "diselesaikan";
                     var replyBlock = canReply ? (
                         '<form class="reply-form stack" data-id="' + item.id_laporan + '" style="margin-top:0.85rem">' +
                             '<div class="input-wrap"><textarea placeholder="Tulis balasan..."></textarea></div>' +
                             '<div style="display:flex;justify-content:flex-end"><button type="submit" class="btn-primary">Balas</button></div>' +
                         '</form>'
-                    ) : '<p class="status-note">Laporan sudah dibalas dan tidak bisa dibalas lagi.</p>';
+                    ) : '<p class="status-note" style="margin-top:0.75rem">Menunggu balasan dari walas...</p>';
                     return '<article class="report-card report-card--wide" data-report-card data-open="false" data-id="' + item.id_laporan + '">' +
                         badge +
                         '<button type="button" class="report-head" data-report-toggle>' +
@@ -155,12 +161,17 @@
                 if (!form) return;
                 e.preventDefault();
                 var textarea = form.querySelector("textarea");
+                var isi = textarea.value.trim();
+                if (!isi) {
+                    alert("Isi balasan dulu ya.");
+                    return;
+                }
                 var formData = new FormData();
                 formData.append("action", "reply");
                 formData.append("id_laporan", form.getAttribute("data-id"));
                 formData.append("pengirim_role", "bk");
                 formData.append("id_bk", session.id || 0);
-                formData.append("isi_balasan", textarea.value.trim());
+                formData.append("isi_balasan", isi);
 
                 fetch("laporan_api.php", { method: "POST", body: formData })
                     .then(function (res) {
@@ -169,14 +180,17 @@
                             return data;
                         });
                     })
-                    .then(loadLaporan)
+                    .then(function () {
+                        textarea.value = "";
+                        loadLaporan();
+                    })
                     .catch(function (err) { alert(err.message); });
             });
 
-            var VIEW_IDS = ["beranda", "laporan", "rekap-laporan"];
+            var VIEW_IDS = ["beranda", "laporan-inbox", "rekap-laporan"];
             var TOOLBAR = {
                 beranda: { title: "Dashboard BK / Kesiswaan", desc: "Beranda masih kosong." },
-                laporan: { title: "Laporan", desc: "Balas laporan yang dikirim oleh walas." },
+                "laporan-inbox": { title: "Inbox Laporan", desc: "Balas laporan yang dikirim oleh walas." },
                 "rekap-laporan": { title: "Rekap laporan", desc: "Ringkasan semua laporan walas." }
             };
 
@@ -192,13 +206,34 @@
                     if (cur) a.setAttribute("aria-current", "page");
                     else a.removeAttribute("aria-current");
                 });
+                document.querySelectorAll("[data-nav-parent]").forEach(function (btn) {
+                    var group = btn.getAttribute("data-nav-parent");
+                    var isActive = (group === "laporan" && (id === "laporan-inbox" || id === "rekap-laporan"));
+                    btn.classList.toggle("is-active", isActive);
+                    btn.setAttribute("aria-expanded", isActive ? "true" : "false");
+                });
+                document.querySelectorAll(".nav-group").forEach(function (groupEl) {
+                    var groupName = groupEl.getAttribute("data-nav-group");
+                    var open = (groupName === "laporan" && (id === "laporan-inbox" || id === "rekap-laporan"));
+                    groupEl.classList.toggle("is-open", open);
+                });
                 document.getElementById("toolbar-title").textContent = TOOLBAR[id].title;
                 document.getElementById("toolbar-desc").textContent = TOOLBAR[id].desc;
+                if (id.indexOf("laporan-") === 0) loadLaporan();
                 if (window.AbsensiTheme && AbsensiTheme.syncFooter) AbsensiTheme.syncFooter();
             }
 
+            document.querySelectorAll("[data-nav-parent]").forEach(function (btn) {
+                btn.addEventListener("click", function () {
+                    var target = btn.getAttribute("data-nav-default") || "beranda";
+                    location.hash = "#" + target;
+                });
+            });
+
             function route() {
                 var raw = (location.hash || "").replace(/^#/, "").toLowerCase().trim();
+                var alias = { laporan: "laporan-inbox" };
+                raw = alias[raw] || raw;
                 var id = VIEW_IDS.indexOf(raw) !== -1 ? raw : "beranda";
                 if (location.hash !== "#" + id) history.replaceState(null, "", location.pathname + location.search + "#" + id);
                 showView(id);

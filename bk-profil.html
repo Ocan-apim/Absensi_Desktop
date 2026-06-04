@@ -18,8 +18,13 @@
             <div class="sidebar-brand">Absensi · BK/Kesiswaan</div>
             <nav class="nav-menu" aria-label="Menu utama">
                 <a href="bk-dashboard.html#beranda">Beranda</a>
-                <a href="bk-dashboard.html#laporan">Laporan</a>
-                <a href="bk-dashboard.html#rekap-laporan">Rekap laporan</a>
+                <div class="nav-group" data-nav-group="laporan">
+                    <button type="button" class="nav-group-toggle" data-nav-parent="laporan" data-nav-default="laporan-inbox" aria-expanded="true">Laporan</button>
+                    <div class="nav-submenu">
+                        <a href="bk-dashboard.html#laporan-inbox">Inbox</a>
+                        <a href="bk-dashboard.html#rekap-laporan">Rekap laporan</a>
+                    </div>
+                </div>
                 <a href="bk-profil.html" aria-current="page">Profil</a>
             </nav>
             <div class="sidebar-footer">

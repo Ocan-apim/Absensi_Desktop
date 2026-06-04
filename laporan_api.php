@@ -170,9 +170,7 @@ if ($action === "reply") {
         jsonResponse(["error" => "Laporan tidak ditemukan"], 404);
     }
 
-    if ($pengirimRole === "bk" && $laporanRow["status"] !== "dikirim") {
-        jsonResponse(["error" => "Laporan sudah dibalas"], 422);
-    }
+    // Allow BK to reply regardless of status (enable back-and-forth conversation)
 
     $stmt = $conn->prepare("
         INSERT INTO laporan_balasan (id_laporan, pengirim_role, id_bk, isi_balasan)

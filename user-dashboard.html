@@ -48,7 +48,10 @@
             <!-- Hadir -->
             <section id="view-hadir" class="view-panel panel is-hidden" data-view-panel="hadir">
                 <h2 class="hidden">Absensi hadir</h2>
-                <p class="page-sub" style="margin-top:0;margin-bottom:1rem" id="hari-line-hadir"></p>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-top:0;margin-bottom:1rem">
+                    <p class="page-sub" style="margin:0" id="hari-line-hadir"></p>
+                    <p class="page-sub" style="margin:0;font-family:monospace;font-weight:600" id="timestamp-hadir">00:00:00</p>
+                </div>
                 <div data-weekday-only="true">
                     <div class="selfie-box">
                         <span class="field-label">Selfie kehadiran</span>
@@ -195,6 +198,7 @@
                                     <th>No</th>
                                     <th>Nama</th>
                                     <th>Waktu hadir</th>
+                                    <th>Status</th>
                                     <th>Selfie hadir</th>
                                     <th>Waktu pulang</th>
                                     <th>Selfie pulang</th>
@@ -687,69 +691,80 @@
                 return new URL(src, window.location.href).href;
             }
 
-            function openWalasWhatsapp(data, ket) {
+            function openWalasWhatsapp(data) {
                 var selfie = data && data.selfie ? photoUrl(data.selfie) : "";
                 var message = [
                     "Absensi hadir siswa",
                     "Nama/NIS: " + USER_LABEL,
-                    "Keterangan: " + ket,
                     selfie ? "Foto: " + selfie : ""
                 ].filter(Boolean).join("\n");
                 var url = "https://wa.me/6283811595696?text=" + encodeURIComponent(message);
                 location.href = url;
             }
 
+            function getStatusAbsensi(waktuHadir) {
+                if (!waktuHadir) return "-";
+                var parts = waktuHadir.split(":");
+                if (parts.length < 2) return "-";
+                var jam = parseInt(parts[0], 10);
+                var menit = parseInt(parts[1], 10);
+                var jamMasuk = 7, menitMasuk = 0;
+                var selisihMenit = (jam - jamMasuk) * 60 + (menit - menitMasuk);
+                if (selisihMenit <= 0) {
+                    return "<span style='color:#4CAF50;font-weight:500'>Tepat waktu</span>";
+                } else {
+                    var jamTelat = Math.floor(selisihMenit / 60);
+                    var menitTelat = selisihMenit % 60;
+                    var teks = jamTelat > 0 ? jamTelat + " jam " : "";
+                    teks += menitTelat > 0 ? menitTelat + " menit" : "";
+                    return "<span style='color:#FF6B6B;font-weight:500'>Telat " + teks.trim() + "</span>";
+                }
+            }
+
             function loadRiwayat() {
                 var body = document.getElementById("riwayat-table-body");
                 if (!body) return;
-                body.innerHTML = '<tr><td class="empty-row" colspan="7">Memuat riwayat...</td></tr>';
+                body.innerHTML = '<tr><td class="empty-row" colspan="8">Memuat riwayat...</td></tr>';
                 fetch("absensi_api.php?action=history&username=" + encodeURIComponent(USER_LABEL))
                     .then(parseApiJson)
                     .then(function (data) {
                         var records = data.records || [];
                         riwayatLoaded = true;
                         body.innerHTML = records.length ? records.map(function (r, idx) {
-                            return "<tr><td>" + (idx + 1) + "</td><td>" + escapeHtml(r.name || USER_LABEL) + "</td><td>" + escapeHtml(r.time || "-") + "</td><td>" + renderPhotoButton(r.hadirSelfie, "Lihat") + "</td><td>" + escapeHtml(r.jamPulang || "-") + "</td><td>" + renderPhotoButton(r.pulangSelfie, "Lihat") + "</td><td>" + escapeHtml(formatTanggal(r.date)) + "</td></tr>";
-                        }).join("") : '<tr><td class="empty-row" colspan="7">Belum ada riwayat hadir.</td></tr>';
+                            var statusHtml = getStatusAbsensi(r.time);
+                            return "<tr><td>" + (idx + 1) + "</td><td>" + escapeHtml(r.name || USER_LABEL) + "</td><td>" + escapeHtml(r.time || "-") + "</td><td>" + statusHtml + "</td><td>" + renderPhotoButton(r.hadirSelfie, "Lihat") + "</td><td>" + escapeHtml(r.jamPulang || "-") + "</td><td>" + renderPhotoButton(r.pulangSelfie, "Lihat") + "</td><td>" + escapeHtml(formatTanggal(r.date)) + "</td></tr>";
+                        }).join("") : '<tr><td class="empty-row" colspan="8">Belum ada riwayat hadir.</td></tr>';
                     })
                     .catch(function () {
-                        body.innerHTML = '<tr><td class="empty-row" colspan="7">Gagal memuat riwayat.</td></tr>';
+                        body.innerHTML = '<tr><td class="empty-row" colspan="8">Gagal memuat riwayat.</td></tr>';
                     });
             }
 
             document.getElementById("hadir-submit").addEventListener("click", function () {
                 showErr("hadir-foto-error", false);
-                showErr("hadir-ket-error", false);
                 if (hasTodayMode("hadir")) {
                     alert("Absensi hadir hari ini sudah terkirim. Lanjutkan ke absensi pulang.");
                     location.hash = "#pulang";
                     return;
                 }
                 var blob = selfieHadir.getBlob();
-                var ket = (document.getElementById("hadir-keterangan").value || "").trim();
 
                 if (!blob) {
                     showErr("hadir-foto-error", true);
-                    return;
-                }
-                if (ket.length < 5) {
-                    showErr("hadir-ket-error", true);
                     return;
                 }
 
                 var formData = new FormData();
                 formData.append("username", USER_LABEL);
                 formData.append("mode", "hadir");
-                formData.append("keterangan", ket);
                 formData.append("selfie", blob, "hadir.jpg");
 
                 submitAbsensi(formData).then(function (data) {
                     attendanceStatus.hasHadir = true;
                     riwayatLoaded = false;
                     if (confirm("Absensi hadir tersimpan. Buka chat WhatsApp walas sekarang?")) {
-                        openWalasWhatsapp(data, ket);
+                        openWalasWhatsapp(data);
                     }
-                    document.getElementById("hadir-keterangan").value = "";
                     selfieHadir.reset();
                     updateAttendanceNav();
                     location.hash = "#pulang";
@@ -949,6 +964,23 @@
                     });
                 
             });
+
+            /* Inisialisasi Timestamp Real-time */
+            (function initTimestamp() {
+                var tsEl = document.getElementById("timestamp-hadir");
+                if (!tsEl) return;
+                
+                function updateTimestamp() {
+                    var now = new Date();
+                    var h = String(now.getHours()).padStart(2, "0");
+                    var m = String(now.getMinutes()).padStart(2, "0");
+                    var s = String(now.getSeconds()).padStart(2, "0");
+                    tsEl.textContent = h + ":" + m + ":" + s;
+                }
+                
+                updateTimestamp();
+                setInterval(updateTimestamp, 1000);
+            })();
         })();
     </script>
 </body>
