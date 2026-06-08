@@ -4,7 +4,6 @@ import { resolve } from "path";
 
 /** Static files are copied to ../admin-stats (served next to admin-dashboard.html). */
 const nextConfig: NextConfig = {
-  output: "export",
   trailingSlash: true,
   images: { unoptimized: true },
   // HTTPS configuration for dev server
