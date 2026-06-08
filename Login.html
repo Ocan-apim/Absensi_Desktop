@@ -412,6 +412,253 @@
         html[data-theme="light"] .demo-hint {
             background: rgba(15, 118, 110, 0.07);
         }
+        .demo-hint,
+        .demo-accounts,
+        [data-demo-accounts],
+        #demo-hint,
+        #demo-accounts {
+            display: none !important;
+        }
+
+        .remember-row,
+        .remember-me,
+        [data-remember-me] {
+            display: none !important;
+        }
+
+        .input-wrap.floating-field {
+            position: relative;
+        }
+
+        .input-wrap.floating-field input {
+            padding-top: 1.15rem;
+            padding-bottom: 0.55rem;
+        }
+
+        .input-wrap.floating-field .floating-label {
+            position: absolute;
+            left: 0.9rem;
+            top: 50%;
+            z-index: 2;
+            transform: translateY(-50%);
+            color: var(--text-muted, #94a3b8);
+            font-size: 0.9rem;
+            font-weight: 600;
+            padding: 0 0.35rem;
+            border-radius: 999px;
+            background: #0d1424;
+            pointer-events: none;
+            transition: top 0.18s ease, transform 0.18s ease, font-size 0.18s ease, color 0.18s ease;
+        }
+
+        .input-wrap.floating-field.is-filled .floating-label,
+        .input-wrap.floating-field:focus-within .floating-label {
+            top: 0;
+            transform: translateY(-50%);
+            font-size: 0.68rem;
+            color: var(--accent, #22d3ee);
+        }
+
+        html[data-theme="light"] .input-wrap.floating-field .floating-label {
+            background: #ffffff;
+        }
+
+        .input-wrap input:-webkit-autofill,
+        .input-wrap input:-webkit-autofill:hover,
+        .input-wrap input:-webkit-autofill:focus {
+            -webkit-text-fill-color: var(--text, #f1f5f9);
+            box-shadow: 0 0 0 1000px rgba(7, 11, 20, 0.92) inset;
+            transition: background-color 9999s ease-out;
+        }
+
+        #btn-back-company,
+        .back-company-btn {
+            position: relative;
+            overflow: hidden;
+            isolation: isolate;
+        }
+
+        #btn-back-company::after,
+        .back-company-btn::after {
+            content: "";
+            position: absolute;
+            inset: -35% auto -35% -45%;
+            z-index: 1;
+            width: 35%;
+            transform: skewX(-22deg) translateX(-130%);
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.68), transparent);
+            filter: blur(8px);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #btn-back-company:hover::after,
+        .back-company-btn:hover::after {
+            opacity: 1;
+            animation: button-shimmer 0.7s ease-out;
+        }
+
+        @keyframes button-shimmer {
+            from {
+                transform: skewX(-22deg) translateX(-130%);
+            }
+            to {
+                transform: skewX(-22deg) translateX(430%);
+            }
+        }
+
+        #btn-back-company,
+        .back-company-btn {
+            border-color: rgba(34, 211, 238, 0.42) !important;
+            box-shadow: inset 0 0 0 1px rgba(34, 211, 238, 0.18);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+        }
+
+        #btn-back-company:hover,
+        .back-company-btn:hover {
+            border-color: rgba(103, 232, 249, 0.72) !important;
+            box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.28), 0 0 22px rgba(34, 211, 238, 0.28), inset 0 0 16px rgba(255, 255, 255, 0.06);
+        }
+
+        .input-wrap.floating-field {
+            border-radius: var(--radius-sm, 10px);
+            isolation: isolate;
+        }
+
+        .input-wrap.floating-field input {
+            position: relative;
+            z-index: 1;
+            background-clip: padding-box;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .input-wrap.floating-field:hover input,
+        .input-wrap.floating-field:focus-within input {
+            border-color: rgba(34, 211, 238, 0.7);
+            box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.1);
+        }
+
+        .input-wrap.floating-field::after {
+            content: "";
+            position: absolute;
+            z-index: 2;
+            width: 34px;
+            height: 3px;
+            left: 10px;
+            top: 2px;
+            border-radius: 999px;
+            background: linear-gradient(90deg, transparent, rgba(103, 232, 249, 0.9), transparent);
+            box-shadow: 0 0 8px rgba(103, 232, 249, 0.55), 0 0 14px rgba(34, 211, 238, 0.24);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .input-wrap.floating-field:hover:not(:focus-within)::after {
+            opacity: 1;
+            animation: input-border-trace 3.2s linear infinite;
+        }
+
+        @keyframes input-border-trace {
+            0% {
+                left: 10px;
+                top: 2px;
+                width: 34px;
+                height: 3px;
+                transform: translate(0, 0);
+            }
+            12.5% {
+                left: calc(100% - 44px);
+                top: 2px;
+                width: 34px;
+                height: 3px;
+                transform: translate(0, 0);
+            }
+            25% {
+                left: calc(100% - 5px);
+                top: 10px;
+                width: 3px;
+                height: 34px;
+                transform: translate(0, 0);
+            }
+            37.5% {
+                left: calc(100% - 5px);
+                top: calc(100% - 44px);
+                width: 3px;
+                height: 34px;
+                transform: translate(0, 0);
+            }
+            50% {
+                left: calc(100% - 44px);
+                top: calc(100% - 5px);
+                width: 34px;
+                height: 3px;
+                transform: translate(0, 0);
+            }
+            62.5% {
+                left: 10px;
+                top: calc(100% - 5px);
+                width: 34px;
+                height: 3px;
+                transform: translate(0, 0);
+            }
+            75% {
+                left: 2px;
+                top: calc(100% - 44px);
+                width: 3px;
+                height: 34px;
+                transform: translate(0, 0);
+            }
+            87.5% {
+                left: 2px;
+                top: 10px;
+                width: 3px;
+                height: 34px;
+                transform: translate(0, 0);
+            }
+            100% {
+                left: 10px;
+                top: 2px;
+                width: 34px;
+                height: 3px;
+                transform: translate(0, 0);
+            }
+        }
+
+        .input-wrap.floating-field::after {
+            inset: -1px;
+            left: auto;
+            top: auto;
+            width: auto;
+            height: auto;
+            border-radius: calc(var(--radius-sm, 10px) + 1px);
+            padding: 2px;
+            background: conic-gradient(
+                from 0deg,
+                transparent 0deg,
+                transparent 245deg,
+                rgba(34, 211, 238, 0.12) 275deg,
+                rgba(103, 232, 249, 0.9) 305deg,
+                rgba(255, 255, 255, 0.68) 318deg,
+                rgba(103, 232, 249, 0.18) 335deg,
+                transparent 360deg
+            );
+            filter: blur(0.4px);
+            box-shadow: none;
+            -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+            -webkit-mask-composite: xor;
+            mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+            mask-composite: exclude;
+        }
+
+        .input-wrap.floating-field:hover:not(:focus-within)::after {
+            animation: input-border-spin 2.4s linear infinite;
+        }
+
+        @keyframes input-border-spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
     </style>
 </head>
 <body>
@@ -449,7 +696,7 @@
             <p id="login-error" class="login-error" role="alert" hidden></p>
             <form id="login-form" class="form-stack" action="#" method="post" novalidate>
                 <div>
-                    <label class="field-label" for="username">NIS / NPSN / Email / Username</label>
+                    <label class="field-label" for="username">NIS / Email / NPSN</label>
                     <div class="input-wrap">
                         <input id="username" name="username" type="text" autocomplete="username" placeholder="Contoh: hosanna@gmail.com" required>
                         <span class="input-icon" aria-hidden="true">
@@ -515,6 +762,114 @@
 
             var form = document.getElementById("login-form");
             var errEl = document.getElementById("login-error");
+            var tataUsahaWa = "https://wa.me/6281325269477";
+
+            function normalizeLoginForm() {
+                if (form) form.setAttribute("autocomplete", "off");
+
+                document.querySelectorAll("label, span, p, small, div").forEach(function (el) {
+                    var text = (el.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
+                    if (text === "ingat saya" || text === "remember me") {
+                        var row = el.closest(".remember-row, .remember-me, label, div");
+                        if (row) row.remove();
+                    }
+                });
+
+                document.querySelectorAll("label").forEach(function (label) {
+                    var raw = (label.textContent || "").replace(/\s+/g, " ").trim();
+                    var lower = raw.toLowerCase();
+                    if (lower === "username" || lower === "npsn") {
+                        label.textContent = "Email / NISN";
+                    }
+                });
+
+                var usernameInput = document.getElementById("username");
+                if (usernameInput) {
+                    usernameInput.placeholder = "";
+                    usernameInput.setAttribute("autocomplete", "off");
+                    usernameInput.setAttribute("autocapitalize", "none");
+                    usernameInput.setAttribute("spellcheck", "false");
+                }
+
+                var passwordInput = document.getElementById("password");
+                if (passwordInput) {
+                    passwordInput.setAttribute("autocomplete", "new-password");
+                }
+
+                document.querySelectorAll("input").forEach(function (input) {
+                    var key = ((input.id || "") + " " + (input.name || "")).toLowerCase();
+                    if (key.indexOf("npsn") === -1) return;
+                    var block = input.closest(".input-wrap");
+                    var parent = block && block.parentElement ? block.parentElement : input.parentElement;
+                    if (parent) parent.remove();
+                });
+
+                document.querySelectorAll(".input-wrap input").forEach(function (input) {
+                    var wrap = input.closest(".input-wrap");
+                    if (!wrap || wrap.querySelector(".floating-label")) return;
+                    var label = null;
+                    if (input.id) {
+                        label = document.querySelector('label[for="' + input.id + '"]');
+                    }
+                    var title = label ? (label.textContent || "").trim() : (input.getAttribute("placeholder") || "");
+                    if (!title) return;
+                    if (title.toLowerCase() === "username" || title.toLowerCase() === "npsn") {
+                        title = "Email / NISN";
+                    }
+                    if (label) label.style.display = "none";
+                    input.placeholder = "";
+                    wrap.classList.add("floating-field");
+                    var floating = document.createElement("span");
+                    floating.className = "floating-label";
+                    floating.textContent = title;
+                    wrap.appendChild(floating);
+
+                    function syncFilled() {
+                        wrap.classList.toggle("is-filled", !!input.value);
+                    }
+                    input.addEventListener("input", syncFilled);
+                    input.addEventListener("change", syncFilled);
+                    syncFilled();
+                });
+
+                function clearRememberedLoginValues() {
+                    document.querySelectorAll("#login-form input").forEach(function (input) {
+                        input.value = "";
+                        input.dispatchEvent(new Event("input", { bubbles: true }));
+                    });
+                }
+
+                setTimeout(clearRememberedLoginValues, 80);
+                setTimeout(clearRememberedLoginValues, 450);
+
+                document.querySelectorAll("a, button").forEach(function (el) {
+                    var text = (el.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
+                    if (text.indexOf("hubungi tata usaha") === -1) return;
+                    if (el.tagName.toLowerCase() === "a") {
+                        el.href = tataUsahaWa;
+                        el.target = "_blank";
+                        el.rel = "noopener";
+                    } else {
+                        el.type = "button";
+                        el.addEventListener("click", function (event) {
+                            event.preventDefault();
+                            location.href = tataUsahaWa;
+                        });
+                    }
+                });
+            }
+
+            normalizeLoginForm();
+            document.addEventListener("click", function (event) {
+                var target = event.target.closest("a, button, [role='button']");
+                if (!target) return;
+                var text = (target.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
+                if (text.indexOf("hubungi tata usaha") === -1) return;
+                if (target.tagName.toLowerCase() !== "a") {
+                    event.preventDefault();
+                    location.href = tataUsahaWa;
+                }
+            });
             document.getElementById("btn-back-company").addEventListener("click", function () {
                 location.href = "companyprofile.html";
             });
@@ -528,7 +883,7 @@
                 var password = document.getElementById("password").value || "";
 
                 if (!username || !password) {
-                    errEl.textContent = "Isi nama pengguna dan kata sandi.";
+                    errEl.textContent = "Isi Email / NISN dan kata sandi.";
                     errEl.hidden = false;
                     return;
                 }

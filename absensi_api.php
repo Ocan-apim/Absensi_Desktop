@@ -289,6 +289,10 @@ if (!$siswa) {
 $idSiswa = (int) $siswa["id_siswa"];
 
 if ($mode === "hadir") {
+    if (date("H:i") > "09:00") {
+        jsonResponse(["error" => "Absensi hadir hanya bisa dikirim sampai pukul 09:00"], 422);
+    }
+
     $stmt = $conn->prepare("SELECT id_hadir FROM hadir WHERE id_siswa = ? AND tanggal = ? LIMIT 1");
     $stmt->bind_param("is", $idSiswa, $today);
     $stmt->execute();

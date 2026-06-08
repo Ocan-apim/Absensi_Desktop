@@ -22,10 +22,16 @@
                     <button type="button" class="nav-group-toggle" data-nav-parent="data" data-nav-default="data-staff" aria-expanded="false">Data</button>
                     <div class="nav-submenu">
                         <a href="#data-staff" data-view="data-staff">Data Staff</a>
-                        <a href="#data-murid" data-view="data-murid">Data Murid</a>
+                        <a href="#data-murid" data-view="data-murid">Data Siswa</a>
                     </div>
                 </div>
-                <a href="#laporan" data-view="laporan">Laporan</a>
+                <div class="nav-group" data-nav-group="laporan">
+                    <button type="button" class="nav-group-toggle" data-nav-parent="laporan" data-nav-default="laporan-aktivitas" aria-expanded="false">Laporan</button>
+                    <div class="nav-submenu">
+                        <a href="#laporan-aktivitas" data-view="laporan-aktivitas">Aktivitas</a>
+                        <a href="#laporan-bk" data-view="laporan-bk">BK</a>
+                    </div>
+                </div>
                 <a href="register.html">Membuat Akun Baru</a>
                 <a href="admin-profil.html">Profil</a>
             </nav>
@@ -52,7 +58,7 @@
                     <div class="admin-data-head">
                         <div>
                             <h2>Data Dashboard</h2>
-                            <p class="page-sub">Kehadiran guru vs siswa dan distribusi jurusan</p>
+                            <p class="page-sub">Perbandingan siswa hadir vs tidak hadir dan distribusi jurusan</p>
                         </div>
                         <div class="admin-calendar-wrap">
                             <button type="button" class="admin-week-button" id="admin-week-button" aria-expanded="false">
@@ -75,6 +81,17 @@
                                 <div class="admin-calendar-grid" id="admin-calendar-grid"></div>
                             </div>
                         </div>
+                        <div class="input-wrap admin-major-filter" style="min-width:180px">
+                            <select id="admin-attendance-major" aria-label="Filter jurusan attendance">
+                                <option value="">Semua jurusan</option>
+                                <option value="PPLG">PPLG</option>
+                                <option value="PM">PM</option>
+                                <option value="DKV">DKV</option>
+                                <option value="MPLB">MPLB</option>
+                                <option value="TJKT">TJKT</option>
+                                <option value="PH">PH</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="chart-card chart-card--area">
                         <div class="chart-card-top">
@@ -88,11 +105,11 @@
                     </div>
                     <div class="admin-chart-grid">
                         <div class="chart-card">
-                            <h3>Guru</h3>
+                            <h3>Tidak hadir</h3>
                             <canvas id="admin-guru-bar" height="220"></canvas>
                         </div>
                         <div class="chart-card">
-                            <h3>Murid</h3>
+                            <h3>Hadir</h3>
                             <canvas id="admin-siswa-bar" height="220"></canvas>
                         </div>
                         <div class="chart-card">
@@ -101,6 +118,58 @@
                             <div id="admin-pie-legend" class="chart-legend chart-legend--wrap"></div>
                         </div>
                     </div>
+                </div>
+            </section>
+
+            <section id="view-laporan-aktivitas" class="view-panel panel wide-panel is-hidden" data-view-panel="laporan-aktivitas" hidden>
+                <div class="section-head">
+                    <div class="section-head-main">
+                        <h2>Activity log</h2>
+                        <p class="page-sub">Riwayat perubahan data oleh admin.</p>
+                    </div>
+                    <div class="section-head-meta activity-log-filters">
+                        <div class="mode-tabs" role="tablist" aria-label="Filter activity log">
+                            <button type="button" class="mode-tab is-active" data-activity-filter="30">30 hari terakhir</button>
+                            <button type="button" class="mode-tab" data-activity-filter="7">Seminggu terakhir</button>
+                        </div>
+                        <div class="input-wrap activity-date-filter">
+                            <input type="date" id="activity-log-date" aria-label="Pilih tanggal activity log">
+                        </div>
+                    </div>
+                </div>
+                <div class="table-card">
+                    <div class="table-scroll">
+                        <table class="data-table activity-log-table">
+                            <thead>
+                                <tr>
+                                    <th>Waktu &amp; tanggal</th>
+                                    <th>Siapa yang diedit</th>
+                                    <th>Apa editannya</th>
+                                </tr>
+                            </thead>
+                            <tbody id="activity-log-body">
+                                <tr><td class="empty-row" colspan="3">Memuat aktivitas...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section id="view-laporan-bk" class="view-panel panel wide-panel is-hidden" data-view-panel="laporan-bk" hidden>
+                <div class="section-head">
+                    <div class="section-head-main">
+                        <h2>Laporan BK</h2>
+                        <p class="page-sub">Laporan yang sedang berjalan dan yang sudah selesai.</p>
+                    </div>
+                    <div class="section-head-meta">
+                        <div class="mode-tabs" role="tablist" aria-label="Filter laporan BK">
+                            <button type="button" class="mode-tab is-active" data-bk-report-filter="ongoing">Ongoing</button>
+                            <button type="button" class="mode-tab" data-bk-report-filter="finished">Finished</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="admin-bk-report-list" class="stack">
+                    <div class="stub-card">Memuat laporan BK...</div>
                 </div>
             </section>
 
@@ -119,8 +188,8 @@
                 </div>
                 <div class="table-card">
                     <div class="table-scroll">
-                        <table class="data-table">
-                            <thead><tr><th>No</th><th>Nama</th><th>NPSN</th><th>Kelas</th><th>Jurusan</th><th>Tempat lahir</th><th>Tanggal lahir</th><th>Dibuat</th><th>Aksi</th></tr></thead>
+                        <table id="staff-table" class="data-table">
+                            <thead id="staff-table-head"><tr><th>No</th><th>Nama</th><th>NPSN</th><th>Kelas</th><th>Jurusan</th><th>Rombel</th><th>Tempat lahir</th><th>Tanggal lahir</th><th>Dibuat</th><th>Aksi</th></tr></thead>
                             <tbody id="staff-table-body"></tbody>
                         </table>
                     </div>
@@ -131,11 +200,12 @@
                 <div class="section-head section-head--students">
                     <div class="section-head-main">
                         <h2>Data Murid</h2>
-                        <p class="page-sub" style="margin-bottom:0">Filter kelas dan jurusan untuk melihat akun murid.</p>
+                        <p class="page-sub" style="margin-bottom:0">Filter kelas, jurusan, dan rombel untuk melihat akun murid.</p>
                     </div>
                     <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
                         <div class="input-wrap"><select id="murid-kelas"><option value="10">Kelas 10</option><option value="11" selected>Kelas 11</option><option value="12">Kelas 12</option></select></div>
                         <div class="input-wrap"><select id="murid-jurusan"><option value="pplg">PPLG</option><option value="mplb">MPLB</option><option value="dkv">DKV</option><option value="tjkt">TJKT</option><option value="pm">PM</option><option value="ph">PH</option></select></div>
+                        <div class="input-wrap"><select id="murid-rombel"><option value="">Semua rombel</option><option value="1">Rombel 1</option><option value="2">Rombel 2</option></select></div>
                     </div>
                 </div>
                 <div class="table-card">
@@ -181,12 +251,13 @@
                 selectedWeekDate: new Date(),
                 calendarMonth: new Date()
             };
-            var VIEW_IDS = ["beranda", "data-staff", "data-murid", "laporan"];
+            var VIEW_IDS = ["beranda", "data-staff", "data-murid", "laporan-aktivitas", "laporan-bk"];
             var TOOLBAR = {
                 beranda: { title: "Dashboard admin", desc: "Halo, " + (session.username || "Admin") + ". Grafik di bawah memakai data MySQL." },
                 "data-staff": { title: "Data staff", desc: "Kelola akun BK/Kesiswaan dan walas." },
                 "data-murid": { title: "Data murid", desc: "Kelola akun murid berdasarkan kelas dan jurusan." },
-                laporan: { title: "Laporan", desc: "Catatan perubahan akun oleh admin." }
+                "laporan-aktivitas": { title: "Aktivitas", desc: "Catatan perubahan akun oleh admin." },
+                "laporan-bk": { title: "Laporan BK", desc: "Pantau laporan BK ongoing dan finished." }
             };
 
             document.getElementById("user-label").textContent = session.username || "Admin";
@@ -260,7 +331,7 @@
 
             function apiUrl(type) {
                 if (type === "murid") {
-                    return "admin_data_api.php?type=murid&kelas=" + encodeURIComponent(document.getElementById("murid-kelas").value) + "&jurusan=" + encodeURIComponent(document.getElementById("murid-jurusan").value);
+                    return "admin_data_api.php?type=murid&kelas=" + encodeURIComponent(document.getElementById("murid-kelas").value) + "&jurusan=" + encodeURIComponent(document.getElementById("murid-jurusan").value) + "&rombel=" + encodeURIComponent(document.getElementById("murid-rombel").value);
                 }
                 return "admin_data_api.php?type=" + encodeURIComponent(document.getElementById("staff-type").value);
             }
@@ -273,16 +344,35 @@
                     '</div>';
             }
 
+            function staffColumnCount(type) {
+                return type === "walas" ? 10 : 7;
+            }
+
+            function updateStaffTableHeader(type) {
+                var head = document.getElementById("staff-table-head");
+                if (!head) return;
+                if (type === "walas") {
+                    head.innerHTML = '<tr><th>No</th><th>Nama</th><th>NPSN</th><th>Email</th><th>Kelas</th><th>Jurusan</th><th>Rombel</th><th>Tempat lahir</th><th>Tanggal lahir</th><th>Aksi</th></tr>';
+                } else {
+                    head.innerHTML = '<tr><th>No</th><th>Nama</th><th>NPSN</th><th>Email</th><th>Tempat lahir</th><th>Tanggal lahir</th><th>Aksi</th></tr>';
+                }
+            }
+
             function loadStaff() {
                 var type = document.getElementById("staff-type").value;
+                updateStaffTableHeader(type);
                 var body = document.getElementById("staff-table-body");
-                body.innerHTML = '<tr><td colspan="9" class="empty-row">Memuat data...</td></tr>';
+                var colCount = staffColumnCount(type);
+                body.innerHTML = '<tr><td colspan="' + colCount + '" class="empty-row">Memuat data...</td></tr>';
                 fetch(apiUrl("staff")).then(parseJson).then(function (data) {
                     state.staff = data.records || [];
                     body.innerHTML = state.staff.length ? state.staff.map(function (r, idx) {
-                        return "<tr><td>" + (idx + 1) + "</td><td>" + escapeHtml(r.nama_lengkap) + "</td><td>" + escapeHtml(r.npsn) + "</td><td>" + escapeHtml(classTitle(r) || r.kelas || "") + "</td><td>" + escapeHtml((r.jurusan || "").toUpperCase()) + "</td><td>" + escapeHtml(r.tempat_lahir) + "</td><td>" + escapeHtml(r.tanggal_lahir) + "</td><td>" + escapeHtml(r.created_at) + "</td><td>" + actionButtons(type, r.id_bk || r.id_walas) + "</td></tr>";
-                    }).join("") : '<tr><td colspan="9" class="empty-row">Belum ada data staff.</td></tr>';
-                }).catch(function (err) { body.innerHTML = '<tr><td colspan="9" class="empty-row">' + escapeHtml(err.message) + '</td></tr>'; });
+                        if (type === "walas") {
+                            return "<tr><td>" + (idx + 1) + "</td><td>" + escapeHtml(r.nama_lengkap) + "</td><td>" + escapeHtml(r.npsn) + "</td><td>" + escapeHtml(r.email || "") + "</td><td>" + escapeHtml(r.kelas || "") + "</td><td>" + escapeHtml((r.jurusan || "").toUpperCase()) + "</td><td>" + escapeHtml(r.rombel || "") + "</td><td>" + escapeHtml(r.tempat_lahir) + "</td><td>" + escapeHtml(r.tanggal_lahir) + "</td><td>" + actionButtons(type, r.id_bk || r.id_walas) + "</td></tr>";
+                        }
+                        return "<tr><td>" + (idx + 1) + "</td><td>" + escapeHtml(r.nama_lengkap) + "</td><td>" + escapeHtml(r.npsn) + "</td><td>" + escapeHtml(r.email || "") + "</td><td>" + escapeHtml(r.tempat_lahir) + "</td><td>" + escapeHtml(r.tanggal_lahir) + "</td><td>" + actionButtons(type, r.id_bk || r.id_walas) + "</td></tr>";
+                    }).join("") : '<tr><td colspan="' + colCount + '" class="empty-row">Belum ada data staff.</td></tr>';
+                }).catch(function (err) { body.innerHTML = '<tr><td colspan="' + colCount + '" class="empty-row">' + escapeHtml(err.message) + '</td></tr>'; });
             }
 
             function loadMurid() {
@@ -303,9 +393,13 @@
             }
 
             function showDetail(type, id) {
-                var r = findRecord(type, id);
-                if (!r) return;
-                alert(Object.keys(r).map(function (k) { return k + ": " + (r[k] || "-"); }).join("\n"));
+                fetch("admin_data_api.php?type=" + encodeURIComponent(type) + "&id=" + encodeURIComponent(id)).then(parseJson).then(function (data) {
+                    var r = data.record;
+                    if (!r) throw new Error("Detail tidak ditemukan");
+                    alert(Object.keys(r).map(function (k) { return k + ": " + (r[k] || "-"); }).join("\n"));
+                }).catch(function (err) {
+                    alert("Gagal memuat detail: " + err.message);
+                });
             }
 
             function input(name, label, value, type) {
@@ -341,9 +435,8 @@
                         { value: "pm", label: "PM" },
                         { value: "ph", label: "PH" }
                     ], r.jurusan) + selectField("rombel", "Rombel", [
-                        { value: "", label: "Tanpa rombel" },
-                        { value: "1", label: "Kelas 1" },
-                        { value: "2", label: "Kelas 2" }
+                        { value: "1", label: "Rombel 1" },
+                        { value: "2", label: "Rombel 2" }
                     ], r.rombel) + input("tempat_lahir", "Tempat lahir", r.tempat_lahir) + input("tanggal_lahir", "Tanggal lahir", r.tanggal_lahir, "date") + input("password", "Password baru (opsional)", "", "password");
                 } else {
                     form.innerHTML = input("nama_lengkap", "Nama lengkap", r.nama_lengkap) + input("npsn", "NPSN", r.npsn);
@@ -360,9 +453,8 @@
                             { value: "pm", label: "PM" },
                             { value: "ph", label: "PH" }
                         ], r.jurusan) + selectField("rombel", "Rombel", [
-                            { value: "", label: "Tanpa rombel" },
-                            { value: "1", label: "Kelas 1" },
-                            { value: "2", label: "Kelas 2" }
+                            { value: "1", label: "Rombel 1" },
+                            { value: "2", label: "Rombel 2" }
                         ], r.rombel);
                     }
                     form.innerHTML += input("tempat_lahir", "Tempat lahir", r.tempat_lahir) + input("tanggal_lahir", "Tanggal lahir", r.tanggal_lahir, "date") + input("password", "Password baru (opsional)", "", "password");
@@ -425,10 +517,16 @@
             function setupCanvas(canvas) {
                 var dpr = window.devicePixelRatio || 1;
                 var rect = canvas.getBoundingClientRect();
-                var h = Number(canvas.getAttribute("height")) || 220;
+                if (!canvas.dataset.baseHeight) {
+                    canvas.dataset.baseHeight = String(Number(canvas.getAttribute("height")) || 220);
+                }
+                var h = Number(canvas.dataset.baseHeight) || 220;
+                canvas.style.height = h + "px";
+                canvas.style.width = "100%";
                 canvas.width = Math.max(320, Math.floor(rect.width * dpr));
                 canvas.height = h * dpr;
                 var ctx = canvas.getContext("2d");
+                if (ctx.resetTransform) ctx.resetTransform();
                 ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
                 return { ctx: ctx, width: canvas.width / dpr, height: h };
             }
@@ -575,13 +673,167 @@
                 var y = selected.getFullYear();
                 var m = pad2(selected.getMonth() + 1);
                 var d = pad2(selected.getDate());
-                var url = "admin_stats_api.php?username=" + encodeURIComponent(session.username || "") + "&chart_month=" + y + "-" + m + "&week_start=" + y + "-" + m + "-" + d;
+                var major = document.getElementById("admin-attendance-major");
+                var url = "admin_stats_api.php?username=" + encodeURIComponent(session.username || "") + "&chart_month=" + y + "-" + m + "&week_start=" + y + "-" + m + "-" + d + "&jurusan=" + encodeURIComponent(major ? major.value : "");
                 fetch(url).then(parseJson).then(renderAdminCharts).catch(function (err) {
                     document.getElementById("admin-chart-period").textContent = err.message;
                     var empty = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"].map(function (label) { return { label: label, count: 0 }; });
                     renderAdminCharts({ meta: { week_range: { start: "-", end: "-" } }, weekBars: { guru: empty, siswa: empty }, jurusan: [] });
                 });
             }
+
+            var activityLogLoaded = false;
+            var activityLogRecords = [];
+            var activityLogFilter = "30";
+            var adminBkReportsLoaded = false;
+            var adminBkReports = [];
+            var adminBkFilter = "ongoing";
+
+            function escapeAdminHtml(value) {
+                return String(value || "").replace(/[&<>"']/g, function (ch) {
+                    return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[ch];
+                });
+            }
+
+            function formatAdminDate(value) {
+                if (!value) return "-";
+                var date = new Date(value);
+                if (isNaN(date.getTime())) return String(value);
+                return date.toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" }) + "<br><span class=\"page-sub\" style=\"margin:0\">" + date.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) + "</span>";
+            }
+
+            function activityLogDateValue(item) {
+                return item.created_at || item.updated_at || item.date || item.time || item.waktu || "";
+            }
+
+            function activityLogPassesFilter(item) {
+                var raw = activityLogDateValue(item);
+                if (!raw) return true;
+                var date = new Date(String(raw).replace(" ", "T"));
+                if (isNaN(date.getTime())) return true;
+                var picked = document.getElementById("activity-log-date");
+                if (picked && picked.value) {
+                    return date.toISOString().slice(0, 10) === picked.value;
+                }
+                var days = activityLogFilter === "7" ? 7 : 30;
+                var limit = new Date();
+                limit.setHours(0, 0, 0, 0);
+                limit.setDate(limit.getDate() - (days - 1));
+                return date >= limit;
+            }
+
+            function renderActivityLog(records) {
+                var body = document.getElementById("activity-log-body");
+                if (!body) return;
+                var visibleRecords = (records || []).filter(activityLogPassesFilter);
+                if (!visibleRecords.length) {
+                    body.innerHTML = '<tr><td class="empty-row" colspan="3">Belum ada aktivitas admin.</td></tr>';
+                    return;
+                }
+                body.innerHTML = visibleRecords.map(function (item) {
+                    var when = activityLogDateValue(item);
+                    var target = item.target_label || item.target || item.member || item.name || item.nama || item.username || item.edited_user || "-";
+                    var event = item.event || item.description || item.details || item.keterangan || item.edit || item.perubahan || (item.action === "edited" ? "Akun diedit" : (item.action === "deleted" ? "Akun dihapus" : item.action)) || "-";
+                    return "<tr><td>" + formatAdminDate(when) + "</td><td>" + escapeAdminHtml(target) + "</td><td>" + escapeAdminHtml(event) + "</td></tr>";
+                }).join("");
+            }
+
+            function loadActivityLog() {
+                var body = document.getElementById("activity-log-body");
+                if (!body || activityLogLoaded) return;
+                body.innerHTML = '<tr><td class="empty-row" colspan="3">Memuat aktivitas...</td></tr>';
+                fetch("admin_data_api.php?action=logs")
+                    .then(parseJson)
+                    .then(function (data) {
+                        activityLogLoaded = true;
+                        activityLogRecords = data.records || data.logs || data.activities || [];
+                        renderActivityLog(activityLogRecords);
+                    })
+                    .catch(function () {
+                        activityLogLoaded = true;
+                        activityLogRecords = [];
+                        renderActivityLog(activityLogRecords);
+                    });
+            }
+
+            document.querySelectorAll("[data-activity-filter]").forEach(function (btn) {
+                btn.addEventListener("click", function () {
+                    activityLogFilter = btn.getAttribute("data-activity-filter") || "30";
+                    var dateInput = document.getElementById("activity-log-date");
+                    if (dateInput) dateInput.value = "";
+                    document.querySelectorAll("[data-activity-filter]").forEach(function (tab) {
+                        tab.classList.toggle("is-active", tab === btn);
+                    });
+                    renderActivityLog(activityLogRecords);
+                });
+            });
+
+            var activityDateInput = document.getElementById("activity-log-date");
+            if (activityDateInput) {
+                activityDateInput.addEventListener("change", function () {
+                    document.querySelectorAll("[data-activity-filter]").forEach(function (tab) {
+                        tab.classList.remove("is-active");
+                    });
+                    renderActivityLog(activityLogRecords);
+                });
+            }
+
+            function isFinishedBkReport(item) {
+                var status = String(item.status || item.state || "").toLowerCase();
+                return status === "finished" || status === "selesai" || status === "diselesaikan" || status === "closed" || status === "resolved";
+            }
+
+            function renderAdminBkReports() {
+                var list = document.getElementById("admin-bk-report-list");
+                if (!list) return;
+                var rows = adminBkReports.filter(function (item) {
+                    var done = isFinishedBkReport(item);
+                    return adminBkFilter === "finished" ? done : !done;
+                });
+                if (!rows.length) {
+                    list.innerHTML = '<div class="stub-card">Tidak ada laporan ' + escapeAdminHtml(adminBkFilter) + '.</div>';
+                    return;
+                }
+                list.innerHTML = rows.map(function (item) {
+                    var subject = item.subject || item.subjek || item.judul || item.title || "Laporan BK";
+                    var from = item.from || item.walas || item.walas_nama || item.teacher || item.pelapor || item.nama || "-";
+                    var date = item.created_at || item.updated_at || item.date || item.tanggal || "";
+                    var text = item.message || item.isi_laporan || item.isi || item.keterangan || item.description || "";
+                    var status = isFinishedBkReport(item) ? "Finished" : "Ongoing";
+                    return '<article class="report-card" data-open="false"><button type="button" class="report-head" data-report-toggle="true"><span><span class="report-from">' + escapeAdminHtml(subject) + '</span><span class="report-meta">Dari: ' + escapeAdminHtml(from) + '</span></span><span class="report-date">' + escapeAdminHtml(status) + '</span></button><div class="report-body"><div class="report-meta">' + formatAdminDate(date) + '</div><div class="report-text">' + escapeAdminHtml(text || "Tidak ada detail.") + '</div></div></article>';
+                }).join("");
+            }
+
+            function loadAdminBkReports() {
+                if (adminBkReportsLoaded) {
+                    renderAdminBkReports();
+                    return;
+                }
+                var list = document.getElementById("admin-bk-report-list");
+                if (list) list.innerHTML = '<div class="stub-card">Memuat laporan BK...</div>';
+                fetch("laporan_api.php?action=admin_bk")
+                    .then(parseJson)
+                    .then(function (data) {
+                        adminBkReportsLoaded = true;
+                        adminBkReports = data.records || data.reports || data.laporan || [];
+                        renderAdminBkReports();
+                    })
+                    .catch(function () {
+                        adminBkReportsLoaded = true;
+                        adminBkReports = [];
+                        renderAdminBkReports();
+                    });
+            }
+
+            document.querySelectorAll("[data-bk-report-filter]").forEach(function (btn) {
+                btn.addEventListener("click", function () {
+                    adminBkFilter = btn.getAttribute("data-bk-report-filter") || "ongoing";
+                    document.querySelectorAll("[data-bk-report-filter]").forEach(function (tab) {
+                        tab.classList.toggle("is-active", tab === btn);
+                    });
+                    renderAdminBkReports();
+                });
+            });
 
             function showView(id) {
                 VIEW_IDS.forEach(function (v) {
@@ -591,11 +843,18 @@
                     panel.hidden = hide;
                 });
                 document.querySelectorAll(".nav-menu a[data-view]").forEach(function (a) {
-                    a.toggleAttribute("aria-current", a.getAttribute("data-view") === id);
+                    var active = a.getAttribute("data-view") === id;
+                    a.toggleAttribute("aria-current", active);
+                    a.classList.toggle("is-active", active);
                 });
                 var openData = id === "data-staff" || id === "data-murid";
                 document.querySelector('[data-nav-group="data"]').classList.toggle("is-open", openData);
                 document.querySelector("[data-nav-parent='data']").classList.toggle("is-active", openData);
+                document.querySelector("[data-nav-parent='data']").setAttribute("aria-expanded", openData ? "true" : "false");
+                var openLaporan = id === "laporan-aktivitas" || id === "laporan-bk";
+                document.querySelector('[data-nav-group="laporan"]').classList.toggle("is-open", openLaporan);
+                document.querySelector("[data-nav-parent='laporan']").classList.toggle("is-active", openLaporan);
+                document.querySelector("[data-nav-parent='laporan']").setAttribute("aria-expanded", openLaporan ? "true" : "false");
                 document.getElementById("toolbar-title").textContent = TOOLBAR[id].title;
                 document.getElementById("toolbar-desc").textContent = TOOLBAR[id].desc;
                 document.querySelector(".dashboard-topbar").classList.toggle("dashboard-topbar--admin-home", id === "beranda");
@@ -603,12 +862,15 @@
                 if (id === "beranda") loadAdminCharts();
                 if (id === "data-staff") loadStaff();
                 if (id === "data-murid") loadMurid();
-                if (id === "laporan") loadLogs();
+                if (id === "beranda") loadAdminCharts();
+                if (id === "laporan-aktivitas") loadActivityLog();
+                if (id === "laporan-bk") loadAdminBkReports();
                 if (window.AbsensiTheme && AbsensiTheme.syncFooter) AbsensiTheme.syncFooter();
             }
 
             function route() {
                 var id = (location.hash || "#beranda").replace("#", "");
+                if (id === "laporan") id = "laporan-aktivitas";
                 if (VIEW_IDS.indexOf(id) === -1) id = "beranda";
                 if (location.hash !== "#" + id) history.replaceState(null, "", location.pathname + location.search + "#" + id);
                 showView(id);
@@ -617,9 +879,14 @@
             document.querySelector("[data-nav-parent='data']").addEventListener("click", function () {
                 location.hash = "#data-staff";
             });
+            document.querySelector("[data-nav-parent='laporan']").addEventListener("click", function () {
+                location.hash = "#laporan-aktivitas";
+            });
             document.getElementById("staff-type").addEventListener("change", loadStaff);
             document.getElementById("murid-kelas").addEventListener("change", loadMurid);
             document.getElementById("murid-jurusan").addEventListener("change", loadMurid);
+            document.getElementById("murid-rombel").addEventListener("change", loadMurid);
+            document.getElementById("admin-attendance-major").addEventListener("change", loadAdminCharts);
             document.getElementById("admin-edit-form").addEventListener("submit", submitEdit);
             document.getElementById("admin-week-button").addEventListener("click", function () {
                 var popover = document.getElementById("admin-calendar-popover");

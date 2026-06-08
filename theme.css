@@ -138,13 +138,133 @@ html[data-theme="light"] .sidebar {
     text-decoration: none;
     font-size: 0.9rem;
     font-weight: 600;
-    transition: background 0.15s, color 0.15s;
+    transition: background 0.2s ease, color 0.2s ease, transform 0.24s ease, box-shadow 0.2s ease;
 }
 
 .nav-menu a:hover,
-.nav-menu a[aria-current="page"] {
+.nav-menu a[aria-current="page"],
+.nav-menu a.is-active {
     background: var(--accent-soft);
     color: var(--text);
+    transform: translateX(6px);
+    box-shadow: inset 4px 0 0 var(--accent);
+}
+
+.nav-submenu a[aria-current="page"] {
+    background: var(--accent-soft);
+    color: var(--text);
+    transform: translateX(6px);
+    box-shadow: inset 4px 0 0 var(--accent);
+}
+
+.nav-menu a::before,
+.nav-group-toggle::before,
+.btn-logout::before {
+    width: 1.1rem;
+    height: 1.1rem;
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 1.1rem;
+    color: currentColor;
+    font-size: 1rem;
+    line-height: 1;
+    opacity: 0.9;
+}
+
+.nav-menu a::before {
+    content: "•";
+}
+
+.nav-menu a[data-view="beranda"]::before,
+.nav-menu a[href*="#beranda"]::before {
+    content: "⌂";
+}
+
+.nav-menu a[data-view="hadir"]::before,
+.nav-menu a[href*="#hadir"]::before {
+    content: "✓";
+}
+
+.nav-menu a[data-view="pulang"]::before,
+.nav-menu a[href*="#pulang"]::before {
+    content: "↗";
+}
+
+.nav-menu a[data-view="sakit"]::before {
+    content: "+";
+}
+
+.nav-menu a[data-view="izin"]::before {
+    content: "!";
+}
+
+.nav-menu a[data-view="dispen"]::before {
+    content: "⏱";
+}
+
+.nav-menu a[data-view="riwayat"]::before,
+.nav-menu a[href*="#riwayat"]::before {
+    content: "↺";
+}
+
+.nav-menu a[data-view*="laporan"]::before,
+.nav-menu a[href*="#laporan"]::before {
+    content: "▤";
+}
+
+.nav-menu a[data-view*="inbox"]::before {
+    content: "□";
+}
+
+.nav-menu a[data-view*="baru"]::before {
+    content: "+";
+}
+
+.nav-menu a[data-view*="riwayat"]::before {
+    content: "↺";
+}
+
+.nav-menu a[data-view*="rekap"]::before,
+.nav-menu a[href*="#rekap"]::before {
+    content: "▥";
+}
+
+.nav-menu a[data-view*="siswa"]::before,
+.nav-menu a[href*="siswa"]::before {
+    content: "◎";
+}
+
+.nav-menu a[data-view*="staff"]::before,
+.nav-menu a[href*="staff"]::before {
+    content: "◈";
+}
+
+.nav-menu a[data-view="register"]::before {
+    content: "+";
+}
+
+.nav-menu a[href*="profil"]::before {
+    content: "◯";
+}
+
+.nav-menu a[href*="register"]::before {
+    content: "+";
+}
+
+.nav-group-toggle::before {
+    content: "▦";
+}
+
+.nav-group[data-nav-group="laporan"] .nav-group-toggle::before {
+    content: "▤";
+}
+
+.nav-group[data-nav-group="absensi"] .nav-group-toggle::before {
+    content: "✓";
+}
+
+.btn-logout::before {
+    content: "↪";
 }
 
 .nav-group {
@@ -236,6 +356,10 @@ html[data-theme="light"] .sidebar {
     font-size: 0.85rem;
     font-weight: 600;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
 }
 
 .btn-logout:hover {
@@ -650,6 +774,12 @@ html[data-theme="light"] .banner-info {
 
 .admin-calendar-wrap {
     position: relative;
+    margin-left: auto;
+    order: 2;
+}
+
+.admin-major-filter {
+    order: 1;
 }
 
 .admin-week-button {
@@ -777,13 +907,15 @@ html[data-theme="light"] .chart-card {
 }
 
 .chart-card canvas {
-    width: 100%;
+    width: 100% !important;
     display: block;
+    contain: size layout paint;
 }
 
 .chart-card--area {
     width: 100%;
     min-height: 360px;
+    height: 360px;
 }
 
 .chart-card-top {
@@ -801,20 +933,59 @@ html[data-theme="light"] .chart-card {
     align-items: stretch;
 }
 
+.admin-chart-grid .chart-card:nth-child(1),
+.admin-chart-grid .chart-card:nth-child(2) {
+    grid-column: auto;
+}
+
+.admin-chart-grid .chart-card:nth-child(1) {
+    border-top-color: rgba(248, 113, 113, 0.45);
+}
+
+.admin-chart-grid .chart-card:nth-child(2) {
+    border-top-color: rgba(74, 222, 128, 0.45);
+}
+
 .admin-chart-grid .chart-card {
     min-height: 300px;
+    height: 300px;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
 .admin-chart-grid .chart-card:nth-child(3) {
     grid-column: 1 / -1;
     min-height: 430px;
+    height: 430px;
+}
+
+.admin-chart-grid .chart-card:nth-child(3),
+.admin-chart-grid .chart-card:nth-child(4) {
+    margin-top: 1rem;
 }
 
 .admin-chart-grid .chart-card canvas {
     flex: 1;
     min-height: 0;
+    height: 100% !important;
+    max-height: 100%;
+}
+
+#admin-area-chart {
+    height: 260px !important;
+    max-height: 260px;
+}
+
+#admin-guru-bar,
+#admin-siswa-bar {
+    height: 220px !important;
+    max-height: 220px;
+}
+
+#admin-jurusan-pie {
+    height: 700px !important;
+    max-height: 700px;
 }
 
 .chart-legend {
@@ -1338,6 +1509,16 @@ html[data-theme="light"] .report-reply {
     border-radius: 50%;
     background: #ef4444;
     box-shadow: 0 10px 18px rgba(239, 68, 68, 0.35);
+    animation: report-badge-glow 1.6s ease-in-out infinite;
+}
+
+@keyframes report-badge-glow {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.28), 0 10px 18px rgba(239, 68, 68, 0.35);
+    }
+    50% {
+        box-shadow: 0 0 0 7px rgba(239, 68, 68, 0), 0 0 24px rgba(239, 68, 68, 0.62);
+    }
 }
 
 .report-body {
@@ -1373,7 +1554,29 @@ html[data-theme="light"] .report-reply {
     line-height: 1.55;
 }
 
+.report-attachment {
+    margin-top: 0.75rem;
+}
+
+.report-attachment a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: var(--accent);
+    font-size: 0.86rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.report-attachment a:hover {
+    text-decoration: underline;
+}
+
 .report-reply {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
     padding: 0.65rem 0.75rem;
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
@@ -1381,8 +1584,21 @@ html[data-theme="light"] .report-reply {
     margin-bottom: 0.5rem;
 }
 
+.report-reply strong {
+    flex-shrink: 0;
+}
+
+.report-reply > div {
+    flex: 1 1 0;
+    min-width: 0;
+    text-align: left;
+}
+
 .report-reply span {
     color: var(--text-muted);
+    flex-shrink: 0;
+    font-size: 0.9em;
+    white-space: nowrap;
 }
 
 .laporan-form-panel {
@@ -1411,4 +1627,106 @@ html[data-theme="light"] .sidebar-return {
 
 .sidebar-return.is-visible {
     transform: translateX(0);
+}
+
+.activity-log-table th {
+    font-size: 0.86rem;
+    color: var(--text);
+    background: transparent;
+}
+
+.activity-log-table td {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+}
+
+.activity-log-table td:nth-child(2) {
+    font-weight: 700;
+}
+
+.activity-log-table td:nth-child(3) {
+    color: var(--text-muted);
+}
+
+.activity-log-filters {
+    align-items: center;
+}
+
+.activity-date-filter {
+    min-width: 170px;
+}
+
+.activity-date-filter input {
+    min-height: 42px;
+}
+
+/* Sidebar icons + smooth nested menus */
+.nav-group-toggle {
+    justify-content: flex-start;
+}
+
+.nav-group-toggle::after {
+    margin-left: auto;
+    transition: transform 0.45s ease;
+}
+
+.nav-submenu {
+    display: flex !important;
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transform: translateY(-4px);
+    transition: max-height 0.55s ease, opacity 0.38s ease, transform 0.45s ease;
+}
+
+.nav-group.is-open .nav-submenu {
+    max-height: 16rem;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+body[data-profile-sidebar="closed"] .nav-group-toggle:not(:hover):not(.is-active) {
+    background: transparent !important;
+    color: var(--text-muted) !important;
+}
+
+body[data-profile-sidebar="closed"] .nav-group-toggle.is-active:not(:hover) {
+    background: transparent !important;
+    color: var(--text-muted) !important;
+}
+
+body[data-profile-sidebar="closed"] .nav-group.is-open .nav-submenu {
+    max-height: 0 !important;
+    opacity: 0 !important;
+    transform: translateY(-4px) !important;
+}
+
+/* Sidebar SVG icon masks. SVG files should use a single-color shape; CSS supplies the color. */
+.nav-menu a[data-view="beranda"]::before,
+.nav-menu a[href*="#beranda"]::before {
+    content: "";
+    background: currentColor;
+    -webkit-mask: url("assets/sidebarIcon/material-symbols--home-rounded.svg") center / contain no-repeat;
+    mask: url("assets/sidebaricon/material-symbols--home-rounded.svg") center / contain no-repeat;
+}
+
+.nav-group[data-nav-group="laporan"] .nav-group-toggle::before {
+    content: "";
+    background: currentColor;
+    -webkit-mask: url("assets/sidebarIcon/mdi--papers.svg") center / contain no-repeat;
+    mask: url("assets/sidebarIcon/mdi--papers.svg") center / contain no-repeat;
+}
+
+.nav-group[data-nav-group="absensi"] .nav-group-toggle::before {
+    content: "";
+    background: currentColor;
+    -webkit-mask: url("assets/sidebarIcon/mynaui--table-solid.svg") center / contain no-repeat;
+    mask: url("assets/sidebarIcon/mynaui--table-solid.svg") center / contain no-repeat;
+}
+
+.nav-menu a[href*="profil"]::before {
+    content: "";
+    background: currentColor;
+    -webkit-mask: url("assets/sidebarIcon/mdi--account.svg") center / contain no-repeat;
+    mask: url("assets/sidebarIcon/mdi--account.svg") center / contain no-repeat;
 }

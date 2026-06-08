@@ -52,6 +52,9 @@
                     <p class="page-sub" style="margin:0" id="hari-line-hadir"></p>
                     <p class="page-sub" style="margin:0;font-family:monospace;font-weight:600" id="timestamp-hadir">00:00:00</p>
                 </div>
+                <div id="hadir-time-banner" class="banner-info banner-warn hidden" role="status">
+                    Absensi hadir hanya bisa dikirim sampai pukul 09:00.
+                </div>
                 <div data-weekday-only="true">
                     <div class="selfie-box">
                         <span class="field-label">Selfie kehadiran</span>
@@ -657,6 +660,19 @@
                 return check.getHours() >= 14;
             }
 
+            function canSubmitHadir() {
+                var check = new Date();
+                return check.getHours() < 9 || (check.getHours() === 9 && check.getMinutes() === 0 && check.getSeconds() === 0);
+            }
+
+            function updateHadirLock() {
+                var submit = document.getElementById("hadir-submit");
+                var banner = document.getElementById("hadir-time-banner");
+                var locked = !isWeekday || !canSubmitHadir();
+                if (submit) submit.disabled = locked;
+                if (banner) banner.classList.toggle("hidden", !locked);
+            }
+
             function updatePulangLock() {
                 var submit = document.getElementById("pulang-submit");
                 var banner = document.getElementById("pulang-time-banner");
@@ -666,7 +682,9 @@
             }
 
             updateAttendanceNav();
+            updateHadirLock();
             updatePulangLock();
+            setInterval(updateHadirLock, 30000);
             setInterval(updatePulangLock, 30000);
             loadAttendanceStatus();
 
@@ -742,6 +760,11 @@
 
             document.getElementById("hadir-submit").addEventListener("click", function () {
                 showErr("hadir-foto-error", false);
+                updateHadirLock();
+                if (!canSubmitHadir()) {
+                    alert("Absensi hadir hanya bisa dikirim sampai pukul 09:00.");
+                    return;
+                }
                 if (hasTodayMode("hadir")) {
                     alert("Absensi hadir hari ini sudah terkirim. Lanjutkan ke absensi pulang.");
                     location.hash = "#pulang";

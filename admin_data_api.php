@@ -113,6 +113,23 @@ if ($method === "GET") {
 
     $type = $_GET["type"] ?? "murid";
     $meta = tableMeta($type);
+    $id = (int) ($_GET["id"] ?? 0);
+
+    if ($id > 0) {
+        if ($type === "murid") {
+            $stmt = $conn->prepare("SELECT id_siswa, nama_lengkap, nama_tampilan, nis, email, password, kelas, jurusan, rombel, tempat_lahir, tanggal_lahir, created_at FROM siswa WHERE id_siswa = ? LIMIT 1");
+        } elseif ($type === "walas") {
+            $stmt = $conn->prepare("SELECT id_walas, nama_lengkap, npsn, email, password, kelas, jurusan, rombel, tempat_lahir, tanggal_lahir, created_at FROM walas WHERE id_walas = ? LIMIT 1");
+        } else {
+            $stmt = $conn->prepare("SELECT id_bk, nama_lengkap, npsn, email, password, tempat_lahir, tanggal_lahir, created_at FROM bk WHERE id_bk = ? LIMIT 1");
+        }
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $row = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+        if (!$row) jsonResponse(["error" => "Detail tidak ditemukan"], 404);
+        jsonResponse(["record" => $row]);
+    }
 
     if ($type === "murid") {
         $kelas = trim($_GET["kelas"] ?? "");
@@ -136,15 +153,24 @@ if ($method === "GET") {
             $params[] = $jurusan;
             $types .= "s";
         }
+        $rombel = trim($_GET["rombel"] ?? "");
+        if ($rombel !== "") {
+            if (!validRombel($rombel)) {
+                jsonResponse(["error" => "Rombel tidak valid"], 422);
+            }
+            $sql .= " AND rombel = ?";
+            $params[] = $rombel;
+            $types .= "s";
+        }
         $sql .= " ORDER BY kelas ASC, jurusan ASC, nama_lengkap ASC";
         $stmt = $conn->prepare($sql);
         if ($params) $stmt->bind_param($types, ...$params);
         $stmt->execute();
         $result = $stmt->get_result();
     } else if ($type === "walas") {
-        $result = $conn->query("SELECT id_walas, nama_lengkap, npsn, kelas, jurusan, rombel, tempat_lahir, tanggal_lahir, created_at FROM walas ORDER BY kelas ASC, jurusan ASC, rombel ASC, nama_lengkap ASC");
+        $result = $conn->query("SELECT id_walas, nama_lengkap, npsn, email, kelas, jurusan, rombel, tempat_lahir, tanggal_lahir FROM walas ORDER BY kelas ASC, jurusan ASC, rombel ASC, nama_lengkap ASC");
     } else {
-        $result = $conn->query("SELECT " . $meta["id"] . ", nama_lengkap, npsn, tempat_lahir, tanggal_lahir, created_at FROM " . $meta["table"] . " ORDER BY nama_lengkap ASC");
+        $result = $conn->query("SELECT " . $meta["id"] . ", nama_lengkap, npsn, email, tempat_lahir, tanggal_lahir FROM " . $meta["table"] . " ORDER BY nama_lengkap ASC");
     }
 
     $rows = [];
@@ -203,6 +229,7 @@ if ($action === "create") {
         if ($email === "") $missing[] = "email";
         if ($kelas === "") $missing[] = "kelas";
         if ($jurusan === "") $missing[] = "jurusan";
+        if ($tanggal === "") $missing[] = "tanggal_lahir";
         if ($password === "") $missing[] = "password";
         if ($missing) {
             jsonResponse(["error" => "Field wajib belum diisi", "missing_fields" => $missing], 422);
@@ -235,8 +262,8 @@ if ($action === "create") {
         $kelas = clean("kelas");
         $jurusan = clean("jurusan");
         $rombel = clean("rombel");
-        if ($nama === "" || $npsn === "" || $password === "") {
-            jsonResponse(["error" => "Nama, NPSN, dan password wajib diisi"], 422);
+        if ($nama === "" || $npsn === "" || $password === "" || $tanggal === "") {
+            jsonResponse(["error" => "Nama, NPSN, password, dan tanggal lahir wajib diisi"], 422);
         }
         $npsn = makeUniqueNpsn($conn, $meta["table"], $npsn);
         if ($type === "walas") {

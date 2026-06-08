@@ -14,6 +14,8 @@ function db() {
         exit;
     }
     $conn->set_charset("utf8mb4");
+    ensureWalasEmailColumn($conn);
+    ensureBkEmailColumn($conn);
     return $conn;
 }
 
@@ -57,6 +59,68 @@ function ensureStudentProfileColumns($conn) {
 function ensureWalasRombelColumn($conn) {
     if (!dbColumnExists($conn, "walas", "rombel")) {
         dbTryAlter($conn, "ALTER TABLE walas ADD COLUMN rombel varchar(10) DEFAULT NULL AFTER jurusan");
+    }
+
+    $result = $conn->query("SELECT id_walas, nama_lengkap, kelas, jurusan, rombel FROM walas ORDER BY kelas ASC, jurusan ASC, id_walas ASC");
+    if (!$result) {
+        return;
+    }
+
+    $groups = [];
+    while ($row = $result->fetch_assoc()) {
+        $key = $row["kelas"] . "|" . strtolower(trim($row["jurusan"]));
+        if (!isset($groups[$key])) {
+            $groups[$key] = [];
+        }
+        $groups[$key][] = $row;
+    }
+
+    foreach ($groups as $group) {
+        $has1 = false;
+        $has2 = false;
+        $blanks = [];
+        foreach ($group as $row) {
+            $rombel = trim((string) $row["rombel"]);
+            if ($rombel === "1") {
+                $has1 = true;
+            } elseif ($rombel === "2") {
+                $has2 = true;
+            } else {
+                $blanks[] = $row;
+            }
+        }
+
+        if (!$has1 && count($blanks) > 0) {
+            $row = array_shift($blanks);
+            $stmt = $conn->prepare("UPDATE walas SET rombel = '1' WHERE id_walas = ?");
+            $stmt->bind_param("i", $row["id_walas"]);
+            $stmt->execute();
+            $stmt->close();
+            $has1 = true;
+        }
+
+        if (!$has2 && count($blanks) > 0) {
+            $row = array_shift($blanks);
+            $stmt = $conn->prepare("UPDATE walas SET rombel = '2' WHERE id_walas = ?");
+            $stmt->bind_param("i", $row["id_walas"]);
+            $stmt->execute();
+            $stmt->close();
+            $has2 = true;
+        }
+    }
+
+    $conn->query("DELETE FROM walas WHERE nama_lengkap LIKE '% (Rombel 2)'");
+}
+
+function ensureWalasEmailColumn($conn) {
+    if (!dbColumnExists($conn, "walas", "email")) {
+        dbTryAlter($conn, "ALTER TABLE walas ADD COLUMN email varchar(100) DEFAULT NULL UNIQUE AFTER password");
+    }
+}
+
+function ensureBkEmailColumn($conn) {
+    if (!dbColumnExists($conn, "bk", "email")) {
+        dbTryAlter($conn, "ALTER TABLE bk ADD COLUMN email varchar(100) DEFAULT NULL UNIQUE AFTER password");
     }
 }
 

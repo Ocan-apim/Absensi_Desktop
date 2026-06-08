@@ -15,11 +15,23 @@
 
     <div class="app-shell">
         <aside class="sidebar">
-            <div class="sidebar-brand">Absensi · Admin</div>
+            <div class="sidebar-brand">Absensi - Admin</div>
             <nav class="nav-menu" aria-label="Menu utama">
-                <a href="admin-dashboard.html">Beranda</a>
-                <a href="#">Data siswa <span style="opacity:0.5">(nanti)</span></a>
-                <a href="#">Laporan <span style="opacity:0.5">(nanti)</span></a>
+                <a href="admin-dashboard.html#beranda" data-view="beranda">Beranda</a>
+                <div class="nav-group" data-nav-group="data">
+                    <button type="button" class="nav-group-toggle" data-nav-parent="data" data-nav-default="data-staff" aria-expanded="false">Data</button>
+                    <div class="nav-submenu">
+                        <a href="admin-dashboard.html#data-staff" data-view="data-staff">Data Staff</a>
+                        <a href="admin-dashboard.html#data-murid" data-view="data-murid">Data Murid</a>
+                    </div>
+                </div>
+                <div class="nav-group" data-nav-group="laporan">
+                    <button type="button" class="nav-group-toggle" data-nav-parent="laporan" data-nav-default="laporan-aktivitas" aria-expanded="false">Laporan</button>
+                    <div class="nav-submenu">
+                        <a href="admin-dashboard.html#laporan-aktivitas" data-view="laporan-aktivitas">Aktivitas</a>
+                        <a href="admin-dashboard.html#laporan-bk" data-view="laporan-bk">BK</a>
+                    </div>
+                </div>
                 <a href="register.html">Membuat Akun Baru</a>
                 <a href="admin-profil.html" aria-current="page">Profil</a>
             </nav>

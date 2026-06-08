@@ -45,8 +45,20 @@
             </div>
 
             <section id="view-beranda" class="view-panel panel" data-view-panel="beranda">
-                <h2>Beranda</h2>
-                <p class="page-sub" style="margin-top:0.35rem">Masih kosong.</p>
+                <h2>Ringkasan laporan</h2>
+                <p class="page-sub" style="margin-top:0.35rem">Pantau laporan masuk dan tindak lanjut BK.</p>
+                <div class="stub-grid">
+                    <div class="stub-card">Laporan baru: <strong id="bk-count-new">0</strong></div>
+                    <div class="stub-card">Ongoing: <strong id="bk-count-ongoing">0</strong></div>
+                    <div class="stub-card">Finished: <strong id="bk-count-finished">0</strong></div>
+                </div>
+                <div class="section-head" style="margin-top:1.25rem">
+                    <div class="section-head-main">
+                        <h2>Prioritas inbox</h2>
+                        <p class="page-sub" style="margin-bottom:0">Laporan terbaru yang belum dibalas.</p>
+                    </div>
+                </div>
+                <div id="bk-priority-list" class="stack"></div>
             </section>
 
             <section id="view-laporan-inbox" class="view-panel panel wide-panel is-hidden" data-view-panel="laporan-inbox" hidden>
@@ -103,18 +115,45 @@
                     .then(function (res) { return res.json(); })
                     .then(function (data) {
                         cachedLaporan = data.laporan || [];
+                        renderBeranda();
                         renderLaporan();
                         renderRekap();
                     });
             }
 
+            function renderBeranda() {
+                var baru = cachedLaporan.filter(function (item) {
+                    return item.status === "dikirim" || item.latest_reply_role === "walas";
+                });
+                var ongoing = cachedLaporan.filter(function (item) {
+                    return item.status !== "diselesaikan";
+                });
+                var finished = cachedLaporan.filter(function (item) {
+                    return item.status === "diselesaikan";
+                });
+                document.getElementById("bk-count-new").textContent = baru.length;
+                document.getElementById("bk-count-ongoing").textContent = ongoing.length;
+                document.getElementById("bk-count-finished").textContent = finished.length;
+
+                var list = document.getElementById("bk-priority-list");
+                if (!list) return;
+                var priority = baru.slice(0, 5);
+                list.innerHTML = priority.length ? priority.map(function (item) {
+                    return '<article class="report-card" data-open="false"><span class="report-badge" aria-label="Laporan baru"></span><button type="button" class="report-head" data-report-toggle><span class="report-from">' + escapeHtml(item.walas_nama || item.walas_npsn || "-") + '</span><span class="report-date">' + escapeHtml(item.created_at) + '</span></button><div class="report-body"><div class="report-subject">' + escapeHtml(item.subjek) + '</div><div class="report-meta">Status: ' + escapeHtml(item.status) + '</div><div class="report-text">' + escapeHtml(item.isi_laporan) + '</div></div></article>';
+                }).join("") : '<p class="status-note">Tidak ada laporan prioritas.</p>';
+            }
+
             function renderLaporan() {
                 var list = document.getElementById("laporan-list");
-                list.innerHTML = cachedLaporan.length ? cachedLaporan.map(function (item) {
-                    var hasNewReplyFromWalas = item.latest_reply_role === "walas";
+                var inboxItems = cachedLaporan.filter(function (item) {
+                    return item.status !== "diselesaikan";
+                });
+                list.innerHTML = inboxItems.length ? inboxItems.map(function (item) {
+                    var hasNewReplyFromWalas = item.status === "dikirim" || item.latest_reply_role === "walas";
                     var badge = hasNewReplyFromWalas ? '<span class="report-badge" aria-label="Balasan baru dari walas"></span>' : '';
+                    var attachment = item.lampiran ? '<div class="report-attachment"><a href="' + escapeHtml(item.lampiran) + '" target="_blank" rel="noopener">Lihat lampiran</a></div>' : '';
                     var replies = item.balasan && item.balasan.length ? item.balasan.map(function (b) {
-                        return '<div class="report-reply"><strong>Balasan ' + escapeHtml(b.pengirim_role) + ':</strong> ' + escapeHtml(b.isi_balasan) + ' <span>(' + escapeHtml(b.created_at) + ')</span></div>';
+                        return '<div class="report-reply"><div><strong>Balasan ' + escapeHtml(b.pengirim_role) + ':</strong> ' + escapeHtml(b.isi_balasan) + '</div><span>' + escapeHtml(b.created_at) + '</span></div>';
                     }).join("") : '<div class="report-reply">Belum ada balasan.</div>';
                     var canReply = item.latest_reply_role !== "bk" && item.status !== "diselesaikan";
                     var replyBlock = canReply ? (
@@ -133,6 +172,7 @@
                             '<div class="report-subject">Subject: ' + escapeHtml(item.subjek) + '</div>' +
                             '<div class="report-meta">Tujuan: ' + escapeHtml(item.tujuan_role) + ' | Status: ' + escapeHtml(item.status) + '</div>' +
                             '<div class="report-text">' + escapeHtml(item.isi_laporan) + '</div>' +
+                            attachment +
                             '<div class="report-replies">' + replies + '</div>' +
                             replyBlock +
                         '</div>' +

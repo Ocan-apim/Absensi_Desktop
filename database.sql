@@ -66,12 +66,14 @@ CREATE TABLE `bk` (
   `id_bk` int NOT NULL AUTO_INCREMENT,
   `nama_lengkap` varchar(100) NOT NULL,
   `npsn` varchar(20) NOT NULL,
+  `password` varchar(255) NOT NULL,
+  `email` varchar(100) DEFAULT NULL,
   `tempat_lahir` varchar(50) DEFAULT NULL,
   `tanggal_lahir` date DEFAULT NULL,
-  `password` varchar(255) NOT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id_bk`),
-  UNIQUE KEY `npsn` (`npsn`)
+  UNIQUE KEY `npsn` (`npsn`),
+  UNIQUE KEY `email` (`email`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1077 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -251,15 +253,17 @@ CREATE TABLE `walas` (
   `id_walas` int NOT NULL AUTO_INCREMENT,
   `nama_lengkap` varchar(100) NOT NULL,
   `npsn` varchar(20) NOT NULL,
+  `password` varchar(255) NOT NULL,
+  `email` varchar(100) DEFAULT NULL,
   `tempat_lahir` varchar(50) DEFAULT NULL,
   `tanggal_lahir` date DEFAULT NULL,
-  `password` varchar(255) NOT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `kelas` varchar(2) DEFAULT NULL,
   `jurusan` varchar(10) DEFAULT NULL,
   `rombel` varchar(10) DEFAULT NULL,
   PRIMARY KEY (`id_walas`),
-  UNIQUE KEY `npsn` (`npsn`)
+  UNIQUE KEY `npsn` (`npsn`),
+  UNIQUE KEY `email` (`email`)
 ) ENGINE=InnoDB AUTO_INCREMENT=120 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 

@@ -28,23 +28,29 @@ export function formatDateIso(d: Date) {
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 }
 
+function readAdminAuth(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    let raw = sessionStorage.getItem("absensi_auth");
+    if (!raw) {
+      raw = localStorage.getItem("absensi_auth");
+    }
+    if (!raw) return null;
+    const j = JSON.parse(raw) as { role?: string; username?: string; email?: string };
+    if (j.role !== "admin") return null;
+    return String(j.username || j.email || "").trim() || null;
+  } catch {
+    return null;
+  }
+}
+
 export function getAdminStatsUsername(): string | null {
   if (typeof window === "undefined") {
     return process.env.NEXT_PUBLIC_ADMIN_STATS_USERNAME?.trim() || null;
   }
-  try {
-    const raw = sessionStorage.getItem("absensi_auth");
-    if (raw) {
-      const j = JSON.parse(raw) as { role?: string; username?: string };
-      if (j.role === "admin" && j.username) {
-        return String(j.username).trim();
-      }
-    }
-  } catch {
-    /* ignore */
-  }
-  const env = process.env.NEXT_PUBLIC_ADMIN_STATS_USERNAME?.trim();
-  return env || null;
+  const sessionUsername = readAdminAuth();
+  if (sessionUsername) return sessionUsername;
+  return process.env.NEXT_PUBLIC_ADMIN_STATS_USERNAME?.trim() || null;
 }
 
 export function getPhpApiBase(): string | null {

@@ -215,10 +215,10 @@
                 </div>
                 <form id="laporan-form" class="stack laporan-form-panel">
                     <div>
-                        <label class="field-label" for="laporan-tujuan">Tujuan</label>
+                        <label class="field-label" for="laporan-tujuan">Tujuan (Petugas BK)</label>
                         <div class="input-wrap">
                             <select id="laporan-tujuan" required>
-                                <option value="bk">BK / Kesiswaan</option>
+                                <option value="">Pilih petugas BK...</option>
                             </select>
                         </div>
                     </div>
@@ -232,6 +232,12 @@
                         <label class="field-label" for="laporan-isi">Isi laporan</label>
                         <div class="input-wrap">
                             <textarea id="laporan-isi" placeholder="Tuliskan laporan untuk BK atau kesiswaan..." required></textarea>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="field-label" for="laporan-lampiran">Add file</label>
+                        <div class="input-wrap">
+                            <input type="file" id="laporan-lampiran" accept=".pdf,.jpg,.jpeg,.png,.webp,image/*,application/pdf">
                         </div>
                     </div>
                     <div style="display:flex;justify-content:flex-end;gap:0.5rem;flex-wrap:wrap">
@@ -573,13 +579,14 @@
 
             function renderReportCard(item, mode) {
                 var hasNewReplyFromBk = item.latest_reply_role === "bk";
-                var badge = hasNewReplyFromBk ? '<span class="report-badge" aria-label="Balasan baru dari BK"></span>' : '';
+                var badge = mode === "inbox" && hasNewReplyFromBk ? '<span class="report-badge" aria-label="Balasan baru dari BK"></span>' : '';
+                var attachment = item.lampiran ? '<div class="report-attachment"><a href="' + escapeHtml(item.lampiran) + '" target="_blank" rel="noopener">Lihat lampiran</a></div>' : '';
                 var replies = item.balasan && item.balasan.length ? item.balasan.map(function (b) {
-                    return '<div class="report-reply"><strong>' + escapeHtml((b.pengirim_role || "").toUpperCase()) + ':</strong> ' + escapeHtml(b.isi_balasan) + ' <span>(' + escapeHtml(b.created_at) + ')</span></div>';
+                    return '<div class="report-reply"><div><strong>' + escapeHtml((b.pengirim_role || "").toUpperCase()) + ':</strong> ' + escapeHtml(b.isi_balasan) + '</div><span>' + escapeHtml(b.created_at) + '</span></div>';
                 }).join("") : '<div class="report-reply">Belum ada balasan.</div>';
                 var actions = '';
                 if (mode === "inbox" && item.status !== "diselesaikan") {
-                    var canReply = item.latest_reply_role !== "walas";
+                    var canReply = item.status === "dibalas" && item.latest_reply_role === "bk";
                     if (canReply) {
                         actions += '<div style="display:flex;justify-content:flex-end;gap:0.5rem;flex-wrap:wrap;margin-top:0.5rem"><button type="button" class="btn-secondary js-report-approve" data-id="' + item.id_laporan + '">Selesaikan</button></div>';
                         actions += '<div class="input-wrap" style="margin-top:0.75rem"><textarea class="js-report-reply-text" data-id="' + item.id_laporan + '" placeholder="Tulis balasan ulang..."></textarea></div>' +
@@ -603,6 +610,7 @@
                         '<div class="report-subject">Subject: ' + escapeHtml(item.subjek) + '</div>' +
                         '<div class="report-meta">Status: ' + escapeHtml(item.status) + '</div>' +
                         '<div class="report-text">' + escapeHtml(item.isi_laporan) + '</div>' +
+                        attachment +
                         '<div class="report-replies">' + replies + '</div>' +
                         actions +
                     '</div>' +
@@ -619,7 +627,7 @@
 
             function renderLaporanViews() {
                 renderReportList("laporan-inbox-list", cachedReports.filter(function (item) {
-                    return item.status === "dibalas";
+                    return item.status === "dikirim" || item.status === "dibalas";
                 }), "inbox", "Belum ada inbox laporan.");
                 renderReportList("laporan-riwayat-list", cachedReports.filter(function (item) {
                     return item.status === "diselesaikan";
@@ -706,6 +714,7 @@
                 document.getElementById("toolbar-desc").textContent = TOOLBAR[id].desc;
                 renderRekap();
                 if (id.indexOf("laporan-") === 0) loadLaporan();
+                if (id === "laporan-baru") loadBkList();
                 if (id === "rekap") setReportMode(reportMode);
                 if (id === "daftar-siswa") refreshModeData("students");
                 if (window.AbsensiTheme && AbsensiTheme.syncFooter) AbsensiTheme.syncFooter();
@@ -800,23 +809,47 @@
             });
             setInterval(loadAbsensiRecords, 30000);
 
+            function loadBkList() {
+                var select = document.getElementById("laporan-tujuan");
+                if (!select) return;
+                fetch("admin_data_api.php?type=bk")
+                    .then(function (res) { return res.json(); })
+                    .then(function (data) {
+                        var records = data.records || [];
+                        var options = '<option value="">Pilih petugas BK...</option>';
+                        records.forEach(function (bk) {
+                            options += '<option value="' + bk.id_bk + '">' + (bk.nama_lengkap || "Tanpa nama") + '</option>';
+                        });
+                        select.innerHTML = options;
+                    })
+                    .catch(function (err) {
+                        select.innerHTML = '<option value="">Error memuat data BK</option>';
+                    });
+            }
+
             document.getElementById("laporan-form").addEventListener("submit", function (e) {
                 e.preventDefault();
                 var msg = document.getElementById("laporan-msg");
                 var formData = new FormData();
                 formData.append("action", "create");
                 formData.append("username", session.username || "");
-                formData.append("tujuan_role", document.getElementById("laporan-tujuan").value);
+                formData.append("id_bk", document.getElementById("laporan-tujuan").value);
                 formData.append("subjek", document.getElementById("laporan-subjek").value.trim());
                 formData.append("isi_laporan", document.getElementById("laporan-isi").value.trim());
+                var lampiran = document.getElementById("laporan-lampiran");
+                if (lampiran && lampiran.files && lampiran.files[0]) {
+                    formData.append("lampiran", lampiran.files[0], lampiran.files[0].name);
+                }
 
                 fetch("laporan_api.php", { method: "POST", body: formData })
                     .then(parseJsonResponse)
                     .then(function () {
                         document.getElementById("laporan-subjek").value = "";
                         document.getElementById("laporan-isi").value = "";
+                        if (lampiran) lampiran.value = "";
                         msg.textContent = "Laporan terkirim.";
                         msg.classList.remove("hidden");
+                        location.hash = "#laporan-inbox";
                         loadLaporan();
                     })
                     .catch(function (err) {

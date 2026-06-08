@@ -68,6 +68,11 @@
         }
         .register-shell {
             width: 100%;
+            max-width: 860px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             transition: transform 0.36s ease;
         }
         body.sidebar-open .register-shell {
@@ -184,6 +189,16 @@
                 display: none;
             }
         }
+        .glass-card {
+            width: min(100% - 2rem, 860px);
+            margin-left: auto !important;
+            margin-right: auto !important;
+        }
+
+        #regForm {
+            margin-left: auto;
+            margin-right: auto;
+        }
     </style>
 </head>
 <body>
@@ -192,13 +207,25 @@
         <span>Kembali</span>
     </button>
 
-    <aside id="return-sidebar" class="sidebar-return" aria-hidden="true">
-        <div class="sidebar-brand">Absensi · Admin</div>
+    <aside id="return-sidebar" class="sidebar sidebar-return" aria-hidden="true">
+        <div class="sidebar-brand">Absensi - Admin</div>
         <nav class="nav-menu" aria-label="Menu kembali">
-            <a href="admin-dashboard.html">Beranda</a>
-            <a href="#">Data siswa <span style="opacity:0.5">(nanti)</span></a>
-            <a href="#">Laporan <span style="opacity:0.5">(nanti)</span></a>
-            <a href="register.html" aria-current="page">Membuat Akun Baru</a>
+            <a href="admin-dashboard.html#beranda" data-view="beranda">Beranda</a>
+            <div class="nav-group" data-nav-group="data">
+                <button type="button" class="nav-group-toggle" data-nav-parent="data" data-nav-default="data-staff" aria-expanded="false">Data</button>
+                <div class="nav-submenu">
+                    <a href="admin-dashboard.html#data-staff" data-view="data-staff">Data Staff</a>
+                    <a href="admin-dashboard.html#data-murid" data-view="data-murid">Data Siswa</a>
+                </div>
+            </div>
+            <div class="nav-group" data-nav-group="laporan">
+                <button type="button" class="nav-group-toggle" data-nav-parent="laporan" data-nav-default="laporan-aktivitas" aria-expanded="false">Laporan</button>
+                <div class="nav-submenu">
+                    <a href="admin-dashboard.html#laporan-aktivitas" data-view="laporan-aktivitas">Aktivitas</a>
+                    <a href="admin-dashboard.html#laporan-bk" data-view="laporan-bk">BK</a>
+                </div>
+            </div>
+            <a href="register.html" data-view="register" aria-current="page">Membuat Akun Baru</a>
             <a href="admin-profil.html">Profil</a>
         </nav>
         <div class="sidebar-footer">
@@ -238,7 +265,7 @@
                         </div>
                         <div class="space-y-1">
                             <label class="text-xs text-gray-400 ml-1">Tanggal Lahir</label>
-                            <input name="tanggal_lahir" type="date" class="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-3 text-sm glow-input">
+                            <input name="tanggal_lahir" type="date" required class="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-3 text-sm glow-input">
                         </div>
                     </div>
                 </div>
@@ -268,9 +295,8 @@
                     <div class="space-y-1">
                         <label class="text-xs text-gray-400 ml-1">Rombel</label>
                         <select name="rombel" id="reg-rombel" class="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-3 text-sm glow-input">
-                            <option value="">Tanpa rombel</option>
-                            <option value="1">Kelas 1</option>
-                            <option value="2">Kelas 2</option>
+                            <option value="1">Rombel 1</option>
+                            <option value="2">Rombel 2</option>
                         </select>
                     </div>
                     <div class="space-y-1">
@@ -313,9 +339,8 @@
                         <div class="space-y-1">
                             <label class="text-xs text-gray-400 ml-1">Rombel</label>
                             <select name="rombel" id="walas-rombel" class="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-3 text-sm glow-input">
-                                <option value="">Tanpa rombel</option>
-                                <option value="1">Kelas 1</option>
-                                <option value="2">Kelas 2</option>
+                                <option value="1">Rombel 1</option>
+                                <option value="2">Rombel 2</option>
                             </select>
                         </div>
                     </div>
@@ -402,6 +427,9 @@
         document.getElementById('regForm').addEventListener('submit', function (e) {
             e.preventDefault();
             var form = e.currentTarget;
+            if (!form.reportValidity()) {
+                return;
+            }
             var formData = new FormData(form);
             formData.append('action', 'create');
             var s = AbsensiAuth.get();

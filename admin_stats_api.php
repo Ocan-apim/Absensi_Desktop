@@ -1,13 +1,12 @@
 <?php
 /**
- * Statistik dashboard admin: kehadiran siswa (hadir), guru/walas (walas_hadir), distribusi jurusan.
+ * Statistik dashboard admin: siswa hadir vs siswa tidak hadir, distribusi jurusan.
  *
  * GET params:
  *   username (wajib) — harus cocok dengan baris di tabel `admin` (username atau email).
  *   chart_month (opsional) — YYYY-MM, default bulan dari week_start / hari ini.
  *   week_start (opsional) — YYYY-MM-DD (tanggal apa pun dalam minggu yang dipilih); default Sen minggu ini.
  *
- * Impor dulu: uploads/migration_admin_dashboard_walas_hadir.sql
  */
 require_once __DIR__ . "/db.php";
 
@@ -43,14 +42,6 @@ $stmt->close();
 
 if (!$ok) {
     jsonResponse(["error" => "Akses ditolak"], 403);
-}
-
-$tWalas = $conn->query("SHOW TABLES LIKE 'walas_hadir'");
-if (!$tWalas || $tWalas->num_rows < 1) {
-    jsonResponse([
-        "error" => "Tabel walas_hadir belum ada. Impor berkas uploads/migration_admin_dashboard_walas_hadir.sql lalu coba lagi.",
-        "code" => "migration_walas_hadir_missing",
-    ], 503);
 }
 
 $tz = new DateTimeZone("Asia/Jakarta");
@@ -90,6 +81,25 @@ $daysInMonth = (int) $monthEndObj->format("d");
 
 $weekFrom = $monday->format("Y-m-d");
 $weekTo = $sunday->format("Y-m-d");
+$jurusanFilter = strtolower(trim($_GET["jurusan"] ?? ""));
+$jurusanSql = $jurusanFilter !== "" ? " AND LOWER(TRIM(s.jurusan)) = ?" : "";
+
+function countStudentsInScope($conn, $jurusanFilter) {
+    $sql = "SELECT COUNT(*) AS cnt FROM siswa s WHERE 1=1";
+    if ($jurusanFilter !== "") {
+        $sql .= " AND LOWER(TRIM(s.jurusan)) = ?";
+    }
+    $stmt = $conn->prepare($sql);
+    if ($jurusanFilter !== "") {
+        $stmt->bind_param("s", $jurusanFilter);
+    }
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    return (int) ($row["cnt"] ?? 0);
+}
+
+$totalStudentsInScope = countStudentsInScope($conn, $jurusanFilter);
 
 function fillDaysMap($conn, $sql, $types, $params, $daysInMonth) {
     $stmt = $conn->prepare($sql);
@@ -111,44 +121,44 @@ function fillDaysMap($conn, $sql, $types, $params, $daysInMonth) {
 $siswaByDay = fillDaysMap(
     $conn,
     "SELECT DAY(tanggal) AS d, COUNT(*) AS cnt
-     FROM hadir
-     WHERE tanggal BETWEEN ? AND ?
+     FROM hadir h
+     JOIN siswa s ON s.id_siswa = h.id_siswa
+     WHERE tanggal BETWEEN ? AND ?" . $jurusanSql . "
      GROUP BY DAY(tanggal)",
-    "ss",
-    [$monthStart, $monthEnd],
-    $daysInMonth
-);
-
-$guruByDay = fillDaysMap(
-    $conn,
-    "SELECT DAY(tanggal) AS d, COUNT(*) AS cnt
-     FROM walas_hadir
-     WHERE tanggal BETWEEN ? AND ?
-     GROUP BY DAY(tanggal)",
-    "ss",
-    [$monthStart, $monthEnd],
+    $jurusanFilter !== "" ? "sss" : "ss",
+    $jurusanFilter !== "" ? [$monthStart, $monthEnd, $jurusanFilter] : [$monthStart, $monthEnd],
     $daysInMonth
 );
 
 $areaByDay = [];
 for ($i = 0; $i < count($siswaByDay); $i++) {
+    $hadirCount = $siswaByDay[$i]["count"];
+    $tidakHadirCount = max(0, $totalStudentsInScope - $hadirCount);
     $areaByDay[] = [
         "day" => $siswaByDay[$i]["day"],
-        "guru" => $guruByDay[$i]["count"],
-        "siswa" => $siswaByDay[$i]["count"],
+        "guru" => $tidakHadirCount,
+        "tidak_hadir" => $tidakHadirCount,
+        "siswa" => $hadirCount,
+        "hadir" => $hadirCount,
     ];
 }
 
 $labels = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"];
 
-function weekdayBars($conn, $table, $weekFrom, $weekTo) {
+function weekdayBars($conn, $table, $weekFrom, $weekTo, $jurusanFilter = "") {
     global $labels;
+    $jurusanSql = $jurusanFilter !== "" ? " AND LOWER(TRIM(s.jurusan)) = ?" : "";
     $sql = "SELECT WEEKDAY(tanggal) AS wd, COUNT(*) AS cnt
-            FROM `$table`
-            WHERE tanggal BETWEEN ? AND ?
+            FROM `$table` t
+            JOIN siswa s ON s.id_siswa = t.id_siswa
+            WHERE tanggal BETWEEN ? AND ?" . $jurusanSql . "
             GROUP BY WEEKDAY(tanggal)";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ss", $weekFrom, $weekTo);
+    if ($jurusanFilter !== "") {
+        $stmt->bind_param("sss", $weekFrom, $weekTo, $jurusanFilter);
+    } else {
+        $stmt->bind_param("ss", $weekFrom, $weekTo);
+    }
     $stmt->execute();
     $res = $stmt->get_result();
     $map = array_fill(0, 7, 0);
@@ -163,8 +173,13 @@ function weekdayBars($conn, $table, $weekFrom, $weekTo) {
     return $out;
 }
 
-$weekBarsGuru = weekdayBars($conn, "walas_hadir", $weekFrom, $weekTo);
-$weekBarsSiswa = weekdayBars($conn, "hadir", $weekFrom, $weekTo);
+$weekBarsSiswa = weekdayBars($conn, "hadir", $weekFrom, $weekTo, $jurusanFilter);
+$weekBarsTidakHadir = array_map(function ($row) use ($totalStudentsInScope) {
+    return [
+        "label" => $row["label"],
+        "count" => max(0, $totalStudentsInScope - (int) $row["count"]),
+    ];
+}, $weekBarsSiswa);
 
 $canonical = ["PM", "DKV", "MPLB", "TJKT", "PPLG", "PH"];
 $aliases = [
@@ -226,8 +241,10 @@ jsonResponse([
     ],
     "areaByDay" => $areaByDay,
     "weekBars" => [
-        "guru" => $weekBarsGuru,
+        "guru" => $weekBarsTidakHadir,
+        "tidak_hadir" => $weekBarsTidakHadir,
         "siswa" => $weekBarsSiswa,
+        "hadir" => $weekBarsSiswa,
     ],
     "jurusan" => $jurusan,
 ]);
