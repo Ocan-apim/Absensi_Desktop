@@ -10,7 +10,7 @@ const nextConfig: NextConfig = {
   images: { unoptimized: true },
   // HTTPS configuration for dev server
   devIndicators: {
-    buildActivityPosition: "bottom-right",
+    position: "bottom-right",
   },
   experimental: {
     serverMinification: false,
