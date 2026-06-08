@@ -7,11 +7,11 @@ if (file_exists(__DIR__ . "/.env.php")) {
 }
 
 function db() {
-    $host = getenv("MYSQLHOST") ?: getenv("DB_HOST") ?: "127.0.0.1";
-    $user = getenv("MYSQLUSER") ?: getenv("DB_USER") ?: "root";
-    $password = getenv("MYSQLPASSWORD") ?: getenv("DB_PASSWORD") ?: "";
-    $database = getenv("MYSQLDATABASE") ?: getenv("DB_NAME") ?: "absensi";
-    $port = (int) (getenv("MYSQLPORT") ?: getenv("DB_PORT") ?: 3306);
+    $host = getenv("MYSQLHOST") ?: getenv("DB_HOST") ?: (defined("DB_HOST") ? DB_HOST : "127.0.0.1");
+    $user = getenv("MYSQLUSER") ?: getenv("DB_USER") ?: (defined("DB_USER") ? DB_USER : "root");
+    $password = getenv("MYSQLPASSWORD") ?: getenv("DB_PASSWORD") ?: (defined("DB_PASS") ? DB_PASS : "");
+    $database = getenv("MYSQLDATABASE") ?: getenv("DB_NAME") ?: (defined("DB_NAME") ? DB_NAME : "absensi");
+    $port = (int) (getenv("MYSQLPORT") ?: getenv("DB_PORT") ?: (defined("DB_PORT") ? DB_PORT : 3306));
 
     $conn = new mysqli($host, $user, $password, $database, $port);
      if ($conn->connect_error) {
