@@ -7,12 +7,19 @@ if (file_exists(__DIR__ . "/.env.php")) {
 }
 
 function db() {
-    $conn = new mysqli("127.0.0.1", "root", "", "absensi");
-    if ($conn->connect_error) {
+    $host = "junction.proxy.rlwy.net";
+    $user = "root";
+    $password = "wnVglfQckkKDwroQwAgWxjONaXHGHiiH";
+    $database = "railway";
+    $port = 51577;
+
+    $conn = new mysqli($host, $user, $password, $database, $port);
+     if ($conn->connect_error) {
         http_response_code(500);
         echo json_encode(["error" => "Koneksi database gagal"]);
         exit;
     }
+
     $conn->set_charset("utf8mb4");
     ensureWalasEmailColumn($conn);
     ensureBkEmailColumn($conn);
