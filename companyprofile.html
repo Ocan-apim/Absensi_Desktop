@@ -1,227 +1,985 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Company Landing Page</title>
+  <title>Absensi SMK Citra Negara</title>
 
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: Arial, sans-serif;
-    }
-
     :root {
-      --cp-bg: #060b14;
-      --cp-text: #f1f5f9;
-      --cp-surface: rgba(15, 23, 42, 0.78);
-      --cp-muted: #94a3b8;
-      --cp-border: rgba(148, 163, 184, 0.12);
-      --cp-button: #22d3ee;
-      --cp-button-hover: #06b6d4;
+      --bg: #070b14;
+      --ink: #f1f5f9;
+      --muted: #94a3b8;
+      --panel: rgba(15, 23, 42, 0.88);
+      --panel-soft: #0f172a;
+      --line: rgba(148, 163, 184, 0.12);
+      --accent: #22d3ee;
+      --accent-dark: #06b6d4;
+      --accent-soft: rgba(34, 211, 238, 0.15);
+      --indigo: #6366f1;
+      --danger: #f87171;
+      --shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+      --radius: 8px;
     }
 
     html[data-theme="light"] {
-      --cp-bg: #f4f7fb;
-      --cp-text: #122132;
-      --cp-surface: rgba(255, 255, 255, 0.92);
-      --cp-muted: #5b6b7f;
-      --cp-border: rgba(15, 23, 42, 0.08);
-      --cp-button: #0f766e;
-      --cp-button-hover: #115e59;
+      --bg: #f4f7fb;
+      --ink: #102133;
+      --muted: #5b6b7f;
+      --panel: rgba(255, 255, 255, 0.92);
+      --panel-soft: #ffffff;
+      --line: rgba(15, 23, 42, 0.12);
+      --accent: #0f766e;
+      --accent-dark: #115e59;
+      --accent-soft: rgba(15, 118, 110, 0.1);
+      --indigo: #4f46e5;
+      --danger: #f87171;
+      --shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
     }
 
     body {
-      background: var(--cp-bg);
-      color: var(--cp-text);
-    }
-
-    /* HERO SECTION */
-    .hero {
-      height: 100vh;
-      background: linear-gradient(
-          rgba(50, 20, 100, 0.6),
-          rgba(9, 14, 116, 0.6)
-        ),
-        url("uploads/CompanyProfile.jpg") center/cover no-repeat;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      color: white;
-      padding: 20px;
-    }
-
-    html[data-theme="light"] .hero {
-      background: linear-gradient(rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.38)), url("uploads/CompanyProfile.jpg") center/cover no-repeat;
-      color: var(--cp-text);
-    }
-
-    .hero-content h1 {
-      font-size: 4rem;
-      margin-bottom: 15px;
-    }
-
-    .hero-content p {
-      font-size: 1.2rem;
-      margin-bottom: 25px;
-    }
-
-    .login-btn {
-      padding: 14px 32px;
-      border: none;
-      background: var(--cp-button);
-      color: white;
-      font-size: 1rem;
-      cursor: pointer;
-      border-radius: 6px;
-      transition: 0.3s;
-    }
-
-    .login-btn:hover {
-      background: var(--cp-button-hover);
-    }
-
-    .login-btn a {
-        text-decoration: none;
-        color:white;
-    }
-
-    /* WHAT WE STAND FOR */
-    .values-section {
-      background: var(--cp-surface);
-      padding: 80px 10%;
-      text-align: center;
-    }
-
-    .values-section h2 {
-      font-size: 2.5rem;
-      margin-bottom: 50px;
-    }
-
-    .values-container {
-      display: flex;
-      justify-content: center;
-      gap: 40px;
-      flex-wrap: wrap;
-    }
-
-    .value-card {
-      background: var(--cp-surface);
-      padding: 30px;
-      width: 300px;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-      border: 1px solid var(--cp-border);
-      transition: 0.3s;
-    }
-
-    .value-card:hover {
-      transform: translateY(-5px);
-    }
-
-    /* LOGO PLACEHOLDER */
-    .logo-placeholder {
-      width: 70px;
-      height: 70px;
-      border: 2px dashed var(--cp-border);
-      border-radius: 12px;
-      margin: 0 auto 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--cp-muted);
-      font-size: 0.9rem;
-      overflow:hidden;
-    }
- 
-    .logo-placeholder img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    }
-
-    .value-card h3 {
-      margin-bottom: 15px;
-      font-size: 1.4rem;
-    }
-
-    .value-card p {
-      color: var(--cp-muted);
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
       line-height: 1.6;
     }
 
-    /* RESPONSIVE */
-    @media (max-width: 768px) {
-      .hero-content h1 {
-        font-size: 2.5rem;
+    img {
+      display: block;
+      max-width: 100%;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      border-bottom: 1px solid var(--line);
+      background: color-mix(in srgb, var(--bg) 92%, transparent);
+      backdrop-filter: blur(16px);
+    }
+
+    .nav {
+      width: min(1160px, calc(100% - 32px));
+      min-height: 72px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 210px;
+      font-weight: 800;
+    }
+
+    .brand-mark {
+      width: 42px;
+      height: 42px;
+      border-radius: var(--radius);
+      display: grid;
+      place-items: center;
+      background: linear-gradient(145deg, var(--accent), var(--indigo));
+      color: #fff;
+      letter-spacing: 0;
+      box-shadow: 0 10px 24px rgba(34, 211, 238, 0.28);
+    }
+
+    .brand small {
+      display: block;
+      color: var(--muted);
+      font-size: 0.76rem;
+      font-weight: 700;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      color: var(--muted);
+      font-size: 0.92rem;
+      font-weight: 700;
+    }
+
+    .nav-links a:hover {
+      color: var(--accent);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      padding: 0 18px;
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      font-weight: 800;
+      transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      box-shadow: 0 12px 24px rgba(34, 211, 238, 0.24);
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-dark);
+    }
+
+    .btn-secondary {
+      background: color-mix(in srgb, var(--panel) 82%, transparent);
+      color: var(--ink);
+    }
+
+    .hero {
+      min-height: 88vh;
+      display: grid;
+      align-items: end;
+      padding: 120px 0 44px;
+      position: relative;
+      overflow: hidden;
+      color: #fff;
+      background:
+        linear-gradient(90deg, rgba(7, 11, 20, 0.94) 0%, rgba(15, 23, 42, 0.78) 45%, rgba(79, 70, 229, 0.32) 100%),
+        url("uploads/CompanyProfile.jpg") center/cover no-repeat;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto 0 0;
+      height: 12px;
+      background: linear-gradient(90deg, var(--accent), var(--indigo), var(--danger));
+    }
+
+    .hero-inner,
+    .section-inner {
+      width: min(1160px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    .hero-content {
+      width: min(720px, 100%);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 18px;
+      color: var(--accent);
+      font-size: 0.82rem;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 32px;
+      height: 3px;
+      background: var(--indigo);
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(2.5rem, 8vw, 5.8rem);
+      line-height: 0.98;
+      letter-spacing: 0;
+    }
+
+    .hero p {
+      max-width: 650px;
+      margin: 22px 0 0;
+      color: rgba(255, 255, 255, 0.84);
+      font-size: clamp(1rem, 2vw, 1.22rem);
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 28px;
+    }
+
+    .hero .btn-secondary {
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      width: min(720px, 100%);
+      margin-top: 44px;
+    }
+
+    .stat {
+      min-height: 106px;
+      padding: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(12px);
+    }
+
+    .stat strong {
+      display: block;
+      color: #fff;
+      font-size: 1.55rem;
+      line-height: 1.1;
+    }
+
+    .stat span {
+      display: block;
+      margin-top: 8px;
+      color: rgba(255, 255, 255, 0.78);
+      font-size: 0.88rem;
+    }
+
+    section {
+      scroll-margin-top: 90px;
+    }
+
+    .section {
+      padding: 88px 0;
+    }
+
+    .section.alt {
+      background: var(--panel-soft);
+    }
+
+    .section-head {
+      display: grid;
+      grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+      gap: 44px;
+      align-items: end;
+      margin-bottom: 34px;
+    }
+
+    .section-kicker {
+      margin: 0 0 10px;
+      color: var(--accent);
+      font-size: 0.8rem;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: clamp(1.85rem, 4vw, 3rem);
+      line-height: 1.12;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin: 0;
+      font-size: 1.16rem;
+      line-height: 1.25;
+    }
+
+    p {
+      margin: 0;
+    }
+
+    .lead {
+      color: var(--muted);
+      font-size: 1.02rem;
+    }
+
+    .profile-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(260px, 0.85fr);
+      gap: 20px;
+      align-items: start;
+    }
+
+    .profile-copy {
+      padding: 24px;
+      border-left: 5px solid var(--accent);
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .profile-copy p + p {
+      margin-top: 16px;
+    }
+
+    .image-panel {
+      min-height: 260px;
+      aspect-ratio: 4 / 3;
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      background: var(--panel);
+    }
+
+    .image-panel img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .info-strip {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 1px;
+      margin-top: 1px;
+      background: var(--line);
+      border: 1px solid var(--line);
+    }
+
+    .info-item {
+      min-height: 116px;
+      padding: 20px;
+      background: var(--panel);
+    }
+
+    .info-item strong {
+      display: block;
+      color: var(--accent);
+      margin-bottom: 6px;
+      font-size: 0.82rem;
+      text-transform: uppercase;
+    }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .card {
+      min-height: 190px;
+      padding: 24px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      box-shadow: 0 8px 24px rgba(24, 33, 47, 0.06);
+    }
+
+    .card p {
+      margin-top: 10px;
+      color: var(--muted);
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 0 10px;
+      margin-bottom: 16px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 0.76rem;
+      font-weight: 800;
+    }
+
+    .majors {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .major {
+      min-height: 136px;
+      padding: 18px;
+      border-radius: var(--radius);
+      background: var(--panel);
+      border: 1px solid var(--line);
+    }
+
+    .major strong {
+      color: var(--accent);
+      font-size: 1.45rem;
+    }
+
+    .major span {
+      display: block;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .feature-layout {
+      display: grid;
+      grid-template-columns: minmax(300px, 0.78fr) minmax(0, 1.22fr);
+      gap: 28px;
+      align-items: stretch;
+    }
+
+    .feature-highlight {
+      padding: 30px;
+      border-radius: var(--radius);
+      background: linear-gradient(145deg, var(--accent), var(--indigo));
+      color: #fff;
+      min-height: 100%;
+    }
+
+    .feature-highlight h3 {
+      font-size: 2rem;
+    }
+
+    .feature-highlight p {
+      margin-top: 16px;
+      color: rgba(255, 255, 255, 0.82);
+    }
+
+    .feature-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .feature-item {
+      min-height: 132px;
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+    }
+
+    .feature-item p {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 0.94rem;
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 1px;
+      background: var(--line);
+      border: 1px solid var(--line);
+    }
+
+    .step {
+      min-height: 220px;
+      padding: 24px;
+      background: var(--panel);
+    }
+
+    .step-number {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      margin-bottom: 34px;
+      border-radius: 50%;
+      background: var(--indigo);
+      color: #fff;
+      font-weight: 900;
+    }
+
+    .step p {
+      margin-top: 10px;
+      color: var(--muted);
+    }
+
+    .activity-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 24px;
+      align-items: stretch;
+    }
+
+    .activity-photo {
+      min-height: 430px;
+      overflow: hidden;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .activity-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .activity-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .activity-item {
+      padding: 20px;
+      border-left: 4px solid var(--danger);
+      background: var(--panel);
+      border-radius: var(--radius);
+      box-shadow: 0 8px 22px rgba(24, 33, 47, 0.06);
+    }
+
+    .activity-item p {
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    .contact-band {
+      color: #fff;
+      background:
+        linear-gradient(90deg, rgba(7, 11, 20, 0.96), rgba(15, 23, 42, 0.9), rgba(79, 70, 229, 0.42)),
+        url("uploads/2.jpg") center/cover no-repeat;
+    }
+
+    .contact-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+      gap: 34px;
+      align-items: center;
+    }
+
+    .contact-band .section-kicker {
+      color: var(--accent);
+    }
+
+    .contact-band .lead {
+      color: rgba(255, 255, 255, 0.78);
+      margin-top: 16px;
+    }
+
+    .contact-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .contact-item {
+      min-height: 116px;
+      padding: 20px;
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .contact-item strong {
+      display: block;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+
+    .site-footer {
+      background: #101720;
+      color: #d9e2ec;
+      padding: 54px 0 28px;
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: minmax(260px, 1.3fr) minmax(180px, 0.7fr) minmax(220px, 0.8fr);
+      gap: 28px;
+    }
+
+    .footer-brand {
+      max-width: 390px;
+    }
+
+    .footer-brand p {
+      margin-top: 14px;
+      color: #9aa7b8;
+    }
+
+    .footer-title {
+      margin: 0 0 14px;
+      color: #fff;
+      font-size: 0.95rem;
+      font-weight: 800;
+    }
+
+    .footer-links {
+      display: grid;
+      gap: 9px;
+      color: #aeb9c6;
+      font-size: 0.92rem;
+    }
+
+    .footer-links a:hover {
+      color: var(--accent);
+    }
+
+    .footer-bottom {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      margin-top: 42px;
+      padding-top: 22px;
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+      color: #8f9dad;
+      font-size: 0.88rem;
+    }
+
+    @media (max-width: 980px) {
+      .nav {
+        flex-wrap: wrap;
+        padding: 14px 0;
       }
 
-      .values-container {
+      .brand {
+        min-width: auto;
+      }
+
+      .nav-links {
+        order: 3;
+        width: 100%;
+        justify-content: flex-start;
+        overflow-x: auto;
+        padding-bottom: 4px;
+      }
+
+      .section-head,
+      .profile-grid,
+      .feature-layout,
+      .activity-grid,
+      .contact-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .info-strip,
+      .cards-grid,
+      .steps,
+      .footer-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .majors {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 640px) {
+      .nav {
+        width: min(100% - 24px, 1160px);
+      }
+
+      .nav-actions .btn-secondary {
+        display: none;
+      }
+
+      .brand span {
+        max-width: 170px;
+      }
+
+      .hero {
+        min-height: 86vh;
+        padding: 104px 0 36px;
+        background-position: center;
+      }
+
+      .hero-stats,
+      .info-strip,
+      .cards-grid,
+      .majors,
+      .feature-list,
+      .steps,
+      .contact-list,
+      .footer-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .section {
+        padding: 64px 0;
+      }
+
+      .profile-copy,
+      .feature-highlight {
+        padding: 24px;
+      }
+
+      .image-panel,
+      .activity-photo {
+        min-height: 280px;
+      }
+
+      .footer-bottom {
         flex-direction: column;
-        align-items: center;
       }
     }
   </style>
 </head>
 <body>
-  <!-- HERO LANDING PAGE -->
-  <section class="hero">
-    <div class="hero-content">
-      <h1>Selamat Datang</h1>
-      <p>Tempat mengelola, mengatur kehadiran absensi para siswa di SMK Citra Negara.</p>
+  <header class="site-header">
+    <nav class="nav" aria-label="Navigasi utama">
+      <a href="#beranda" class="brand">
+        <span class="brand-mark">CN</span>
+        <span>Absensi Citra Negara<small>SMK Citra Negara Depok</small></span>
+      </a>
 
-        <a href="Login.html" class="login-btn">Login</a>
-    </div>
-  </section>
-
-  <!-- WHAT WE STAND FOR -->
-  <section class="values-section">
-    <h2>Keunggulan kami</h2>
-
-    <div class="values-container">
-
-      <div class="value-card">
-        <div class="logo-placeholder">
-          <img src="uploads/1.jpg">
-        </div>
-
-        <h3>Kepercayaan</h3>
-
-        <p>
-          Kami membantu tenaga pendidik menghemat waktu melalui sistem absensi yang praktis dan modern.
-        </p>
+      <div class="nav-links">
+        <a href="#tentang">Tentang</a>
+        <a href="#visi-misi">Visi Misi</a>
+        <a href="#bidang-studi">Bidang Studi</a>
+        <a href="#fitur">Fitur</a>
+        <a href="#kontak">Kontak</a>
       </div>
 
-      <div class="value-card">
-        <div class="logo-placeholder">
-          <img src="uploads/2.jpg">
+      <div class="nav-actions">
+        <a class="btn btn-secondary" href="#alur">Alur</a>
+        <a class="btn btn-primary" href="Login.html">Login</a>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" id="beranda">
+      <div class="hero-inner">
+        <div class="hero-content">
+          <p class="eyebrow">Portal kehadiran sekolah</p>
+          <h1>Absensi SMK Citra Negara</h1>
+          <p>Sistem kehadiran siswa untuk membantu guru, BK, dan admin memantau disiplin sekolah secara cepat, rapi, dan terpusat.</p>
+
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="Login.html">Masuk ke Sistem</a>
+            <a class="btn btn-secondary" href="#tentang">Profil Sekolah</a>
+          </div>
         </div>
 
-        <h3>Efisiensi</h3>
-
-        <p>
-            Kami menjaga data kehadiran siswa dengan akurat, aman, dan transparan.
-        </p>
+        <div class="hero-stats" aria-label="Ringkasan sekolah">
+          <div class="stat">
+            <strong>2004</strong>
+            <span>Mulai berdiri melayani pendidikan vokasi.</span>
+          </div>
+          <div class="stat">
+            <strong>6</strong>
+            <span>Bidang keahlian untuk masa depan siswa.</span>
+          </div>
+          <div class="stat">
+            <strong>M.A.N.T.A.P</strong>
+            <span>Pilihan yang tepat di sekolah yang mantap.</span>
+          </div>
+        </div>
       </div>
+    </section>
 
-      <div class="value-card">
-        <div class="logo-placeholder">
-          <img src="uploads/3.jpg">
+    <section class="section" id="tentang">
+      <div class="section-inner">
+        <div class="section-head">
+          <div>
+            <p class="section-kicker">Tentang sekolah</p>
+            <h2>Lingkungan vokasi yang menumbuhkan disiplin dan keterampilan.</h2>
+          </div>
+          <p class="lead">SMK Citra Negara berada di bawah Yayasan AT-TAQWA Kemiri Jaya dan menjadi ruang belajar bagi siswa untuk berkembang secara akademik, religius, dan profesional.</p>
         </div>
 
-        <h3>Disiplin</h3>
+        <div class="profile-grid">
+          <div class="profile-copy">
+            <p>Landing page ini diarahkan menjadi wajah resmi sistem absensi sekolah: bukan hanya halaman login, tetapi pengantar yang menjelaskan hubungan antara kehadiran, pembinaan, dan budaya disiplin di SMK Citra Negara.</p>
+            <p>Dengan data kehadiran yang tersusun, guru dapat memantau kelas, BK dapat menindaklanjuti laporan, admin dapat menjaga data sekolah, dan siswa memiliki riwayat absensi yang lebih jelas.</p>
+          </div>
+          <div class="image-panel">
+            <img src="uploads/1.jpg" alt="Kegiatan siswa SMK Citra Negara" />
+          </div>
+        </div>
 
-        <p>
-          Kami percaya kedisiplinan adalah fondasi utama dalam membangun generasi yang bertanggung jawab.
-        </p>
-        </p>
+        <div class="info-strip">
+          <div class="info-item">
+            <strong>Nama</strong>
+            <span>SMK Citra Negara</span>
+          </div>
+          <div class="info-item">
+            <strong>Lokasi</strong>
+            <span>Beji, Kota Depok</span>
+          </div>
+          <div class="info-item">
+            <strong>Naungan</strong>
+            <span>Yayasan AT-TAQWA Kemiri Jaya</span>
+          </div>
+          <div class="info-item">
+            <strong>Fokus</strong>
+            <span>Pendidikan kejuruan dan karakter siswa</span>
+          </div>
+        </div>
       </div>
+    </section>
 
-    </div>
-  </section>
+    <section class="section alt" id="visi-misi">
+      <div class="section-inner">
+        <div class="section-head">
+          <div>
+            <p class="section-kicker">Visi dan misi</p>
+            <h2>Disiplin hadir sebagai bagian dari pembentukan karakter.</h2>
+          </div>
+          <p class="lead">Sistem absensi ini mendukung arah sekolah dalam membentuk peserta didik yang religius, disiplin, terampil, dan siap menghadapi dunia kerja serta Generasi Emas 2045.</p>
+        </div>
+
+        <div class="cards-grid">
+          <article class="card">
+            <span class="tag">Karakter</span>
+            <h3>Religius dan bertanggung jawab</h3>
+            <p>Kehadiran tercatat dengan jelas sehingga pembinaan siswa dapat dilakukan lebih terarah.</p>
+          </article>
+          <article class="card">
+            <span class="tag">Disiplin</span>
+            <h3>Kebiasaan tepat waktu</h3>
+            <p>Data absensi membantu sekolah membaca pola kehadiran dan memberi tindak lanjut lebih cepat.</p>
+          </article>
+          <article class="card">
+            <span class="tag">Kompetensi</span>
+            <h3>Siap belajar dan bekerja</h3>
+            <p>Budaya tertib menjadi dasar penting sebelum siswa masuk ke praktik vokasi dan dunia industri.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="bidang-studi">
+      <div class="section-inner">
+        <div class="section-head">
+          <div>
+            <p class="section-kicker">Bidang studi</p>
+            <h2>Program keahlian SMK Citra Negara.</h2>
+          </div>
+          <p class="lead">Absensi yang rapi membantu setiap jurusan menjaga ritme pembelajaran, praktik, dan kegiatan sekolah.</p>
+        </div>
+
+        <div class="majors">
+          <div class="major"><strong>TJKT</strong><span>Teknik Jaringan Komputer dan Telekomunikasi</span></div>
+          <div class="major"><strong>PPLG</strong><span>Pengembangan Perangkat Lunak dan Gim</span></div>
+          <div class="major"><strong>MPLB</strong><span>Manajemen Perkantoran dan Layanan Bisnis</span></div>
+          <div class="major"><strong>DKV</strong><span>Desain Komunikasi Visual</span></div>
+          <div class="major"><strong>PM</strong><span>Pemasaran</span></div>
+          <div class="major"><strong>PH</strong><span>Perhotelan</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section alt" id="fitur">
+      <div class="section-inner">
+        <div class="section-head">
+          <div>
+            <p class="section-kicker">Sistem absensi</p>
+            <h2>Satu portal untuk siswa, guru, BK, dan admin.</h2>
+          </div>
+          <p class="lead">Fitur halaman disusun mengikuti kebutuhan pengguna yang sudah ada di aplikasi Absensi.</p>
+        </div>
+
+        <div class="feature-layout">
+          <div class="feature-highlight">
+            <h3>Kehadiran terpusat, tindak lanjut lebih cepat.</h3>
+            <p>Setiap status hadir, sakit, izin, dispen, dan laporan tersimpan dalam alur yang mudah dipantau oleh pihak sekolah.</p>
+          </div>
+          <div class="feature-list">
+            <div class="feature-item">
+              <h3>Absensi siswa</h3>
+              <p>Siswa dapat mengirim status kehadiran dan melihat riwayat pribadi.</p>
+            </div>
+            <div class="feature-item">
+              <h3>Rekap guru</h3>
+              <p>Guru memantau daftar siswa, rekap kelas, dan laporan kehadiran.</p>
+            </div>
+            <div class="feature-item">
+              <h3>Inbox BK</h3>
+              <p>BK menerima laporan yang perlu diperiksa dan ditindaklanjuti.</p>
+            </div>
+            <div class="feature-item">
+              <h3>Dashboard admin</h3>
+              <p>Admin mengelola data staff, siswa, dan laporan dari satu tempat.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="alur">
+      <div class="section-inner">
+        <div class="section-head">
+          <div>
+            <p class="section-kicker">Alur penggunaan</p>
+            <h2>Dari login sampai data siap ditindaklanjuti.</h2>
+          </div>
+          <p class="lead">Alur dibuat ringkas agar setiap pengguna langsung memahami perannya di sistem.</p>
+        </div>
+
+        <div class="steps">
+          <div class="step">
+            <div class="step-number">1</div>
+            <h3>Login akun</h3>
+            <p>Pengguna masuk sesuai role: siswa, guru, BK, atau admin.</p>
+          </div>
+          <div class="step">
+            <div class="step-number">2</div>
+            <h3>Isi status</h3>
+            <p>Siswa mengirim kehadiran, izin, sakit, atau dispen sesuai kondisi.</p>
+          </div>
+          <div class="step">
+            <div class="step-number">3</div>
+            <h3>Pantau rekap</h3>
+            <p>Guru dan admin melihat data kelas serta riwayat yang sudah masuk.</p>
+          </div>
+          <div class="step">
+            <div class="step-number">4</div>
+            <h3>Tindak lanjut</h3>
+            <p>BK dan sekolah menggunakan data untuk pembinaan siswa.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section alt" id="berita-kegiatan">
+      <div class="section-inner">
+        <div class="section-head">
+          <div>
+            <p class="section-kicker">Berita dan kegiatan</p>
+            <h2>Sekolah aktif, data kehadiran ikut menjaga keteraturan.</h2>
+          </div>
+          <p class="lead">Kehadiran tidak hanya penting di kelas, tetapi juga dalam kegiatan ekstrakurikuler, pembinaan, dan agenda sekolah.</p>
+        </div>
+
+        <div class="activity-grid">
+          <div class="activity-photo">
+            <img src="uploads/3.jpg" alt="Kegiatan sekolah SMK Citra Negara" />
+          </div>
+          <div class="activity-list">
+            <div class="activity-item">
+              <h3>Ekstrakurikuler</h3>
+              <p>Paskibra, futsal, taekwondo, IT Club, esport, dan kegiatan minat bakat lainnya.</p>
+            </div>
+            <div class="activity-item">
+              <h3>Pembinaan siswa</h3>
+              <p>Data absensi membantu sekolah melihat siswa yang perlu dukungan lebih awal.</p>
+            </div>
+            <div class="activity-item">
+              <h3>Budaya sekolah</h3>
+              <p>Ketertiban administrasi mendukung suasana belajar yang lebih profesional.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <div id="kontak" aria-hidden="true"></div>
+  </main>
 
   <script src="theme.js"></script>
 </body>
