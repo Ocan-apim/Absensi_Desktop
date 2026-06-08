@@ -7,11 +7,11 @@ if (file_exists(__DIR__ . "/.env.php")) {
 }
 
 function db() {
-    $host = "junction.proxy.rlwy.net";
-    $user = "root";
-    $password = "wnVglfQckkKDwroQwAgWxjONaXHGHiiH";
-    $database = "railway";
-    $port = 51577;
+    $host = getenv("MYSQLHOST") ?: getenv("DB_HOST") ?: "127.0.0.1";
+    $user = getenv("MYSQLUSER") ?: getenv("DB_USER") ?: "root";
+    $password = getenv("MYSQLPASSWORD") ?: getenv("DB_PASSWORD") ?: "";
+    $database = getenv("MYSQLDATABASE") ?: getenv("DB_NAME") ?: "absensi";
+    $port = (int) (getenv("MYSQLPORT") ?: getenv("DB_PORT") ?: 3306);
 
     $conn = new mysqli($host, $user, $password, $database, $port);
      if ($conn->connect_error) {
