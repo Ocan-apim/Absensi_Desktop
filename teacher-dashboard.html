@@ -81,6 +81,20 @@
                     <button type="button" class="mode-tab" data-report-mode="weekly">Mingguan</button>
                     <button type="button" class="mode-tab" data-report-mode="monthly">Bulanan</button>
                 </div>
+                <div class="period-controls" aria-label="Pilih periode rekap">
+                    <div class="period-control" data-period-control="weekly">
+                        <label class="field-label" for="weekly-date">Pilih minggu</label>
+                        <div class="input-wrap">
+                            <input type="date" id="weekly-date">
+                        </div>
+                    </div>
+                    <div class="period-control is-hidden" data-period-control="monthly">
+                        <label class="field-label" for="monthly-date">Pilih bulan</label>
+                        <div class="input-wrap">
+                            <input type="month" id="monthly-date">
+                        </div>
+                    </div>
+                </div>
                 <div id="rekap-daily" class="attendance-layout report-mode-panel" data-report-panel="daily">
                     <div>
                         <div class="table-card">
@@ -130,19 +144,7 @@
                         <h3>Mingguan</h3>
                         <div class="table-scroll">
                             <table class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>No</th>
-                                        <th>Nama lengkap</th>
-                                        <th>NIS</th>
-                                        <th>Senin</th>
-                                        <th>Selasa</th>
-                                        <th>Rabu</th>
-                                        <th>Kamis</th>
-                                        <th>Jumat</th>
-                                        <th>Total</th>
-                                    </tr>
-                                </thead>
+                                <thead id="weekly-table-head"></thead>
                                 <tbody id="weekly-table-body"></tbody>
                             </table>
                         </div>
@@ -153,19 +155,8 @@
                     <div class="table-card">
                         <h3>Bulanan</h3>
                         <div class="table-scroll">
-                            <table class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>No</th>
-                                        <th>Nama lengkap</th>
-                                        <th>NIS</th>
-                                        <th>Minggu 1</th>
-                                        <th>Minggu 2</th>
-                                        <th>Minggu 3</th>
-                                        <th>Minggu 4</th>
-                                        <th>Total</th>
-                                    </tr>
-                                </thead>
+                            <table class="data-table monthly-book-table">
+                                <thead id="monthly-table-head"></thead>
                                 <tbody id="monthly-table-body"></tbody>
                             </table>
                         </div>
@@ -293,6 +284,8 @@
             var cachedReports = [];
             var reportMode = "daily";
             var reportCache = { weekly: null, monthly: null, students: null };
+            var selectedWeekDate = new Date(now);
+            var selectedMonthDate = new Date(now.getFullYear(), now.getMonth(), 1);
 
             function mapClassLabel(kelas) {
                 if (kelas === "10") return "X";
@@ -370,6 +363,25 @@
                 return date.getFullYear() + "-" + pad2(date.getMonth() + 1) + "-" + pad2(date.getDate());
             }
 
+            function parseDateInput(value) {
+                if (!value) return new Date(now);
+                var parts = String(value).split("-");
+                return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2] || 1));
+            }
+
+            function monthInputValue(date) {
+                return date.getFullYear() + "-" + pad2(date.getMonth() + 1);
+            }
+
+            function dayLabel(dateKey) {
+                var parts = String(dateKey).split("-");
+                return parts.length === 3 ? String(Number(parts[2])) : dateKey;
+            }
+
+            function shortDateLabel(date) {
+                return date.toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" });
+            }
+
             function monthStart(date) {
                 return new Date(date.getFullYear(), date.getMonth(), 1);
             }
@@ -391,6 +403,42 @@
                     d.setDate(d.getDate() + 1);
                 }
                 return total;
+            }
+
+            function weekdaysBetween(start, end) {
+                var days = [];
+                var d = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+                while (d <= end) {
+                    var day = d.getDay();
+                    if (day >= 1 && day <= 5) days.push(formatDateISO(d));
+                    d.setDate(d.getDate() + 1);
+                }
+                return days;
+            }
+
+            function weekGroupLabel(dateKey) {
+                var date = parseDateInput(dateKey);
+                return "Minggu " + Math.min(5, Math.max(1, Math.ceil(date.getDate() / 7)));
+            }
+
+            function attendanceCode(records, studentId, dateKey) {
+                var matches = records.filter(function (r) {
+                    return String(r.id_siswa) === String(studentId) && r.date === dateKey;
+                });
+                if (matches.some(function (r) { return r.mode === "hadir" || r.mode === "pulang"; })) return "H";
+                if (matches.some(function (r) { return r.mode === "izin"; })) return "I";
+                if (matches.some(function (r) { return r.mode === "sakit"; })) return "S";
+                return "A";
+            }
+
+            function summarizeCodes(codes) {
+                var total = codes.length || 1;
+                var counts = { H: 0, A: 0, I: 0, S: 0 };
+                codes.forEach(function (code) {
+                    counts[code] = (counts[code] || 0) + 1;
+                });
+                counts.percent = Math.round((counts.H / total) * 100) + "%";
+                return counts;
             }
 
             function getStudents() {
@@ -457,22 +505,27 @@
             function renderWeekly(data, startDate) {
                 var students = data.students || [];
                 var records = data.records || [];
+                var head = document.getElementById("weekly-table-head");
                 var body = document.getElementById("weekly-table-body");
-                if (!students.length) {
-                    body.innerHTML = emptyRow(9, "Belum ada siswa.");
-                    updatePercent(0);
-                    return;
-                }
                 var daysInWeek = [0, 1, 2, 3, 4].map(function (offset) {
                     var d = new Date(startDate);
                     d.setDate(startDate.getDate() + offset);
                     return formatDateISO(d);
                 });
+                var dayNames = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat"];
+                head.innerHTML = '<tr><th>No</th><th>Nama lengkap</th><th>NIS</th>' +
+                    daysInWeek.map(function (dateKey, index) {
+                        return '<th>' + dayNames[index] + '<br><span class="table-subdate">' + escapeHtml(formatTanggal(dateKey)) + '</span></th>';
+                    }).join("") +
+                    '<th>Total</th></tr>';
+                if (!students.length) {
+                    body.innerHTML = emptyRow(9, "Belum ada siswa.");
+                    updatePercent(0);
+                    return;
+                }
                 body.innerHTML = students.map(function (student, idx) {
                     var cols = daysInWeek.map(function (dateKey) {
-                        return records.some(function (r) {
-                            return String(r.id_siswa) === String(student.id_siswa) && r.mode === "hadir" && r.date === dateKey;
-                        }) ? "Hadir" : "-";
+                        return attendanceCode(records, student.id_siswa, dateKey);
                     });
                     var totalPercent = attendancePercentForStudent(records, student.id_siswa, startDate, new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() + 4));
                     return "<tr><td>" + (idx + 1) + "</td><td>" + escapeHtml(student.nama_lengkap) + "</td><td>" + escapeHtml(student.nis) + "</td><td>" + cols[0] + "</td><td>" + cols[1] + "</td><td>" + cols[2] + "</td><td>" + cols[3] + "</td><td>" + cols[4] + "</td><td>" + totalPercent + "</td></tr>";
@@ -486,25 +539,42 @@
             function renderMonthly(data) {
                 var students = data.students || [];
                 var records = data.records || [];
+                var head = document.getElementById("monthly-table-head");
                 var body = document.getElementById("monthly-table-body");
+                var start = monthStart(selectedMonthDate);
+                var end = monthEnd(selectedMonthDate);
+                var days = weekdaysBetween(start, end);
+                var weekGroups = [];
+                days.forEach(function (dateKey) {
+                    var label = weekGroupLabel(dateKey);
+                    var current = weekGroups[weekGroups.length - 1];
+                    if (!current || current.label !== label) {
+                        weekGroups.push({ label: label, count: 1 });
+                    } else {
+                        current.count++;
+                    }
+                });
+                head.innerHTML = '<tr><th rowspan="2">No</th><th rowspan="2">Nama</th>' +
+                    weekGroups.map(function (group) { return '<th colspan="' + group.count + '">' + escapeHtml(group.label) + '</th>'; }).join("") +
+                    '<th colspan="4">Ket.</th></tr><tr>' +
+                    days.map(function (dateKey) { return '<th>' + escapeHtml(dayLabel(dateKey)) + '</th>'; }).join("") +
+                    '<th>A</th><th>I</th><th>S</th><th>%</th></tr>';
                 if (!students.length) {
-                    body.innerHTML = emptyRow(8, "Belum ada siswa.");
+                    body.innerHTML = emptyRow(days.length + 6, "Belum ada siswa.");
                     updatePercent(0);
                     return;
                 }
                 body.innerHTML = students.map(function (student, idx) {
-                    var weeks = [1, 2, 3, 4].map(function (wk) {
-                        var present = records.filter(function (r) {
-                            if (String(r.id_siswa) !== String(student.id_siswa) || r.mode !== "hadir") return false;
-                            return Math.min(4, Math.ceil(toDate(r.date).getDate() / 7)) === wk;
-                        }).length;
-                        return present ? present + "x" : "-";
+                    var codes = days.map(function (dateKey) {
+                        return attendanceCode(records, student.id_siswa, dateKey);
                     });
-                    var totalPercent = attendancePercentForStudent(records, student.id_siswa, monthStart(now), monthEnd(now));
-                    return "<tr><td>" + (idx + 1) + "</td><td>" + escapeHtml(student.nama_lengkap) + "</td><td>" + escapeHtml(student.nis) + "</td><td>" + weeks[0] + "</td><td>" + weeks[1] + "</td><td>" + weeks[2] + "</td><td>" + weeks[3] + "</td><td>" + totalPercent + "</td></tr>";
+                    var counts = summarizeCodes(codes);
+                    return "<tr><td>" + (idx + 1) + "</td><td>" + escapeHtml(student.nama_lengkap) + "</td>" +
+                        codes.map(function (code) { return "<td>" + escapeHtml(code) + "</td>"; }).join("") +
+                        "<td>" + counts.A + "</td><td>" + counts.I + "</td><td>" + counts.S + "</td><td>" + counts.percent + "</td></tr>";
                 }).join("");
 
-                var percent = (records.filter(function (r) { return r.mode === "hadir"; }).length / Math.max(1, students.length * countWeekdays(monthStart(now), monthEnd(now)))) * 100;
+                var percent = (records.filter(function (r) { return r.mode === "hadir"; }).length / Math.max(1, students.length * days.length)) * 100;
                 updatePercent(percent);
             }
 
@@ -519,7 +589,7 @@
                     return Promise.resolve();
                 }
                 if (mode === "weekly") {
-                    var startWeek = weekStartDate(now);
+                    var startWeek = weekStartDate(selectedWeekDate);
                     var endWeek = new Date(startWeek.getFullYear(), startWeek.getMonth(), startWeek.getDate() + 4);
                     return fetchRange(formatDateISO(startWeek), formatDateISO(endWeek), "weekly").then(function (data) {
                         renderWeekly(data, startWeek);
@@ -527,8 +597,8 @@
                     });
                 }
                 if (mode === "monthly") {
-                    var start = formatDateISO(monthStart(now));
-                    var end = formatDateISO(monthEnd(now));
+                    var start = formatDateISO(monthStart(selectedMonthDate));
+                    var end = formatDateISO(monthEnd(selectedMonthDate));
                     return fetchRange(start, end, "monthly").then(function (data) {
                         renderMonthly(data);
                         renderStudentList(data.students || []);
@@ -549,6 +619,9 @@
                 });
                 document.querySelectorAll(".report-mode-panel").forEach(function (panel) {
                     panel.classList.toggle("is-hidden", panel.getAttribute("data-report-panel") !== mode);
+                });
+                document.querySelectorAll("[data-period-control]").forEach(function (control) {
+                    control.classList.toggle("is-hidden", control.getAttribute("data-period-control") !== mode);
                 });
                 refreshModeData(mode);
             }
@@ -766,6 +839,19 @@
                 });
             });
 
+            document.getElementById("weekly-date").value = formatDateISO(selectedWeekDate);
+            document.getElementById("monthly-date").value = monthInputValue(selectedMonthDate);
+            document.getElementById("weekly-date").addEventListener("change", function () {
+                if (!this.value) return;
+                selectedWeekDate = parseDateInput(this.value);
+                if (reportMode === "weekly") refreshModeData("weekly");
+            });
+            document.getElementById("monthly-date").addEventListener("change", function () {
+                if (!this.value) return;
+                selectedMonthDate = parseDateInput(this.value + "-01");
+                if (reportMode === "monthly") refreshModeData("monthly");
+            });
+
             document.querySelectorAll("[data-nav-parent]").forEach(function (btn) {
                 btn.addEventListener("click", function () {
                     var target = btn.getAttribute("data-nav-default") || "beranda";
@@ -783,10 +869,118 @@
                 return document.getElementById("rekap-monthly").innerHTML;
             }
 
+            function reportPeriodLabel() {
+                if (reportMode === "weekly") {
+                    var startWeek = weekStartDate(selectedWeekDate);
+                    var endWeek = new Date(startWeek.getFullYear(), startWeek.getMonth(), startWeek.getDate() + 4);
+                    return shortDateLabel(startWeek) + " - " + shortDateLabel(endWeek);
+                }
+                if (reportMode === "monthly") {
+                    return selectedMonthDate.toLocaleDateString("id-ID", { month: "long", year: "numeric" });
+                }
+                return dateLabel;
+            }
+
+            function activeReportTables() {
+                var panelId = reportMode === "daily" ? "rekap-daily" : (reportMode === "weekly" ? "rekap-weekly" : "rekap-monthly");
+                return Array.prototype.slice.call(document.querySelectorAll("#" + panelId + " table"));
+            }
+
+            function tableToPdfLines(table) {
+                var lines = [];
+                var title = table.closest(".table-card") && table.closest(".table-card").querySelector("h3");
+                if (title) lines.push(title.textContent.trim());
+                Array.prototype.slice.call(table.rows).forEach(function (row) {
+                    var cells = Array.prototype.slice.call(row.cells).map(function (cell) {
+                        return cell.textContent.replace(/\s+/g, " ").trim();
+                    });
+                    lines.push(cells.join(" | "));
+                });
+                lines.push("");
+                return lines;
+            }
+
+            function pdfEscape(text) {
+                return String(text || "").replace(/[^\x20-\x7E]/g, "?").replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
+            }
+
+            function makePdfBlob(lines, title, landscape) {
+                var width = landscape ? 842 : 595;
+                var height = landscape ? 595 : 842;
+                var fontSize = reportMode === "monthly" ? 5 : 8;
+                var lineHeight = reportMode === "monthly" ? 7 : 11;
+                var marginX = 28;
+                var marginY = 30;
+                var pageLines = Math.max(20, Math.floor((height - marginY * 2 - 28) / lineHeight));
+                var pages = [];
+                for (var i = 0; i < lines.length; i += pageLines) {
+                    pages.push(lines.slice(i, i + pageLines));
+                }
+                if (!pages.length) pages.push(["Tidak ada data."]);
+
+                var objects = [];
+                function setObj(id, value) { objects[id] = value; }
+                setObj(1, "<< /Type /Catalog /Pages 2 0 R >>");
+                setObj(3, "<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>");
+
+                var kids = [];
+                pages.forEach(function (pageLines, idx) {
+                    var pageId = 4 + idx * 2;
+                    var contentId = pageId + 1;
+                    kids.push(pageId + " 0 R");
+                    var y = height - marginY;
+                    var content = "BT\n/F1 10 Tf\n1 0 0 1 " + marginX + " " + y + " Tm\n(" + pdfEscape(title) + ") Tj\n";
+                    y -= 16;
+                    content += "/F1 " + fontSize + " Tf\n";
+                    pageLines.forEach(function (line) {
+                        var clipped = String(line).slice(0, reportMode === "monthly" ? 230 : 120);
+                        content += "1 0 0 1 " + marginX + " " + y + " Tm\n(" + pdfEscape(clipped) + ") Tj\n";
+                        y -= lineHeight;
+                    });
+                    content += "ET";
+                    setObj(contentId, "<< /Length " + content.length + " >>\nstream\n" + content + "\nendstream");
+                    setObj(pageId, "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 " + width + " " + height + "] /Resources << /Font << /F1 3 0 R >> >> /Contents " + contentId + " 0 R >>");
+                });
+                setObj(2, "<< /Type /Pages /Kids [" + kids.join(" ") + "] /Count " + pages.length + " >>");
+
+                var pdf = "%PDF-1.4\n";
+                var offsets = [0];
+                for (var id = 1; id < objects.length; id++) {
+                    offsets[id] = pdf.length;
+                    pdf += id + " 0 obj\n" + objects[id] + "\nendobj\n";
+                }
+                var xref = pdf.length;
+                pdf += "xref\n0 " + objects.length + "\n0000000000 65535 f \n";
+                for (var x = 1; x < objects.length; x++) {
+                    pdf += String(offsets[x]).padStart(10, "0") + " 00000 n \n";
+                }
+                pdf += "trailer\n<< /Size " + objects.length + " /Root 1 0 R >>\nstartxref\n" + xref + "\n%%EOF";
+                return new Blob([pdf], { type: "application/pdf" });
+            }
+
+            function downloadAttendancePdf() {
+                refreshModeData(reportMode).then(function () {
+                    var titleMap = { daily: "Harian", weekly: "Mingguan", monthly: "Bulanan" };
+                    var title = "Laporan Kehadiran " + titleMap[reportMode] + " Kelas " + CLASS_LABEL + " - " + reportPeriodLabel();
+                    var lines = ["Periode: " + reportPeriodLabel(), "Kelas: " + CLASS_LABEL, ""];
+                    activeReportTables().forEach(function (table) {
+                        lines = lines.concat(tableToPdfLines(table));
+                    });
+                    var blob = makePdfBlob(lines, title, reportMode !== "daily");
+                    var link = document.createElement("a");
+                    link.href = URL.createObjectURL(blob);
+                    link.download = title.replace(/[^\w\s-]/g, "").replace(/\s+/g, "_") + ".pdf";
+                    document.body.appendChild(link);
+                    link.click();
+                    URL.revokeObjectURL(link.href);
+                    link.remove();
+                });
+            }
+
             function printAttendanceReport() {
                 refreshModeData(reportMode).then(function () {
                     var titleMap = { daily: "Harian", weekly: "Mingguan", monthly: "Bulanan" };
-                    var title = "Laporan Kehadiran " + titleMap[reportMode] + " Kelas " + CLASS_LABEL;
+                    var title = "Laporan Kehadiran " + titleMap[reportMode] + " Kelas " + CLASS_LABEL + " - " + reportPeriodLabel();
                     var printedAt = new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
                     var win = window.open("", "_blank");
                     if (!win) {
@@ -806,7 +1000,7 @@
             }
 
             document.getElementById("btn-print-attendance").addEventListener("click", printAttendanceReport);
-            document.getElementById("btn-download-attendance").addEventListener("click", printAttendanceReport);
+            document.getElementById("btn-download-attendance").addEventListener("click", downloadAttendancePdf);
 
             var laporanLampiran = document.getElementById("laporan-lampiran");
             var laporanAttachBtn = document.getElementById("laporan-attach-btn");
