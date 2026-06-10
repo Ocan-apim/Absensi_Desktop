@@ -429,6 +429,16 @@
                 return days;
             }
 
+            function datesBetween(start, end) {
+                var days = [];
+                var d = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+                while (d <= end) {
+                    days.push(formatDateISO(d));
+                    d.setDate(d.getDate() + 1);
+                }
+                return days;
+            }
+
             function weekGroupLabel(dateKey) {
                 var date = parseDateInput(dateKey);
                 return "Minggu " + Math.min(5, Math.max(1, Math.ceil(date.getDate() / 7)));
@@ -472,6 +482,30 @@
                         if (data.students) cachedStudents = data.students;
                         return data;
                     });
+            }
+
+            function fetchWeeklySummary(start, key) {
+                return fetch("absensi_api.php?action=rekap_weekly&start=" + encodeURIComponent(start) + "&kelas=" + encodeURIComponent(CLASS_FILTER.kelas) + "&jurusan=" + encodeURIComponent(CLASS_FILTER.jurusan) + "&rombel=" + encodeURIComponent(CLASS_FILTER.rombel) + "&username=" + encodeURIComponent(session.username || ""))
+                    .then(function (res) { return res.json(); })
+                    .then(function (data) {
+                        reportCache[key] = data;
+                        return data;
+                    });
+            }
+
+            function fetchMonthlySummary(month, key) {
+                return fetch("absensi_api.php?action=rekap_monthly&month=" + encodeURIComponent(month) + "&kelas=" + encodeURIComponent(CLASS_FILTER.kelas) + "&jurusan=" + encodeURIComponent(CLASS_FILTER.jurusan) + "&rombel=" + encodeURIComponent(CLASS_FILTER.rombel) + "&username=" + encodeURIComponent(session.username || ""))
+                    .then(function (res) { return res.json(); })
+                    .then(function (data) {
+                        reportCache[key] = data;
+                        return data;
+                    });
+            }
+
+            function studentsFromSummaryRows(rows) {
+                return (rows || []).map(function (row) {
+                    return { id_siswa: row.id_siswa, nama_lengkap: row.nama, nis: row.nis };
+                });
             }
 
             function uniquePresentDates(records, studentId) {
@@ -521,8 +555,7 @@
             }
 
             function renderWeekly(data, startDate, endDate) {
-                var students = data.students || [];
-                var records = data.records || [];
+                var rows = data.rows || [];
                 var head = document.getElementById("weekly-table-head");
                 var body = document.getElementById("weekly-table-body");
                 var daysInWeek = weekdaysBetween(startDate, endDate);
@@ -533,31 +566,33 @@
                         return '<th>' + escapeHtml(dayName) + '<br><span class="table-subdate">' + escapeHtml(formatTanggal(dateKey)) + '</span></th>';
                     }).join("") +
                     '<th>Total</th></tr>';
-                if (!students.length) {
+                if (!rows.length) {
                     body.innerHTML = emptyRow(daysInWeek.length + 4, "Belum ada siswa.");
                     updatePercent(0);
                     return;
                 }
-                body.innerHTML = students.map(function (student, idx) {
-                    var cols = daysInWeek.map(function (dateKey) {
-                        return attendanceCode(records, student.id_siswa, dateKey);
+                var dayKeys = ["sen", "sel", "rab", "kam", "jum"].slice(0, daysInWeek.length);
+                var totalPresent = 0;
+                body.innerHTML = rows.map(function (row, idx) {
+                    var cols = dayKeys.map(function (key) {
+                        return row[key] || "A";
                     });
-                    var totalPercent = attendancePercentForStudent(records, student.id_siswa, startDate, endDate);
-                    return "<tr><td>" + (idx + 1) + "</td><td>" + escapeHtml(student.nama_lengkap) + "</td><td>" + escapeHtml(student.nis) + "</td>" + cols.map(function (code) { return "<td>" + escapeHtml(code) + "</td>"; }).join("") + "<td>" + totalPercent + "</td></tr>";
+                    var counts = summarizeCodes(cols);
+                    totalPresent += counts.H;
+                    return "<tr><td>" + (row.no || (idx + 1)) + "</td><td>" + escapeHtml(row.nama || "-") + "</td><td>" + escapeHtml(row.nis || "-") + "</td>" + cols.map(function (code) { return "<td>" + escapeHtml(code) + "</td>"; }).join("") + "<td>" + counts.percent + "</td></tr>";
                 }).join("");
 
-                var percent = (records.filter(function (r) { return r.mode === "hadir"; }).length / Math.max(1, students.length * countWeekdays(startDate, endDate))) * 100;
+                var percent = (totalPresent / Math.max(1, rows.length * daysInWeek.length)) * 100;
                 updatePercent(percent);
             }
 
             function renderMonthly(data) {
-                var students = data.students || [];
-                var records = data.records || [];
+                var rows = data.rows || [];
                 var head = document.getElementById("monthly-table-head");
                 var body = document.getElementById("monthly-table-body");
                 var start = monthStart(selectedMonthDate);
                 var end = monthEnd(selectedMonthDate);
-                var days = weekdaysBetween(start, end);
+                var days = datesBetween(start, end);
                 var weekGroups = [];
                 days.forEach(function (dateKey) {
                     var label = weekGroupLabel(dateKey);
@@ -575,17 +610,19 @@
                         return '<th class="' + (dayLabel(dateKey) === "1" || days.indexOf(dateKey) === 0 || weekGroupLabel(dateKey) !== weekGroupLabel(days[days.indexOf(dateKey) - 1]) ? "week-boundary" : "") + '">' + escapeHtml(dayLabel(dateKey)) + '</th>';
                     }).join("") +
                     '<th class="summary-boundary">A</th><th>I</th><th>S</th><th class="percent-boundary">%</th></tr>';
-                if (!students.length) {
+                if (!rows.length) {
                     body.innerHTML = emptyRow(days.length + 6, "Belum ada siswa.");
                     updatePercent(0);
                     return;
                 }
-                body.innerHTML = students.map(function (student, idx) {
+                var totalPresent = 0;
+                body.innerHTML = rows.map(function (row, idx) {
                     var codes = days.map(function (dateKey) {
-                        return attendanceCode(records, student.id_siswa, dateKey);
+                        return row[String(Number(dayLabel(dateKey)))] || "A";
                     });
                     var counts = summarizeCodes(codes);
-                    return "<tr><td>" + (idx + 1) + "</td><td>" + escapeHtml(student.nama_lengkap) + "</td>" +
+                    totalPresent += counts.H;
+                    return "<tr><td>" + (row.no || (idx + 1)) + "</td><td>" + escapeHtml(row.nama || "-") + "</td>" +
                         codes.map(function (code, codeIndex) {
                             var currentDate = days[codeIndex];
                             var prevDate = days[codeIndex - 1];
@@ -595,7 +632,7 @@
                         '<td class="summary-boundary">' + counts.A + "</td><td>" + counts.I + "</td><td>" + counts.S + '</td><td class="percent-boundary">' + counts.percent + "</td></tr>";
                 }).join("");
 
-                var percent = (records.filter(function (r) { return r.mode === "hadir"; }).length / Math.max(1, students.length * days.length)) * 100;
+                var percent = (totalPresent / Math.max(1, rows.length * days.length)) * 100;
                 updatePercent(percent);
             }
 
