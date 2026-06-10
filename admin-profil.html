@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profil Admin — Absensi</title>
+    <title>Profil Admin - Absensi</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700&display=swap" rel="stylesheet">
@@ -39,11 +39,12 @@
                 <button type="button" class="btn-logout" id="btn-logout">Keluar</button>
             </div>
         </aside>
+
         <main class="main-area">
             <div class="dashboard-topbar">
                 <div class="toolbar-heading">
                     <h1 class="page-title">Profil</h1>
-                    <p class="page-sub" style="margin-bottom:0">Pengaturan akun admin (placeholder).</p>
+                    <p class="page-sub" style="margin-bottom:0">Pengaturan akun admin.</p>
                 </div>
                 <button type="button" class="theme-toggle theme-toggle--inline" data-theme-toggle aria-label="Tema"></button>
                 <a id="header-avatar-link" href="admin-profil.html" class="avatar-btn" title="Profil" aria-label="Buka profil">
@@ -61,17 +62,28 @@
                     <div class="input-wrap">
                         <input type="file" id="profil-foto-input" accept="image/*">
                     </div>
-                    <button type="button" class="btn-primary" id="profil-simpan">Simpan foto profil</button>
                     <p id="profil-msg" class="page-sub hidden" style="margin:0;color:var(--success)">Tersimpan.</p>
                 </div>
-                <div class="stack" style="margin-top:1.25rem">
+
+                <form id="profil-form" class="stack" style="margin-top:1.25rem">
                     <div>
-                        <span class="field-label">Email / username</span>
-                        <div class="input-wrap">
-                            <input type="text" id="profil-email" placeholder="Dari database nanti" readonly>
-                        </div>
+                        <span class="field-label">Nama lengkap</span>
+                        <div class="input-wrap"><input type="text" id="profil-nama-lengkap" required></div>
                     </div>
-                </div>
+                    <div>
+                        <span class="field-label" id="profil-identifier-label">Username</span>
+                        <div class="input-wrap"><input type="text" id="profil-identifier" required></div>
+                    </div>
+                    <div>
+                        <span class="field-label">Email</span>
+                        <div class="input-wrap"><input type="email" id="profil-email" required></div>
+                    </div>
+                    <div>
+                        <span class="field-label">Password</span>
+                        <div class="input-wrap"><input type="text" id="profil-password" required></div>
+                    </div>
+                    <button type="submit" class="btn-primary">Simpan perubahan akun</button>
+                </form>
             </section>
         </main>
     </div>
@@ -79,65 +91,14 @@
     <script src="theme.js"></script>
     <script src="auth.js"></script>
     <script src="dashboard-avatar.js"></script>
+    <script src="profile-form.js"></script>
     <script>
-        (function () {
-            var session = AbsensiAuth.requireRoles(["admin"]);
-            if (!session) return;
-            document.getElementById("btn-logout").addEventListener("click", function () {
-                AbsensiAuth.logout();
-            });
-            document.getElementById("profil-email").value = session.username || "";
-
-            DashboardAvatar.bind("admin-profil.html");
-
-            function loadAvatar() {
-                var url = AbsensiAuth.getAvatarDataUrl();
-                var img = document.getElementById("profil-avatar-img");
-                var ph = document.getElementById("profil-avatar-ph");
-                if (url) {
-                    img.src = url;
-                    img.classList.remove("hidden");
-                    ph.classList.add("hidden");
-                } else {
-                    ph.textContent = (session.username || "A").slice(0, 2).toUpperCase();
-                }
-            }
-            loadAvatar();
-
-            document.getElementById("profil-foto-input").addEventListener("change", function () {
-                var f = this.files && this.files[0];
-                if (!f) return;
-                var reader = new FileReader();
-                reader.onload = function () {
-                    var img = document.getElementById("profil-avatar-img");
-                    img.src = reader.result;
-                    img.classList.remove("hidden");
-                    document.getElementById("profil-avatar-ph").classList.add("hidden");
-                };
-                reader.readAsDataURL(f);
-            });
-
-            document.getElementById("profil-simpan").addEventListener("click", function () {
-    var img = document.getElementById("profil-avatar-img");
-    var src = img.src; // Use .src to get the full resolved URL/DataURI
-    
-    if (src && src.startsWith("data:image")) {
-        AbsensiAuth.setAvatarDataUrl(src);
-        
-        // Show success message
-        var msg = document.getElementById("profil-msg") || document.getElementById("profil-save-msg");
-        msg.classList.remove("hidden");
-        setTimeout(function () { msg.classList.add("hidden"); }, 2200);
-        
-        // Trigger the top-right corner to update immediately
-        if (window.DashboardAvatar && DashboardAvatar.refresh) {
-            DashboardAvatar.refresh();
-        }
-    } else {
-        alert("Pilih foto terlebih dahulu sebelum menyimpan.");
-    }
-});
-        })();
+        AbsensiProfileForm.init({
+            role: "admin",
+            roles: ["admin"],
+            profileHref: "admin-profil.html",
+            fallbackInitials: "AD"
+        });
     </script>
 </body>
 </html>

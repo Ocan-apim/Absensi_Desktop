@@ -7,13 +7,21 @@ if (file_exists(__DIR__ . "/.env.php")) {
 }
 
 function db() {
-    $conn = new mysqli("127.0.0.1", "root", "", "absensi");
-    if ($conn->connect_error) {
+    $host = getenv("MYSQLHOST") ?: getenv("DB_HOST") ?: (defined("DB_HOST") ? DB_HOST : "127.0.0.1");
+    $user = getenv("MYSQLUSER") ?: getenv("DB_USER") ?: (defined("DB_USER") ? DB_USER : "root");
+    $password = getenv("MYSQLPASSWORD") ?: getenv("DB_PASSWORD") ?: (defined("DB_PASS") ? DB_PASS : "");
+    $database = getenv("MYSQLDATABASE") ?: getenv("DB_NAME") ?: (defined("DB_NAME") ? DB_NAME : "absensi");
+    $port = (int) (getenv("MYSQLPORT") ?: getenv("DB_PORT") ?: (defined("DB_PORT") ? DB_PORT : 3306));
+
+    try {
+        $conn = new mysqli($host, $user, $password, $database, $port);
+    } catch (mysqli_sql_exception $e) {
         http_response_code(500);
         echo json_encode(["error" => "Koneksi database gagal"]);
         exit;
     }
     $conn->set_charset("utf8mb4");
+    ensureAdminProfileColumn($conn);
     ensureWalasEmailColumn($conn);
     ensureBkEmailColumn($conn);
     return $conn;
@@ -54,6 +62,12 @@ function ensureStudentProfileColumns($conn) {
           AND kelas = '11'
           AND LOWER(jurusan) = 'pplg'
     ");
+}
+
+function ensureAdminProfileColumn($conn) {
+    if (!dbColumnExists($conn, "admin", "nama_lengkap")) {
+        dbTryAlter($conn, "ALTER TABLE admin ADD COLUMN nama_lengkap varchar(100) DEFAULT NULL AFTER id_admin");
+    }
 }
 
 function ensureWalasRombelColumn($conn) {

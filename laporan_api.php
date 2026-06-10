@@ -166,7 +166,7 @@ if ($action === "create") {
     if (!$walas) jsonResponse(["error" => "Walas tidak ditemukan"], 404);
     if ($idBk < 1) jsonResponse(["error" => "Tujuan laporan (petugas BK) harus dipilih"], 422);
     if ($subjek === "") jsonResponse(["error" => "Subjek laporan wajib diisi"], 422);
-    if (strlen($isi) < 10) jsonResponse(["error" => "Isi laporan minimal 10 karakter"], 422);
+    if ($isi === "") jsonResponse(["error" => "Isi laporan wajib diisi"], 422);
 
     $checkBk = $conn->prepare("SELECT id_bk FROM bk WHERE id_bk = ? LIMIT 1");
     $checkBk->bind_param("i", $idBk);

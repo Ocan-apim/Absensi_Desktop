@@ -509,7 +509,8 @@
                 fetch("admin_data_api.php?action=logs").then(parseJson).then(function (data) {
                     var logs = data.logs || [];
                     list.innerHTML = logs.length ? logs.map(function (log) {
-                        return '<article class="report-card" data-report-card data-open="false"><button type="button" class="report-head" data-report-toggle><span class="report-from">' + escapeHtml(log.target_label || log.target_type) + '</span><span class="report-date">' + escapeHtml(log.created_at) + '</span></button><div class="report-body"><div class="report-subject">Akun ' + (log.action === "edited" ? "diedit" : "dihapus") + '</div><div class="report-meta">Admin: ' + escapeHtml(log.admin_username || "-") + ' | Jenis: ' + escapeHtml(log.target_type) + ' | ID: ' + escapeHtml(log.target_id) + '</div><div class="report-text">' + escapeHtml(log.details || "Tidak ada detail.") + '</div></div></article>';
+                        var actionText = log.action === "deleted" ? "dihapus" : (log.action === "profile_updated" ? "mengubah profil sendiri" : "diedit");
+                        return '<article class="report-card" data-report-card data-open="false"><button type="button" class="report-head" data-report-toggle><span class="report-from">' + escapeHtml(log.target_label || log.target_type) + '</span><span class="report-date">' + escapeHtml(log.created_at) + '</span></button><div class="report-body"><div class="report-subject">Akun ' + actionText + '</div><div class="report-meta">Admin: ' + escapeHtml(log.admin_username || "-") + ' | Jenis: ' + escapeHtml(log.target_type) + ' | ID: ' + escapeHtml(log.target_id) + '</div><div class="report-text">' + escapeHtml(log.details || "Tidak ada detail.") + '</div></div></article>';
                     }).join("") : '<p class="status-note">Belum ada laporan aktivitas.</p>';
                 });
             }

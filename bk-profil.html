@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profil BK / Kesiswaan — Absensi</title>
+    <title>Profil BK - Absensi</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700&display=swap" rel="stylesheet">
@@ -15,14 +15,14 @@
 
     <div class="app-shell">
         <aside class="sidebar">
-            <div class="sidebar-brand">Absensi · BK/Kesiswaan</div>
+            <div class="sidebar-brand">Absensi - BK/Kesiswaan</div>
             <nav class="nav-menu" aria-label="Menu utama">
-                <a href="bk-dashboard.html#beranda">Beranda</a>
+                <a href="bk-dashboard.html#beranda" data-view="beranda">Beranda</a>
                 <div class="nav-group" data-nav-group="laporan">
-                    <button type="button" class="nav-group-toggle" data-nav-parent="laporan" data-nav-default="laporan-inbox" aria-expanded="true">Laporan</button>
+                    <button type="button" class="nav-group-toggle" data-nav-parent="laporan" data-nav-default="laporan-inbox" aria-expanded="false">Laporan</button>
                     <div class="nav-submenu">
-                        <a href="bk-dashboard.html#laporan-inbox">Inbox</a>
-                        <a href="bk-dashboard.html#rekap-laporan">Rekap laporan</a>
+                        <a href="bk-dashboard.html#laporan-inbox" data-view="laporan-inbox">Inbox</a>
+                        <a href="bk-dashboard.html#rekap-laporan" data-view="rekap-laporan">Rekap laporan</a>
                     </div>
                 </div>
                 <a href="bk-profil.html" aria-current="page">Profil</a>
@@ -31,11 +31,12 @@
                 <button type="button" class="btn-logout" id="btn-logout">Keluar</button>
             </div>
         </aside>
+
         <main class="main-area">
             <div class="dashboard-topbar">
                 <div class="toolbar-heading">
                     <h1 class="page-title">Profil</h1>
-                    <p class="page-sub" style="margin-bottom:0">Data BK / kesiswaan.</p>
+                    <p class="page-sub" style="margin-bottom:0">Data akun BK / kesiswaan.</p>
                 </div>
                 <a id="header-avatar-link" href="bk-profil.html" class="avatar-btn" title="Profil" aria-label="Buka profil">
                     <img id="header-avatar-img" class="hidden" alt="">
@@ -52,17 +53,28 @@
                     <div class="input-wrap">
                         <input type="file" id="profil-foto-input" accept="image/*">
                     </div>
-                    <button type="button" class="btn-primary" id="profil-simpan">Simpan foto profil</button>
                     <p id="profil-msg" class="page-sub hidden" style="margin:0;color:var(--success)">Tersimpan.</p>
                 </div>
-                <div class="stack" style="margin-top:1.25rem">
+
+                <form id="profil-form" class="stack" style="margin-top:1.25rem">
                     <div>
-                        <span class="field-label">NPSN</span>
-                        <div class="input-wrap">
-                            <input type="text" id="profil-meta" readonly>
-                        </div>
+                        <span class="field-label">Nama lengkap</span>
+                        <div class="input-wrap"><input type="text" id="profil-nama-lengkap" required></div>
                     </div>
-                </div>
+                    <div>
+                        <span class="field-label" id="profil-identifier-label">NPSN</span>
+                        <div class="input-wrap"><input type="text" id="profil-identifier" required></div>
+                    </div>
+                    <div>
+                        <span class="field-label">Email</span>
+                        <div class="input-wrap"><input type="email" id="profil-email" required></div>
+                    </div>
+                    <div>
+                        <span class="field-label">Password</span>
+                        <div class="input-wrap"><input type="text" id="profil-password" required></div>
+                    </div>
+                    <button type="submit" class="btn-primary">Simpan perubahan akun</button>
+                </form>
             </section>
         </main>
     </div>
@@ -70,48 +82,14 @@
     <script src="theme.js"></script>
     <script src="auth.js"></script>
     <script src="dashboard-avatar.js"></script>
+    <script src="profile-form.js"></script>
     <script>
-        (function () {
-            var session = AbsensiAuth.requireRoles(["bk"]);
-            if (!session) return;
-            document.getElementById("btn-logout").addEventListener("click", function () { AbsensiAuth.logout(); });
-            document.getElementById("profil-meta").value = session.username || "";
-            DashboardAvatar.bind("bk-profil.html");
-
-            function loadAvatar() {
-                var url = AbsensiAuth.getAvatarDataUrl();
-                var img = document.getElementById("profil-avatar-img");
-                var ph = document.getElementById("profil-avatar-ph");
-                if (url) {
-                    img.src = url;
-                    img.classList.remove("hidden");
-                    ph.classList.add("hidden");
-                } else {
-                    ph.textContent = (session.username || "BK").slice(0, 2).toUpperCase();
-                }
-            }
-            loadAvatar();
-
-            document.getElementById("profil-foto-input").addEventListener("change", function () {
-                var f = this.files && this.files[0];
-                if (!f) return;
-                var reader = new FileReader();
-                reader.onload = function () {
-                    var img = document.getElementById("profil-avatar-img");
-                    img.src = reader.result;
-                    img.classList.remove("hidden");
-                    document.getElementById("profil-avatar-ph").classList.add("hidden");
-                };
-                reader.readAsDataURL(f);
-            });
-
-            document.getElementById("profil-simpan").addEventListener("click", function () {
-                var src = document.getElementById("profil-avatar-img").getAttribute("src");
-                if (src && src.indexOf("data:") === 0) AbsensiAuth.setAvatarDataUrl(src);
-                document.getElementById("profil-msg").classList.remove("hidden");
-                if (window.DashboardAvatar && DashboardAvatar.refresh) DashboardAvatar.refresh();
-            });
-        })();
+        AbsensiProfileForm.init({
+            role: "bk",
+            roles: ["bk"],
+            profileHref: "bk-profil.html",
+            fallbackInitials: "BK"
+        });
     </script>
 </body>
 </html>

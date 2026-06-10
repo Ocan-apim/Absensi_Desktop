@@ -25,7 +25,7 @@ function passwordMatches($plainPassword, $storedPassword) {
 function findUser($conn, $role, $username) {
     switch ($role) {
         case 'admin':
-            $sql = "SELECT id_admin AS id, username, email, password, 'admin' AS auth_role, 'admin' AS table_role
+            $sql = "SELECT id_admin AS id, nama_lengkap, username, email, password, 'admin' AS auth_role, 'admin' AS table_role
                     FROM admin
                     WHERE username = ? OR email = ?
                     LIMIT 1";

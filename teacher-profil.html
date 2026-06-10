@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profil Guru — Absensi</title>
+    <title>Profil Guru - Absensi</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700&display=swap" rel="stylesheet">
@@ -15,22 +15,22 @@
 
     <div class="app-shell">
         <aside class="sidebar">
-            <div class="sidebar-brand">Absensi · Guru/Walas</div>
+            <div class="sidebar-brand">Absensi - Guru/Walas</div>
             <nav class="nav-menu" aria-label="Menu utama">
-                <a href="teacher-dashboard.html#beranda">Beranda</a>
-                <div class="nav-group is-open">
-                    <button type="button" class="nav-group-toggle is-active" aria-expanded="true">Absensi</button>
+                <a href="teacher-dashboard.html#beranda" data-view="beranda">Beranda</a>
+                <div class="nav-group" data-nav-group="absensi">
+                    <button type="button" class="nav-group-toggle" data-nav-parent="absensi" data-nav-default="rekap" aria-expanded="false">Absensi</button>
                     <div class="nav-submenu">
-                        <a href="teacher-dashboard.html#rekap">Rekap Absensi</a>
-                        <a href="teacher-dashboard.html#daftar-siswa">Daftar Siswa</a>
+                        <a href="teacher-dashboard.html#rekap" data-view="rekap">Rekap Absensi</a>
+                        <a href="teacher-dashboard.html#daftar-siswa" data-view="daftar-siswa">Daftar Siswa</a>
                     </div>
                 </div>
-                <div class="nav-group is-open">
-                    <button type="button" class="nav-group-toggle is-active" aria-expanded="true">Laporan</button>
+                <div class="nav-group" data-nav-group="laporan">
+                    <button type="button" class="nav-group-toggle" data-nav-parent="laporan" data-nav-default="laporan-inbox" aria-expanded="false">Laporan</button>
                     <div class="nav-submenu">
-                        <a href="teacher-dashboard.html#laporan-inbox">Inbox</a>
-                        <a href="teacher-dashboard.html#laporan-baru">Laporan Baru</a>
-                        <a href="teacher-dashboard.html#laporan-riwayat">Riwayat Laporan</a>
+                        <a href="teacher-dashboard.html#laporan-inbox" data-view="laporan-inbox">Inbox</a>
+                        <a href="teacher-dashboard.html#laporan-baru" data-view="laporan-baru">Laporan Baru</a>
+                        <a href="teacher-dashboard.html#laporan-riwayat" data-view="laporan-riwayat">Riwayat Laporan</a>
                     </div>
                 </div>
                 <a href="teacher-profil.html" aria-current="page">Profil</a>
@@ -39,11 +39,12 @@
                 <button type="button" class="btn-logout" id="btn-logout">Keluar</button>
             </div>
         </aside>
+
         <main class="main-area">
             <div class="dashboard-topbar">
                 <div class="toolbar-heading">
                     <h1 class="page-title">Profil</h1>
-                    <p class="page-sub" style="margin-bottom:0">Data guru / wali kelas (placeholder).</p>
+                    <p class="page-sub" style="margin-bottom:0">Data akun guru / wali kelas.</p>
                 </div>
                 <a id="header-avatar-link" href="teacher-profil.html" class="avatar-btn" title="Profil" aria-label="Buka profil">
                     <img id="header-avatar-img" class="hidden" alt="">
@@ -60,17 +61,28 @@
                     <div class="input-wrap">
                         <input type="file" id="profil-foto-input" accept="image/*">
                     </div>
-                    <button type="button" class="btn-primary" id="profil-simpan">Simpan foto profil</button>
                     <p id="profil-msg" class="page-sub hidden" style="margin:0;color:var(--success)">Tersimpan.</p>
                 </div>
-                <div class="stack" style="margin-top:1.25rem">
+
+                <form id="profil-form" class="stack" style="margin-top:1.25rem">
                     <div>
-                        <span class="field-label">NIP / username</span>
-                        <div class="input-wrap">
-                            <input type="text" id="profil-meta" placeholder="Dari database nanti" readonly>
-                        </div>
+                        <span class="field-label">Nama lengkap</span>
+                        <div class="input-wrap"><input type="text" id="profil-nama-lengkap" required></div>
                     </div>
-                </div>
+                    <div>
+                        <span class="field-label" id="profil-identifier-label">NPSN</span>
+                        <div class="input-wrap"><input type="text" id="profil-identifier" required></div>
+                    </div>
+                    <div>
+                        <span class="field-label">Email</span>
+                        <div class="input-wrap"><input type="email" id="profil-email" required></div>
+                    </div>
+                    <div>
+                        <span class="field-label">Password</span>
+                        <div class="input-wrap"><input type="text" id="profil-password" required></div>
+                    </div>
+                    <button type="submit" class="btn-primary">Simpan perubahan akun</button>
+                </form>
             </section>
         </main>
     </div>
@@ -78,58 +90,14 @@
     <script src="theme.js"></script>
     <script src="auth.js"></script>
     <script src="dashboard-avatar.js"></script>
+    <script src="profile-form.js"></script>
     <script>
-        (function () {
-            var session = AbsensiAuth.requireRoles(["teacher"]);
-            if (!session) return;
-            document.getElementById("btn-logout").addEventListener("click", function () {
-                AbsensiAuth.logout();
-            });
-            document.getElementById("profil-meta").value = session.username || "";
-
-            DashboardAvatar.bind("teacher-profil.html");
-
-            function loadAvatar() {
-                var url = AbsensiAuth.getAvatarDataUrl();
-                var img = document.getElementById("profil-avatar-img");
-                var ph = document.getElementById("profil-avatar-ph");
-                if (url) {
-                    img.src = url;
-                    img.classList.remove("hidden");
-                    ph.classList.add("hidden");
-                } else {
-                    ph.textContent = (session.username || "G").slice(0, 2).toUpperCase();
-                }
-            }
-            loadAvatar();
-
-            document.getElementById("profil-foto-input").addEventListener("change", function () {
-                var f = this.files && this.files[0];
-                if (!f) return;
-                var reader = new FileReader();
-                reader.onload = function () {
-                    var img = document.getElementById("profil-avatar-img");
-                    img.src = reader.result;
-                    img.classList.remove("hidden");
-                    document.getElementById("profil-avatar-ph").classList.add("hidden");
-                };
-                reader.readAsDataURL(f);
-            });
-
-            document.getElementById("profil-simpan").addEventListener("click", function () {
-                var img = document.getElementById("profil-avatar-img");
-                var src = img.getAttribute("src");
-                if (src && src.indexOf("data:") === 0) {
-                    AbsensiAuth.setAvatarDataUrl(src);
-                }
-                var msg = document.getElementById("profil-msg");
-                msg.classList.remove("hidden");
-                setTimeout(function () {
-                    msg.classList.add("hidden");
-                }, 2200);
-                if (window.DashboardAvatar && DashboardAvatar.refresh) DashboardAvatar.refresh();
-            });
-        })();
+        AbsensiProfileForm.init({
+            role: "teacher",
+            roles: ["teacher"],
+            profileHref: "teacher-profil.html",
+            fallbackInitials: "GU"
+        });
     </script>
 </body>
 </html>
