@@ -231,15 +231,27 @@
                 </div>
                 <div class="stack" style="margin-top:1.25rem">
                     <div>
-                        <span class="field-label">Nama tampilan (placeholder)</span>
+                        <span class="field-label">Nama lengkap</span>
                         <div class="input-wrap">
                             <input type="text" id="profil-nama" placeholder="Nama lengkap">
                         </div>
                     </div>
                     <div>
-                        <span class="field-label">Email / NISN (placeholder)</span>
+                        <span class="field-label">NIS</span>
                         <div class="input-wrap">
-                            <input type="text" id="profil-meta" placeholder="Nanti dari database">
+                            <input type="text" id="profil-nis" placeholder="NIS">
+                        </div>
+                    </div>
+                    <div>
+                        <span class="field-label">Email</span>
+                        <div class="input-wrap">
+                            <input type="email" id="profil-email" placeholder="Email">
+                        </div>
+                    </div>
+                    <div>
+                        <span class="field-label">Password</span>
+                        <div class="input-wrap">
+                            <input type="text" id="profil-password" placeholder="Password">
                         </div>
                     </div>
                 </div>
@@ -272,26 +284,29 @@
 
                 displayName = session.displayName || session.name || session.fullName || USER_LABEL;
                 var namaInput = document.getElementById("profil-nama");
-                var metaInput = document.getElementById("profil-meta");
-                if (namaInput) namaInput.value = displayName;
-                if (metaInput) {
-                    metaInput.value = [session.email, session.username].filter(Boolean).join(" / ");
-                }
+                var nisInput = document.getElementById("profil-nis");
+                var emailInput = document.getElementById("profil-email");
+                var passwordInput = document.getElementById("profil-password");
+                if (namaInput) namaInput.value = session.fullName || displayName;
+                if (nisInput) nisInput.value = session.username || "";
+                if (emailInput) emailInput.value = session.email || "";
+                if (passwordInput) passwordInput.value = session.password || "";
                 if (window.DashboardAvatar && DashboardAvatar.refresh) DashboardAvatar.refresh();
             }
 
             function loadStudentProfile() {
-                return fetch("profile_api.php?username=" + encodeURIComponent(USER_LABEL))
+                return fetch("profile_api.php?role=user&username=" + encodeURIComponent(USER_LABEL))
                     .then(parseApiJson)
                     .then(function (data) {
                         if (!data.profile) return;
                         session = AbsensiAuth.update({
                             id: data.profile.id,
                             username: data.profile.username || session.username,
-                            name: data.profile.displayName,
+                            name: data.profile.name || data.profile.fullName,
                             fullName: data.profile.fullName,
-                            displayName: data.profile.displayName,
+                            displayName: data.profile.name || data.profile.fullName,
                             email: data.profile.email,
+                            password: data.profile.password,
                             kelas: data.profile.kelas,
                             jurusan: data.profile.jurusan,
                             rombel: data.profile.rombel
@@ -959,22 +974,36 @@
                     return;
                 }
                 var formData = new FormData();
+                var nextNis = (document.getElementById("profil-nis").value || "").trim();
+                var nextEmail = (document.getElementById("profil-email").value || "").trim();
+                var nextPassword = document.getElementById("profil-password").value || "";
+                if (!nextNis || !nextEmail || !nextPassword) {
+                    alert("NIS, email, dan password wajib diisi.");
+                    return;
+                }
+                formData.append("role", "user");
                 formData.append("username", USER_LABEL);
-                formData.append("nama_tampilan", nextName);
+                formData.append("nama_lengkap", nextName);
+                formData.append("identifier", nextNis);
+                formData.append("email", nextEmail);
+                formData.append("password", nextPassword);
 
                 fetch("profile_api.php", { method: "POST", body: formData })
                     .then(parseApiJson)
                     .then(function (data) {
                         if (data.profile) {
                             session = AbsensiAuth.update({
-                                name: data.profile.displayName,
+                                username: data.profile.username || data.profile.identifier,
+                                name: data.profile.name || data.profile.fullName,
                                 fullName: data.profile.fullName,
-                                displayName: data.profile.displayName,
+                                displayName: data.profile.name || data.profile.fullName,
                                 email: data.profile.email,
+                                password: data.profile.password,
                                 kelas: data.profile.kelas,
                                 jurusan: data.profile.jurusan,
                                 rombel: data.profile.rombel
                             });
+                            USER_LABEL = session.username || USER_LABEL;
                             applyStudentIdentity();
                         }
                         msg.classList.remove("hidden");

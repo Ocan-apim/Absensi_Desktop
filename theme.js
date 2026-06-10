@@ -182,6 +182,13 @@
                 var open = !group.classList.contains("is-open");
                 group.classList.toggle("is-open", open);
                 btn.setAttribute("aria-expanded", open ? "true" : "false");
+                var defaultView = btn.getAttribute("data-nav-default");
+                if (defaultView) {
+                    var target = group.querySelector('.nav-submenu a[href*="#' + defaultView + '"]') || group.querySelector(".nav-submenu a[href]");
+                    if (target && target.getAttribute("href")) {
+                        global.location.href = target.getAttribute("href");
+                    }
+                }
             });
         });
     }
