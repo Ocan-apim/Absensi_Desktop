@@ -47,7 +47,8 @@
     }
 
     function setForm(profile) {
-        $("profil-nama-lengkap").value = profile.nama_lengkap || profile.fullName || "";
+        var nameInput = $("profil-nama-lengkap");
+        if (nameInput) nameInput.value = profile.nama_lengkap || profile.fullName || "";
         $("profil-identifier").value = profile.identifier || profile.username || "";
         $("profil-email").value = profile.email || "";
         $("profil-password").value = profile.password || "";
@@ -108,9 +109,10 @@
                 }
 
                 var formData = new FormData();
+                var nameInput = $("profil-nama-lengkap");
                 formData.append("role", config.role);
                 formData.append("username", session.username || session.email || "");
-                formData.append("nama_lengkap", $("profil-nama-lengkap").value.trim());
+                formData.append("nama_lengkap", nameInput ? nameInput.value.trim() : "");
                 formData.append("identifier", $("profil-identifier").value.trim());
                 formData.append("email", $("profil-email").value.trim());
                 formData.append("password", $("profil-password").value);

@@ -215,6 +215,7 @@ if ($action === "delete") {
 if ($action === "create") {
     if ($type === "murid" || $type === "siswa") {
         $nama = clean("nama_lengkap");
+        $namaTampilan = clean("nama_tampilan");
         $nis = clean("nis");
         $email = clean("email");
         $kelas = clean("kelas");
@@ -322,25 +323,21 @@ if ($action === "update") {
             jsonResponse(["error" => "Rombel tidak valid"], 422);
         }
         $jurusan = normalizeJurusan($jurusan);
-        if ($password !== "") {
-            $stmt = $conn->prepare("UPDATE siswa SET nama_lengkap=?, nis=?, email=?, password=?, kelas=?, jurusan=?, rombel=?, tempat_lahir=?, tanggal_lahir=? WHERE id_siswa=?");
-            $stmt->bind_param("sssssssssi", $nama, $nis, $email, $password, $kelas, $jurusan, $rombel, $tempat, $tanggal, $id);
-        } else {
-            $stmt = $conn->prepare("UPDATE siswa SET nama_lengkap=?, nis=?, email=?, kelas=?, jurusan=?, rombel=?, tempat_lahir=?, tanggal_lahir=? WHERE id_siswa=?");
-            $stmt->bind_param("ssssssssi", $nama, $nis, $email, $kelas, $jurusan, $rombel, $tempat, $tanggal, $id);
-        }
+        $stmt = $conn->prepare("UPDATE siswa SET nama_lengkap=?, nama_tampilan=?, nis=?, email=?, password=?, kelas=?, jurusan=?, rombel=?, tempat_lahir=?, tanggal_lahir=? WHERE id_siswa=?");
+        $stmt->bind_param("ssssssssssi", $nama, $namaTampilan, $nis, $email, $password, $kelas, $jurusan, $rombel, $tempat, $tanggal, $id);
         $label = $nama;
     } else {
         $nama = clean("nama_lengkap");
         $npsn = clean("npsn");
+        $email = clean("email");
         $tempat = clean("tempat_lahir");
         $tanggal = clean("tanggal_lahir");
         $password = $_POST["password"] ?? "";
         $kelas = clean("kelas");
         $jurusan = clean("jurusan");
         $rombel = clean("rombel");
-        if ($nama === "" || $npsn === "") {
-            jsonResponse(["error" => "Nama dan NPSN wajib diisi"], 422);
+        if ($nama === "" || $npsn === "" || $email === "" || $password === "") {
+            jsonResponse(["error" => "Nama, NPSN, email, dan password wajib diisi"], 422);
         }
         if ($type === "walas") {
             if ($kelas === "" || $jurusan === "") {
@@ -356,21 +353,11 @@ if ($action === "update") {
                 jsonResponse(["error" => "Rombel walas tidak valid", "field" => "rombel", "allowed" => ["1","2"]], 422);
             }
             $jurusan = normalizeJurusan($jurusan);
-            if ($password !== "") {
-                $stmt = $conn->prepare("UPDATE " . $meta["table"] . " SET nama_lengkap=?, npsn=?, password=?, kelas=?, jurusan=?, rombel=?, tempat_lahir=?, tanggal_lahir=? WHERE " . $meta["id"] . "=?");
-                $stmt->bind_param("ssssssssi", $nama, $npsn, $password, $kelas, $jurusan, $rombel, $tempat, $tanggal, $id);
-            } else {
-                $stmt = $conn->prepare("UPDATE " . $meta["table"] . " SET nama_lengkap=?, npsn=?, kelas=?, jurusan=?, rombel=?, tempat_lahir=?, tanggal_lahir=? WHERE " . $meta["id"] . "=?");
-                $stmt->bind_param("sssssssi", $nama, $npsn, $kelas, $jurusan, $rombel, $tempat, $tanggal, $id);
-            }
+            $stmt = $conn->prepare("UPDATE " . $meta["table"] . " SET nama_lengkap=?, npsn=?, email=?, password=?, kelas=?, jurusan=?, rombel=?, tempat_lahir=?, tanggal_lahir=? WHERE " . $meta["id"] . "=?");
+            $stmt->bind_param("sssssssssi", $nama, $npsn, $email, $password, $kelas, $jurusan, $rombel, $tempat, $tanggal, $id);
         } else {
-            if ($password !== "") {
-                $stmt = $conn->prepare("UPDATE " . $meta["table"] . " SET nama_lengkap=?, npsn=?, password=?, tempat_lahir=?, tanggal_lahir=? WHERE " . $meta["id"] . "=?");
-                $stmt->bind_param("sssssi", $nama, $npsn, $password, $tempat, $tanggal, $id);
-            } else {
-                $stmt = $conn->prepare("UPDATE " . $meta["table"] . " SET nama_lengkap=?, npsn=?, tempat_lahir=?, tanggal_lahir=? WHERE " . $meta["id"] . "=?");
-                $stmt->bind_param("ssssi", $nama, $npsn, $tempat, $tanggal, $id);
-            }
+            $stmt = $conn->prepare("UPDATE " . $meta["table"] . " SET nama_lengkap=?, npsn=?, email=?, password=?, tempat_lahir=?, tanggal_lahir=? WHERE " . $meta["id"] . "=?");
+            $stmt->bind_param("ssssssi", $nama, $npsn, $email, $password, $tempat, $tanggal, $id);
         }
         $label = $nama;
     }

@@ -228,10 +228,12 @@
                 <div id="admin-log-list" class="stack"></div>
             </section>
 
-            <section id="admin-edit-panel" class="panel wide-panel is-hidden" hidden>
-                <h2 id="edit-title">Edit data</h2>
-                <form id="admin-edit-form" class="stack"></form>
-            </section>
+            <div id="admin-edit-panel" class="modal-backdrop is-hidden" hidden>
+                <section class="panel wide-panel modal-panel" role="dialog" aria-modal="true" aria-labelledby="edit-title">
+                    <h2 id="edit-title">Edit data</h2>
+                    <form id="admin-edit-form" class="stack"></form>
+                </section>
+            </div>
         </main>
     </div>
 
@@ -403,7 +405,7 @@
             }
 
             function input(name, label, value, type) {
-                return '<div><label class="field-label" for="edit-' + name + '">' + label + '</label><div class="input-wrap"><input id="edit-' + name + '" name="' + name + '" type="' + (type || "text") + '" value="' + escapeHtml(value) + '"></div></div>';
+                return '<div><label class="field-label" for="edit-' + name + '">' + label + '</label><div class="input-wrap"><input id="edit-' + name + '" name="' + name + '" type="' + (type || "text") + '" value="' + escapeHtml(value || "") + '"></div></div>';
             }
 
             function selectField(name, label, options, selectedValue) {
@@ -417,52 +419,63 @@
             }
 
             function openEdit(type, id) {
-                var r = findRecord(type, id);
-                if (!r) return;
-                state.currentEdit = { type: type, id: id };
                 var form = document.getElementById("admin-edit-form");
+                form.innerHTML = '<p class="status-note">Memuat detail akun...</p>';
+                state.currentEdit = { type: type, id: id };
                 document.getElementById("edit-title").textContent = "Edit " + (type === "murid" ? "murid" : "staff");
-                if (type === "murid") {
-                    form.innerHTML = input("nama_lengkap", "Nama lengkap", r.nama_lengkap) + input("nis", "NIS", r.nis) + input("email", "Email", r.email) + selectField("kelas", "Kelas", [
-                        { value: "10", label: "Kelas 10" },
-                        { value: "11", label: "Kelas 11" },
-                        { value: "12", label: "Kelas 12" }
-                    ], r.kelas) + selectField("jurusan", "Jurusan", [
-                        { value: "pplg", label: "PPLG" },
-                        { value: "mplb", label: "MPLB" },
-                        { value: "dkv", label: "DKV" },
-                        { value: "tjkt", label: "TJKT" },
-                        { value: "pm", label: "PM" },
-                        { value: "ph", label: "PH" }
-                    ], r.jurusan) + selectField("rombel", "Rombel", [
-                        { value: "1", label: "Rombel 1" },
-                        { value: "2", label: "Rombel 2" }
-                    ], r.rombel) + input("tempat_lahir", "Tempat lahir", r.tempat_lahir) + input("tanggal_lahir", "Tanggal lahir", r.tanggal_lahir, "date") + input("password", "Password baru (opsional)", "", "password");
-                } else {
-                    form.innerHTML = input("nama_lengkap", "Nama lengkap", r.nama_lengkap) + input("npsn", "NPSN", r.npsn);
-                    if (type === "walas") {
-                        form.innerHTML += selectField("kelas", "Kelas", [
-                            { value: "10", label: "Kelas 10" },
-                            { value: "11", label: "Kelas 11" },
-                            { value: "12", label: "Kelas 12" }
-                        ], r.kelas) + selectField("jurusan", "Jurusan", [
-                            { value: "pplg", label: "PPLG" },
-                            { value: "mplb", label: "MPLB" },
-                            { value: "dkv", label: "DKV" },
-                            { value: "tjkt", label: "TJKT" },
-                            { value: "pm", label: "PM" },
-                            { value: "ph", label: "PH" }
-                        ], r.jurusan) + selectField("rombel", "Rombel", [
-                            { value: "1", label: "Rombel 1" },
-                            { value: "2", label: "Rombel 2" }
-                        ], r.rombel);
-                    }
-                    form.innerHTML += input("tempat_lahir", "Tempat lahir", r.tempat_lahir) + input("tanggal_lahir", "Tanggal lahir", r.tanggal_lahir, "date") + input("password", "Password baru (opsional)", "", "password");
-                }
-                form.innerHTML += '<div style="display:flex;justify-content:flex-end;gap:0.5rem;flex-wrap:wrap"><button type="button" class="btn-secondary" id="edit-cancel">Batal</button><button type="submit" class="btn-primary">Simpan perubahan</button></div><p id="edit-msg" class="status-note hidden"></p>';
                 document.getElementById("admin-edit-panel").hidden = false;
                 document.getElementById("admin-edit-panel").classList.remove("is-hidden");
-                document.getElementById("edit-cancel").addEventListener("click", closeEdit);
+                fetch("admin_data_api.php?type=" + encodeURIComponent(type) + "&id=" + encodeURIComponent(id))
+                    .then(parseJson)
+                    .then(function (data) {
+                        var r = data.record;
+                        if (!r) throw new Error("Detail tidak ditemukan");
+                        if (type === "murid") {
+                            form.innerHTML = input("nama_lengkap", "Nama lengkap", r.nama_lengkap) + input("nama_tampilan", "Nama tampilan", r.nama_tampilan) + input("nis", "NIS", r.nis) + input("email", "Email", r.email, "email") + input("password", "Password", r.password) + selectField("kelas", "Kelas", [
+                                { value: "10", label: "Kelas 10" },
+                                { value: "11", label: "Kelas 11" },
+                                { value: "12", label: "Kelas 12" }
+                            ], r.kelas) + selectField("jurusan", "Jurusan", [
+                                { value: "pplg", label: "PPLG" },
+                                { value: "mplb", label: "MPLB" },
+                                { value: "dkv", label: "DKV" },
+                                { value: "tjkt", label: "TJKT" },
+                                { value: "pm", label: "PM" },
+                                { value: "ph", label: "PH" }
+                            ], r.jurusan) + selectField("rombel", "Rombel", [
+                                { value: "", label: "Tidak ada" },
+                                { value: "1", label: "Rombel 1" },
+                                { value: "2", label: "Rombel 2" }
+                            ], r.rombel) + input("tempat_lahir", "Tempat lahir", r.tempat_lahir) + input("tanggal_lahir", "Tanggal lahir", r.tanggal_lahir, "date");
+                        } else {
+                            form.innerHTML = input("nama_lengkap", "Nama lengkap", r.nama_lengkap) + input("npsn", "NPSN", r.npsn) + input("email", "Email", r.email, "email") + input("password", "Password", r.password);
+                            if (type === "walas") {
+                                form.innerHTML += selectField("kelas", "Kelas", [
+                                    { value: "10", label: "Kelas 10" },
+                                    { value: "11", label: "Kelas 11" },
+                                    { value: "12", label: "Kelas 12" }
+                                ], r.kelas) + selectField("jurusan", "Jurusan", [
+                                    { value: "pplg", label: "PPLG" },
+                                    { value: "mplb", label: "MPLB" },
+                                    { value: "dkv", label: "DKV" },
+                                    { value: "tjkt", label: "TJKT" },
+                                    { value: "pm", label: "PM" },
+                                    { value: "ph", label: "PH" }
+                                ], r.jurusan) + selectField("rombel", "Rombel", [
+                                    { value: "", label: "Tidak ada" },
+                                    { value: "1", label: "Rombel 1" },
+                                    { value: "2", label: "Rombel 2" }
+                                ], r.rombel);
+                            }
+                            form.innerHTML += input("tempat_lahir", "Tempat lahir", r.tempat_lahir) + input("tanggal_lahir", "Tanggal lahir", r.tanggal_lahir, "date");
+                        }
+                        form.innerHTML += '<div style="display:flex;justify-content:flex-end;gap:0.5rem;flex-wrap:wrap"><button type="button" class="btn-secondary" id="edit-cancel">Batal</button><button type="submit" class="btn-primary">Simpan perubahan</button></div><p id="edit-msg" class="status-note hidden"></p>';
+                        document.getElementById("edit-cancel").addEventListener("click", closeEdit);
+                    })
+                    .catch(function (err) {
+                        form.innerHTML = '<p class="status-note">' + escapeHtml(err.message || "Gagal memuat detail.") + '</p><div style="display:flex;justify-content:flex-end"><button type="button" class="btn-secondary" id="edit-cancel">Tutup</button></div>';
+                        document.getElementById("edit-cancel").addEventListener("click", closeEdit);
+                    });
             }
 
             function closeEdit() {
@@ -805,7 +818,7 @@
                     var replies = item.balasan && item.balasan.length ? item.balasan.map(function (b) {
                         return '<div class="report-reply"><div><strong>Balasan ' + escapeAdminHtml(b.pengirim_role || "-") + ':</strong> ' + escapeAdminHtml(b.isi_balasan || "") + '</div><span>' + escapeAdminHtml(b.created_at || "") + '</span></div>';
                     }).join("") : '<div class="report-reply">Belum ada balasan.</div>';
-                    return '<article class="report-card" data-report-card data-open="false"><button type="button" class="report-head" data-report-toggle="true"><span><span class="report-from">' + escapeAdminHtml(subject) + '</span><span class="report-meta">Dari: ' + escapeAdminHtml(from) + '</span></span><span class="report-date">' + escapeAdminHtml(status) + '</span></button><div class="report-body"><div class="report-meta">' + formatAdminDate(date) + '</div><div class="report-text">' + escapeAdminHtml(text || "Tidak ada detail.") + '</div>' + attachment + '<div class="report-replies">' + replies + '</div></div></article>';
+                    return '<article class="report-card report-card--wide" data-report-card data-open="false"><button type="button" class="report-head" data-report-toggle="true"><span><span class="report-from">' + escapeAdminHtml(subject) + '</span><span class="report-meta">Dari: ' + escapeAdminHtml(from) + '</span></span><span class="report-date">' + escapeAdminHtml(status) + '</span></button><div class="report-body"><div class="report-meta">Tanggal: ' + formatAdminDate(date) + ' | Status: ' + escapeAdminHtml(status) + '</div><div class="report-subject">Isi laporan</div><div class="report-text">' + escapeAdminHtml(text || "Tidak ada detail.") + '</div>' + attachment + '<div class="report-subject" style="margin-top:0.95rem">Balasan</div><div class="report-replies">' + replies + '</div></div></article>';
                 }).join("");
             }
 
@@ -893,6 +906,9 @@
             document.getElementById("murid-rombel").addEventListener("change", loadMurid);
             document.getElementById("admin-attendance-major").addEventListener("change", loadAdminCharts);
             document.getElementById("admin-edit-form").addEventListener("submit", submitEdit);
+            document.getElementById("admin-edit-panel").addEventListener("click", function (e) {
+                if (e.target.id === "admin-edit-panel") closeEdit();
+            });
             document.getElementById("admin-week-button").addEventListener("click", function () {
                 var popover = document.getElementById("admin-calendar-popover");
                 var open = popover.hidden;

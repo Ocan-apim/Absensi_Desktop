@@ -44,8 +44,18 @@ ensureLaporanSchema($conn);
 $replyTable = replyTable($conn);
 
 function saveLaporanLampiran($field) {
-    if (empty($_FILES[$field]) || !is_uploaded_file($_FILES[$field]["tmp_name"])) {
+    if (empty($_FILES[$field]) || ($_FILES[$field]["error"] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
         return null;
+    }
+    if (($_FILES[$field]["error"] ?? UPLOAD_ERR_OK) !== UPLOAD_ERR_OK) {
+        jsonResponse(["error" => "Gagal mengunggah lampiran. Pastikan ukuran file maksimal 10MB."], 422);
+    }
+    if (!is_uploaded_file($_FILES[$field]["tmp_name"])) {
+        jsonResponse(["error" => "Lampiran tidak valid"], 422);
+    }
+
+    if ((int) ($_FILES[$field]["size"] ?? 0) > 10 * 1024 * 1024) {
+        jsonResponse(["error" => "Lampiran maksimal 10MB"], 422);
     }
 
     $allowed = [
@@ -53,10 +63,17 @@ function saveLaporanLampiran($field) {
         "image/png" => "png",
         "image/webp" => "webp",
         "application/pdf" => "pdf",
+        "application/msword" => "doc",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document" => "docx",
     ];
     $mime = mime_content_type($_FILES[$field]["tmp_name"]);
     if (!isset($allowed[$mime])) {
-        jsonResponse(["error" => "Lampiran harus berupa JPG, PNG, WEBP, atau PDF"], 422);
+        $ext = strtolower(pathinfo($_FILES[$field]["name"] ?? "", PATHINFO_EXTENSION));
+        $extMap = ["jpg" => "jpg", "jpeg" => "jpg", "png" => "png", "webp" => "webp", "pdf" => "pdf", "doc" => "doc", "docx" => "docx"];
+        if (!isset($extMap[$ext])) {
+            jsonResponse(["error" => "Lampiran harus berupa PNG, JPG, WEBP, PDF, DOC, atau DOCX"], 422);
+        }
+        $allowed[$mime] = $extMap[$ext];
     }
 
     $dir = __DIR__ . "/uploads/laporan";

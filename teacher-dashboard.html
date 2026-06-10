@@ -68,6 +68,7 @@
                     </div>
                     <div class="section-head-meta">
                         <button type="button" class="btn-secondary" id="btn-print-attendance">Cetak PDF</button>
+                        <button type="button" class="btn-secondary" id="btn-download-attendance">Download PDF</button>
                         <div class="class-pill" id="rekap-class-pill">XI PPLG 2</div>
                         <div class="attendance-pill">
                             <span class="attendance-pill-label">Kehadiran</span>
@@ -237,7 +238,7 @@
                     <div>
                         <label class="field-label" for="laporan-lampiran">Add file</label>
                         <div class="input-wrap">
-                            <input type="file" id="laporan-lampiran" accept=".pdf,.jpg,.jpeg,.png,.webp,image/*,application/pdf">
+                            <input type="file" id="laporan-lampiran" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp,image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
                         </div>
                     </div>
                     <div style="display:flex;justify-content:flex-end;gap:0.5rem;flex-wrap:wrap">
@@ -779,6 +780,7 @@
             }
 
             document.getElementById("btn-print-attendance").addEventListener("click", printAttendanceReport);
+            document.getElementById("btn-download-attendance").addEventListener("click", printAttendanceReport);
 
             document.addEventListener("click", function (e) {
                 var replyBtn = e.target.closest(".js-report-reply-send");
@@ -838,6 +840,10 @@
                 formData.append("isi_laporan", document.getElementById("laporan-isi").value.trim());
                 var lampiran = document.getElementById("laporan-lampiran");
                 if (lampiran && lampiran.files && lampiran.files[0]) {
+                    if (lampiran.files[0].size > 10 * 1024 * 1024) {
+                        alert("Lampiran maksimal 10MB.");
+                        return;
+                    }
                     formData.append("lampiran", lampiran.files[0], lampiran.files[0].name);
                 }
 

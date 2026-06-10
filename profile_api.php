@@ -57,7 +57,7 @@ function cleanPost($key) {
 function findProfile($conn, $role, $username) {
     $meta = profileMeta($role);
     if ($role === "admin") {
-        $stmt = $conn->prepare("SELECT id_admin AS id, nama_lengkap, username AS identifier, email, password FROM admin WHERE username = ? OR email = ? LIMIT 1");
+        $stmt = $conn->prepare("SELECT id_admin AS id, username AS identifier, email, password FROM admin WHERE username = ? OR email = ? LIMIT 1");
     } elseif ($role === "siswa") {
         $stmt = $conn->prepare("SELECT id_siswa AS id, nama_lengkap, nis AS identifier, email, password, kelas, jurusan, rombel FROM siswa WHERE nis = ? OR email = ? LIMIT 1");
     } else {
@@ -72,7 +72,7 @@ function findProfile($conn, $role, $username) {
         jsonResponse(["error" => "Profil tidak ditemukan"], 404);
     }
 
-    $fullName = trim((string) ($row["nama_lengkap"] ?? ""));
+    $fullName = $role === "admin" ? "Admin" : trim((string) ($row["nama_lengkap"] ?? ""));
     if ($fullName === "") $fullName = $row["identifier"];
 
     return [
@@ -117,24 +117,30 @@ $identifier = cleanPost("identifier");
 $email = cleanPost("email");
 $password = $_POST["password"] ?? "";
 
-if ($nama === "" || $identifier === "" || $email === "" || $password === "") {
-    jsonResponse(["error" => "Nama lengkap, " . $meta["identifier_label"] . ", email, dan password wajib diisi"], 422);
+if ($role !== "admin" && $nama === "") {
+    jsonResponse(["error" => "Nama lengkap wajib diisi"], 422);
+}
+if ($identifier === "" || $email === "" || $password === "") {
+    $required = $role === "admin" ? $meta["identifier_label"] . ", email, dan password wajib diisi" : "Nama lengkap, " . $meta["identifier_label"] . ", email, dan password wajib diisi";
+    jsonResponse(["error" => $required], 422);
 }
 
 $changed = [];
-if ($nama !== $current["nama_lengkap"]) $changed[] = "nama_lengkap";
+if ($role !== "admin" && $nama !== $current["nama_lengkap"]) $changed[] = "nama_lengkap";
 if ($identifier !== $current["identifier"]) $changed[] = $meta["identifier"];
 if ($email !== $current["email"]) $changed[] = "email";
 if ($password !== $current["password"]) $changed[] = "password";
 
 if ($role === "admin") {
-    $stmt = $conn->prepare("UPDATE admin SET nama_lengkap = ?, username = ?, email = ?, password = ? WHERE id_admin = ?");
+    $stmt = $conn->prepare("UPDATE admin SET username = ?, email = ?, password = ? WHERE id_admin = ?");
+    $stmt->bind_param("sssi", $identifier, $email, $password, $id);
 } elseif ($role === "siswa") {
     $stmt = $conn->prepare("UPDATE siswa SET nama_lengkap = ?, nis = ?, email = ?, password = ? WHERE id_siswa = ?");
+    $stmt->bind_param("ssssi", $nama, $identifier, $email, $password, $id);
 } else {
     $stmt = $conn->prepare("UPDATE " . $meta["table"] . " SET nama_lengkap = ?, npsn = ?, email = ?, password = ? WHERE " . $meta["id"] . " = ?");
+    $stmt->bind_param("ssssi", $nama, $identifier, $email, $password, $id);
 }
-$stmt->bind_param("ssssi", $nama, $identifier, $email, $password, $id);
 if (!$stmt->execute()) {
     jsonResponse(["error" => "Gagal menyimpan profil. Pastikan NIS/NPSN/email tidak duplikat."], 500);
 }

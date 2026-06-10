@@ -144,7 +144,8 @@
                 if (!list) return;
                 var priority = baru.slice(0, 5);
                 list.innerHTML = priority.length ? priority.map(function (item) {
-                    return '<article class="report-card" data-open="false"><span class="report-badge" aria-label="Laporan baru"></span><button type="button" class="report-head" data-report-toggle><span class="report-from">' + escapeHtml(item.walas_nama || item.walas_npsn || "-") + '</span><span class="report-date">' + escapeHtml(item.created_at) + '</span></button><div class="report-body"><div class="report-subject">' + escapeHtml(item.subjek) + '</div><div class="report-meta">Status: ' + escapeHtml(item.status) + '</div><div class="report-text">' + escapeHtml(item.isi_laporan) + '</div></div></article>';
+                    var attachment = item.lampiran ? '<div class="report-attachment"><a href="' + escapeHtml(item.lampiran) + '" target="_blank" rel="noopener">Lihat lampiran</a></div>' : '';
+                    return '<article class="report-card" data-report-card data-open="false"><span class="report-badge" aria-label="Laporan baru"></span><button type="button" class="report-head" data-report-toggle><span class="report-from">' + escapeHtml(item.walas_nama || item.walas_npsn || "-") + '</span><span class="report-date">' + escapeHtml(item.created_at) + '</span></button><div class="report-body"><div class="report-subject">' + escapeHtml(item.subjek) + '</div><div class="report-meta">Status: ' + escapeHtml(item.status) + '</div><div class="report-text">' + escapeHtml(item.isi_laporan) + '</div>' + attachment + '</div></article>';
                 }).join("") : '<p class="status-note">Tidak ada laporan prioritas.</p>';
             }
 
@@ -193,6 +194,15 @@
             }
 
             document.getElementById("laporan-list").addEventListener("click", function (e) {
+                var toggle = e.target.closest("[data-report-toggle]");
+                if (!toggle) return;
+                var card = toggle.closest("[data-report-card]");
+                if (!card) return;
+                var open = card.getAttribute("data-open") === "true";
+                card.setAttribute("data-open", open ? "false" : "true");
+            });
+
+            document.getElementById("bk-priority-list").addEventListener("click", function (e) {
                 var toggle = e.target.closest("[data-report-toggle]");
                 if (!toggle) return;
                 var card = toggle.closest("[data-report-card]");
