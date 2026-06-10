@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . "/db.php";
+require_once __DIR__ . "/cloudinary-upload.php";
 
 $conn = db();
 ensureStudentProfileColumns($conn);
@@ -18,29 +19,7 @@ function findSiswa($conn, $username) {
 }
 
 function saveUpload($field, $dir, $prefix) {
-    if (!isset($_FILES[$field]) || $_FILES[$field]["error"] !== UPLOAD_ERR_OK) {
-        return null;
-    }
-
-    $baseDir = __DIR__ . "/" . $dir;
-    if (!is_dir($baseDir)) {
-        mkdir($baseDir, 0775, true);
-    }
-
-    $original = basename($_FILES[$field]["name"]);
-    $ext = strtolower(pathinfo($original, PATHINFO_EXTENSION));
-    if ($ext === "") {
-        $ext = "jpg";
-    }
-
-    $name = $prefix . "_" . date("Ymd_His") . "_" . bin2hex(random_bytes(4)) . "." . $ext;
-    $target = $baseDir . "/" . $name;
-
-    if (!move_uploaded_file($_FILES[$field]["tmp_name"], $target)) {
-        return null;
-    }
-
-    return $dir . "/" . $name;
+    return saveUploadWithCloudinary($field, $dir, $prefix, $dir);
 }
 
 function fetchStudentsByClass($conn, $kelas, $jurusan, $rombel = "") {

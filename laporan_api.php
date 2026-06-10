@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . "/db.php";
+require_once __DIR__ . "/cloudinary-upload.php";
 
 $conn = db();
 $method = $_SERVER["REQUEST_METHOD"];
@@ -125,6 +126,11 @@ function saveLaporanLampiran($field) {
         $ext = allowedLampiranExtension($file["tmp_name"], $file["name"]);
         $name = "laporan_" . date("Ymd_His") . "_" . bin2hex(random_bytes(4)) . "." . $ext;
         $target = $dir . "/" . $name;
+        $cloudUrl = uploadTempFileToCloudinary($file["tmp_name"], $file["name"], "uploads/laporan", pathinfo($name, PATHINFO_FILENAME));
+        if ($cloudUrl) {
+            $paths[] = $cloudUrl;
+            continue;
+        }
         if (!move_uploaded_file($file["tmp_name"], $target)) {
             jsonResponse(["error" => "Gagal mengunggah lampiran"], 500);
         }
