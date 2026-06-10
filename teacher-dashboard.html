@@ -83,9 +83,21 @@
                 </div>
                 <div class="period-controls" aria-label="Pilih periode rekap">
                     <div class="period-control" data-period-control="weekly">
-                        <label class="field-label" for="weekly-date">Pilih minggu</label>
+                        <label class="field-label" for="weekly-month">Pilih bulan</label>
                         <div class="input-wrap">
-                            <input type="date" id="weekly-date">
+                            <input type="month" id="weekly-month">
+                        </div>
+                    </div>
+                    <div class="period-control" data-period-control="weekly">
+                        <label class="field-label" for="weekly-number">Minggu ke</label>
+                        <div class="input-wrap">
+                            <select id="weekly-number">
+                                <option value="1">Minggu 1</option>
+                                <option value="2">Minggu 2</option>
+                                <option value="3">Minggu 3</option>
+                                <option value="4">Minggu 4</option>
+                                <option value="5">Minggu 5</option>
+                            </select>
                         </div>
                     </div>
                     <div class="period-control is-hidden" data-period-control="monthly">
@@ -284,7 +296,8 @@
             var cachedReports = [];
             var reportMode = "daily";
             var reportCache = { weekly: null, monthly: null, students: null };
-            var selectedWeekDate = new Date(now);
+            var selectedWeekMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            var selectedWeekNumber = Math.min(5, Math.max(1, Math.ceil(now.getDate() / 7)));
             var selectedMonthDate = new Date(now.getFullYear(), now.getMonth(), 1);
 
             function mapClassLabel(kelas) {
@@ -502,24 +515,26 @@
                 return d;
             }
 
-            function renderWeekly(data, startDate) {
+            function selectedWeekStartDate() {
+                var day = ((selectedWeekNumber - 1) * 7) + 1;
+                return new Date(selectedWeekMonth.getFullYear(), selectedWeekMonth.getMonth(), day);
+            }
+
+            function renderWeekly(data, startDate, endDate) {
                 var students = data.students || [];
                 var records = data.records || [];
                 var head = document.getElementById("weekly-table-head");
                 var body = document.getElementById("weekly-table-body");
-                var daysInWeek = [0, 1, 2, 3, 4].map(function (offset) {
-                    var d = new Date(startDate);
-                    d.setDate(startDate.getDate() + offset);
-                    return formatDateISO(d);
-                });
-                var dayNames = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat"];
+                var daysInWeek = weekdaysBetween(startDate, endDate);
                 head.innerHTML = '<tr><th>No</th><th>Nama lengkap</th><th>NIS</th>' +
-                    daysInWeek.map(function (dateKey, index) {
-                        return '<th>' + dayNames[index] + '<br><span class="table-subdate">' + escapeHtml(formatTanggal(dateKey)) + '</span></th>';
+                    daysInWeek.map(function (dateKey) {
+                        var date = parseDateInput(dateKey);
+                        var dayName = date.toLocaleDateString("id-ID", { weekday: "long" });
+                        return '<th>' + escapeHtml(dayName) + '<br><span class="table-subdate">' + escapeHtml(formatTanggal(dateKey)) + '</span></th>';
                     }).join("") +
                     '<th>Total</th></tr>';
                 if (!students.length) {
-                    body.innerHTML = emptyRow(9, "Belum ada siswa.");
+                    body.innerHTML = emptyRow(daysInWeek.length + 4, "Belum ada siswa.");
                     updatePercent(0);
                     return;
                 }
@@ -527,11 +542,10 @@
                     var cols = daysInWeek.map(function (dateKey) {
                         return attendanceCode(records, student.id_siswa, dateKey);
                     });
-                    var totalPercent = attendancePercentForStudent(records, student.id_siswa, startDate, new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() + 4));
-                    return "<tr><td>" + (idx + 1) + "</td><td>" + escapeHtml(student.nama_lengkap) + "</td><td>" + escapeHtml(student.nis) + "</td><td>" + cols[0] + "</td><td>" + cols[1] + "</td><td>" + cols[2] + "</td><td>" + cols[3] + "</td><td>" + cols[4] + "</td><td>" + totalPercent + "</td></tr>";
+                    var totalPercent = attendancePercentForStudent(records, student.id_siswa, startDate, endDate);
+                    return "<tr><td>" + (idx + 1) + "</td><td>" + escapeHtml(student.nama_lengkap) + "</td><td>" + escapeHtml(student.nis) + "</td>" + cols.map(function (code) { return "<td>" + escapeHtml(code) + "</td>"; }).join("") + "<td>" + totalPercent + "</td></tr>";
                 }).join("");
 
-                var endDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() + 4);
                 var percent = (records.filter(function (r) { return r.mode === "hadir"; }).length / Math.max(1, students.length * countWeekdays(startDate, endDate))) * 100;
                 updatePercent(percent);
             }
@@ -555,10 +569,12 @@
                     }
                 });
                 head.innerHTML = '<tr><th rowspan="2">No</th><th rowspan="2">Nama</th>' +
-                    weekGroups.map(function (group) { return '<th colspan="' + group.count + '">' + escapeHtml(group.label) + '</th>'; }).join("") +
-                    '<th colspan="4">Ket.</th></tr><tr>' +
-                    days.map(function (dateKey) { return '<th>' + escapeHtml(dayLabel(dateKey)) + '</th>'; }).join("") +
-                    '<th>A</th><th>I</th><th>S</th><th>%</th></tr>';
+                    weekGroups.map(function (group) { return '<th class="week-boundary" colspan="' + group.count + '">' + escapeHtml(group.label) + '</th>'; }).join("") +
+                    '<th class="summary-boundary" colspan="4">Ket.</th></tr><tr>' +
+                    days.map(function (dateKey) {
+                        return '<th class="' + (dayLabel(dateKey) === "1" || days.indexOf(dateKey) === 0 || weekGroupLabel(dateKey) !== weekGroupLabel(days[days.indexOf(dateKey) - 1]) ? "week-boundary" : "") + '">' + escapeHtml(dayLabel(dateKey)) + '</th>';
+                    }).join("") +
+                    '<th class="summary-boundary">A</th><th>I</th><th>S</th><th class="percent-boundary">%</th></tr>';
                 if (!students.length) {
                     body.innerHTML = emptyRow(days.length + 6, "Belum ada siswa.");
                     updatePercent(0);
@@ -570,8 +586,13 @@
                     });
                     var counts = summarizeCodes(codes);
                     return "<tr><td>" + (idx + 1) + "</td><td>" + escapeHtml(student.nama_lengkap) + "</td>" +
-                        codes.map(function (code) { return "<td>" + escapeHtml(code) + "</td>"; }).join("") +
-                        "<td>" + counts.A + "</td><td>" + counts.I + "</td><td>" + counts.S + "</td><td>" + counts.percent + "</td></tr>";
+                        codes.map(function (code, codeIndex) {
+                            var currentDate = days[codeIndex];
+                            var prevDate = days[codeIndex - 1];
+                            var cls = codeIndex === 0 || weekGroupLabel(currentDate) !== weekGroupLabel(prevDate) ? ' class="week-boundary"' : "";
+                            return "<td" + cls + ">" + escapeHtml(code) + "</td>";
+                        }).join("") +
+                        '<td class="summary-boundary">' + counts.A + "</td><td>" + counts.I + "</td><td>" + counts.S + '</td><td class="percent-boundary">' + counts.percent + "</td></tr>";
                 }).join("");
 
                 var percent = (records.filter(function (r) { return r.mode === "hadir"; }).length / Math.max(1, students.length * days.length)) * 100;
@@ -589,10 +610,12 @@
                     return Promise.resolve();
                 }
                 if (mode === "weekly") {
-                    var startWeek = weekStartDate(selectedWeekDate);
+                    var startWeek = selectedWeekStartDate();
                     var endWeek = new Date(startWeek.getFullYear(), startWeek.getMonth(), startWeek.getDate() + 4);
+                    var endOfMonth = monthEnd(selectedWeekMonth);
+                    if (endWeek > endOfMonth) endWeek = endOfMonth;
                     return fetchRange(formatDateISO(startWeek), formatDateISO(endWeek), "weekly").then(function (data) {
-                        renderWeekly(data, startWeek);
+                        renderWeekly(data, startWeek, endWeek);
                         renderStudentList(data.students || []);
                     });
                 }
@@ -839,11 +862,16 @@
                 });
             });
 
-            document.getElementById("weekly-date").value = formatDateISO(selectedWeekDate);
+            document.getElementById("weekly-month").value = monthInputValue(selectedWeekMonth);
+            document.getElementById("weekly-number").value = String(selectedWeekNumber);
             document.getElementById("monthly-date").value = monthInputValue(selectedMonthDate);
-            document.getElementById("weekly-date").addEventListener("change", function () {
+            document.getElementById("weekly-month").addEventListener("change", function () {
                 if (!this.value) return;
-                selectedWeekDate = parseDateInput(this.value);
+                selectedWeekMonth = parseDateInput(this.value + "-01");
+                if (reportMode === "weekly") refreshModeData("weekly");
+            });
+            document.getElementById("weekly-number").addEventListener("change", function () {
+                selectedWeekNumber = Number(this.value || 1);
                 if (reportMode === "weekly") refreshModeData("weekly");
             });
             document.getElementById("monthly-date").addEventListener("change", function () {
@@ -871,9 +899,11 @@
 
             function reportPeriodLabel() {
                 if (reportMode === "weekly") {
-                    var startWeek = weekStartDate(selectedWeekDate);
+                    var startWeek = selectedWeekStartDate();
                     var endWeek = new Date(startWeek.getFullYear(), startWeek.getMonth(), startWeek.getDate() + 4);
-                    return shortDateLabel(startWeek) + " - " + shortDateLabel(endWeek);
+                    var endOfMonth = monthEnd(selectedWeekMonth);
+                    if (endWeek > endOfMonth) endWeek = endOfMonth;
+                    return "Minggu " + selectedWeekNumber + ", " + selectedWeekMonth.toLocaleDateString("id-ID", { month: "long", year: "numeric" }) + " (" + shortDateLabel(startWeek) + " - " + shortDateLabel(endWeek) + ")";
                 }
                 if (reportMode === "monthly") {
                     return selectedMonthDate.toLocaleDateString("id-ID", { month: "long", year: "numeric" });

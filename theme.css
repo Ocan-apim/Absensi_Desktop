@@ -1381,6 +1381,27 @@ html[data-theme="light"] .data-table td {
     vertical-align: middle;
 }
 
+.report-mode-panel .table-card {
+    min-height: 340px;
+}
+
+.monthly-book-table tbody tr,
+#weekly-table-body tr {
+    height: 58px;
+}
+
+.monthly-book-table .week-boundary {
+    border-left: 2px solid rgba(148, 163, 184, 0.55);
+}
+
+.monthly-book-table .summary-boundary {
+    border-left: 3px solid var(--accent);
+}
+
+.monthly-book-table .percent-boundary {
+    border-left: 2px solid rgba(148, 163, 184, 0.65);
+}
+
 .monthly-book-table th:nth-child(2),
 .monthly-book-table td:nth-child(2) {
     min-width: 180px;
@@ -1394,6 +1415,10 @@ html[data-theme="light"] .data-table td {
 html[data-theme="light"] .monthly-book-table th:nth-child(2),
 html[data-theme="light"] .monthly-book-table td:nth-child(2) {
     background: rgba(248, 250, 252, 0.98);
+}
+
+html[data-theme="light"] .monthly-book-table .week-boundary {
+    border-left-color: rgba(15, 23, 42, 0.24);
 }
 
 .empty-row {
