@@ -230,6 +230,162 @@ if ($method === "GET") {
     $tanggal = $_GET["tanggal"] ?? $today;
     error_log("Absensi GET: action=$action, tanggal=$tanggal");
 
+    // Rekap mingguan untuk peran walas: Senin - Jumat, kode: H,S,I,A
+    if ($action === "rekap_weekly") {
+        $start = $_GET["start"] ?? $today; // expected Monday YYYY-MM-DD
+        $kelas = trim($_GET["kelas"] ?? "11");
+        $jurusan = trim($_GET["jurusan"] ?? "pplg");
+        $rombel = trim($_GET["rombel"] ?? "");
+        $username = trim($_GET["username"] ?? ""); // optional walas npsn
+
+        // If username provided and matches a walas, prefer their kelas/jurusan/rombel
+        if ($username !== "") {
+            $stmt = $conn->prepare("SELECT kelas, jurusan, rombel FROM walas WHERE npsn = ? LIMIT 1");
+            if ($stmt) {
+                $stmt->bind_param("s", $username);
+                $stmt->execute();
+                $w = $stmt->get_result()->fetch_assoc();
+                $stmt->close();
+                if ($w) {
+                    $kelas = $w["kelas"] ?? $kelas;
+                    $jurusan = $w["jurusan"] ?? $jurusan;
+                    $rombel = $w["rombel"] ?? $rombel;
+                }
+            }
+        }
+
+        $monday = DateTime::createFromFormat('Y-m-d', $start);
+        if (!$monday) jsonResponse(["error" => "start harus YYYY-MM-DD"], 422);
+        // ensure monday is the week's Monday (no strong enforcement, we take start..+4days)
+        $endObj = clone $monday;
+        $endObj->modify('+4 days');
+        $end = $endObj->format('Y-m-d');
+
+        $students = fetchStudentsByClass($conn, $kelas, $jurusan, $rombel);
+        $records = fetchRangeRecordsByClass($conn, $monday->format('Y-m-d'), $end, $kelas, $jurusan, $rombel);
+
+        // build lookup: map[id_siswa][date] => code
+        $map = [];
+        foreach ($records as $r) {
+            $sid = $r['id_siswa'];
+            $date = $r['date'];
+            $mode = $r['mode'];
+            $code = 'A';
+            if ($mode === 'hadir') $code = 'H';
+            elseif ($mode === 'sakit') $code = 'S';
+            elseif ($mode === 'izin' || $mode === 'dispen') $code = 'I';
+
+            // prefer H over others when multiple records exist
+            if (!isset($map[$sid][$date]) || $map[$sid][$date] !== 'H') {
+                $map[$sid][$date] = $code;
+            }
+        }
+
+        // prepare days labels and dates for Monday..Friday
+        $days = [];
+        $d = clone $monday;
+        for ($i = 0; $i < 5; $i++) {
+            $days[] = $d->format('Y-m-d');
+            $d->modify('+1 day');
+        }
+
+        $out = [];
+        $no = 1;
+        foreach ($students as $s) {
+            $row = [
+                'no' => $no++,
+                'id_siswa' => $s['id_siswa'],
+                'nis' => $s['nis'],
+                'nama' => $s['nama_lengkap']
+            ];
+            foreach ($days as $idx => $dt) {
+                $col = ['sen','sel','rab','kam','jum'][$idx];
+                $row[$col] = $map[$s['id_siswa']][$dt] ?? 'A';
+            }
+            $out[] = $row;
+        }
+
+        jsonResponse([
+            'meta' => ['kelas' => $kelas, 'jurusan' => $jurusan, 'rombel' => $rombel, 'start' => $monday->format('Y-m-d'), 'end' => $end],
+            'columns' => ['no','id_siswa','nis','nama','sen','sel','rab','kam','jum'],
+            'rows' => $out
+        ]);
+    }
+
+    // Rekap bulanan: tulis setiap hari pada bulan itu (tidak di-skip)
+    if ($action === "rekap_monthly") {
+        $month = trim($_GET['month'] ?? ''); // expected YYYY-MM
+        $kelas = trim($_GET["kelas"] ?? "11");
+        $jurusan = trim($_GET["jurusan"] ?? "pplg");
+        $rombel = trim($_GET["rombel"] ?? "");
+        $username = trim($_GET["username"] ?? "");
+
+        if ($month === '') jsonResponse(["error" => "month parameter wajib (YYYY-MM)"], 422);
+        if (!preg_match('/^\d{4}-\d{2}$/', $month)) jsonResponse(["error" => "month harus YYYY-MM"], 422);
+
+        if ($username !== "") {
+            $stmt = $conn->prepare("SELECT kelas, jurusan, rombel FROM walas WHERE npsn = ? LIMIT 1");
+            if ($stmt) {
+                $stmt->bind_param("s", $username);
+                $stmt->execute();
+                $w = $stmt->get_result()->fetch_assoc();
+                $stmt->close();
+                if ($w) {
+                    $kelas = $w["kelas"] ?? $kelas;
+                    $jurusan = $w["jurusan"] ?? $jurusan;
+                    $rombel = $w["rombel"] ?? $rombel;
+                }
+            }
+        }
+
+        [$y, $m] = array_map('intval', explode('-', $month, 2));
+        $start = sprintf('%04d-%02d-01', $y, $m);
+        $startObj = DateTime::createFromFormat('Y-m-d', $start);
+        $endObj = (new DateTimeImmutable($startObj->format('Y-m-d')))->modify('last day of this month');
+        $end = $endObj->format('Y-m-d');
+        $daysInMonth = (int) $endObj->format('d');
+
+        $students = fetchStudentsByClass($conn, $kelas, $jurusan, $rombel);
+        $records = fetchRangeRecordsByClass($conn, $start, $end, $kelas, $jurusan, $rombel);
+
+        $map = [];
+        foreach ($records as $r) {
+            $sid = $r['id_siswa'];
+            $date = $r['date'];
+            $mode = $r['mode'];
+            $code = 'A';
+            if ($mode === 'hadir') $code = 'H';
+            elseif ($mode === 'sakit') $code = 'S';
+            elseif ($mode === 'izin' || $mode === 'dispen') $code = 'I';
+            if (!isset($map[$sid][$date]) || $map[$sid][$date] !== 'H') {
+                $map[$sid][$date] = $code;
+            }
+        }
+
+        $out = [];
+        $no = 1;
+        foreach ($students as $s) {
+            $row = [
+                'no' => $no++,
+                'id_siswa' => $s['id_siswa'],
+                'nis' => $s['nis'],
+                'nama' => $s['nama_lengkap']
+            ];
+            for ($d = 1; $d <= $daysInMonth; $d++) {
+                $date = sprintf('%04d-%02d-%02d', $y, $m, $d);
+                $row[(string)$d] = $map[$s['id_siswa']][$date] ?? 'A';
+            }
+            $out[] = $row;
+        }
+
+        $columns = array_merge(['no','id_siswa','nis','nama'], array_map('strval', range(1, $daysInMonth)));
+        jsonResponse([
+            'meta' => ['kelas' => $kelas, 'jurusan' => $jurusan, 'rombel' => $rombel, 'month' => $month],
+            'columns' => $columns,
+            'rows' => $out
+        ]);
+    }
+
     if ($action === "range") {
         $start = $_GET["start"] ?? $today;
         $end = $_GET["end"] ?? $today;
