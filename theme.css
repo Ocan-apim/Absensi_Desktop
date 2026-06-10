@@ -1665,6 +1665,51 @@ html[data-theme="light"] .report-reply {
     white-space: nowrap;
 }
 
+.file-selected-list {
+    display: grid;
+    gap: 0.55rem;
+}
+
+.file-selected-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.7rem 0.8rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: rgba(255,255,255,0.04);
+    color: var(--text);
+    font-size: 0.9rem;
+}
+
+.file-selected-item span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.file-selected-item small {
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.file-remove-btn {
+    border: 0;
+    background: transparent;
+    color: #ef4444;
+    font: inherit;
+    font-size: 0.86rem;
+    font-weight: 800;
+    cursor: pointer;
+    flex: 0 0 auto;
+}
+
+.file-remove-btn:hover {
+    text-decoration: underline;
+}
+
 .visually-hidden {
     position: absolute !important;
     width: 1px !important;

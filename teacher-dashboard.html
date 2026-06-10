@@ -235,14 +235,15 @@
                             <textarea id="laporan-isi" placeholder="Tuliskan laporan untuk BK atau kesiswaan..." required></textarea>
                         </div>
                     </div>
-                    <input type="file" id="laporan-lampiran" class="visually-hidden" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp,image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+                    <input type="file" id="laporan-lampiran" class="visually-hidden" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp,image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
                     <div class="file-upload-inline">
                         <button type="button" class="file-attach-btn" id="laporan-attach-btn" aria-label="Tambahkan lampiran" title="Tambahkan lampiran">
-                            <span aria-hidden="true">📎</span>
+                            <span aria-hidden="true">&#128206;</span>
                         </button>
                         <span id="laporan-file-name" class="file-attach-label">Belum ada lampiran</span>
                         <button type="submit" class="btn-primary">Kirim laporan</button>
                     </div>
+                    <div id="laporan-file-list" class="file-selected-list" aria-live="polite"></div>
                     <p id="laporan-msg" class="status-note hidden"></p>
                 </form>
             </section>
@@ -582,7 +583,7 @@
                 var badge = mode === "inbox" && hasNewReplyFromBk ? '<span class="report-badge" aria-label="Balasan baru dari BK"></span>' : '';
                 var attachments = reportAttachments(item);
                 var attachment = attachments.length ? '<div class="report-attachment">' + attachments.map(function (path, index) {
-                    return '<a href="' + escapeHtml(path) + '" target="_blank" rel="noopener">Lihat lampiran ' + (index + 1) + '</a>';
+                    return '<a href="' + escapeHtml(attachmentHref(path)) + '" target="_blank" rel="noopener">Lihat lampiran ' + (index + 1) + '</a>';
                 }).join("") + '</div>' : '';
                 var replies = item.balasan && item.balasan.length ? item.balasan.map(function (b) {
                     return '<div class="report-reply"><div><strong>' + escapeHtml((b.pengirim_role || "").toUpperCase()) + ':</strong> ' + escapeHtml(b.isi_balasan) + '</div><span>' + escapeHtml(b.created_at) + '</span></div>';
@@ -636,6 +637,12 @@
                     if (Array.isArray(parsed)) return parsed.filter(Boolean);
                 } catch (err) {}
                 return [item.lampiran];
+            }
+
+            function attachmentHref(path) {
+                if (/^https?:\/\//i.test(String(path))) return path;
+                var appBase = window.location.origin + window.location.pathname.replace(/[^\/]*$/, "");
+                return new URL(String(path).replace(/^\/+/, ""), appBase).href;
             }
 
             function reportStatusLabel(status) {
@@ -804,21 +811,50 @@
             var laporanLampiran = document.getElementById("laporan-lampiran");
             var laporanAttachBtn = document.getElementById("laporan-attach-btn");
             var laporanFileName = document.getElementById("laporan-file-name");
+            var laporanFileList = document.getElementById("laporan-file-list");
+            var selectedLaporanFiles = [];
+
+            function selectedLampiranSize() {
+                return selectedLaporanFiles.reduce(function (sum, file) {
+                    return sum + file.size;
+                }, 0);
+            }
+
+            function renderSelectedLampiran() {
+                if (!laporanFileName || !laporanFileList) return;
+                laporanFileName.textContent = selectedLaporanFiles.length ? selectedLaporanFiles.length + " lampiran dipilih" : "Belum ada lampiran";
+                laporanFileList.innerHTML = selectedLaporanFiles.map(function (file, index) {
+                    var sizeKb = Math.max(1, Math.round(file.size / 1024));
+                    return '<div class="file-selected-item"><span>' + escapeHtml(file.name) + ' <small>' + sizeKb + ' KB</small></span><button type="button" class="file-remove-btn" data-remove-lampiran="' + index + '">Hapus</button></div>';
+                }).join("");
+            }
+
+            function clearSelectedLampiran() {
+                selectedLaporanFiles = [];
+                if (laporanLampiran) laporanLampiran.value = "";
+                renderSelectedLampiran();
+            }
+
             if (laporanAttachBtn && laporanLampiran) {
                 laporanAttachBtn.addEventListener("click", function () {
+                    laporanLampiran.value = "";
                     laporanLampiran.click();
                 });
             }
             if (laporanLampiran && laporanFileName) {
                 laporanLampiran.addEventListener("change", function () {
-                    var files = Array.prototype.slice.call(laporanLampiran.files || []);
-                    if (!files.length) {
-                        laporanFileName.textContent = "Belum ada lampiran";
-                    } else if (files.length === 1) {
-                        laporanFileName.textContent = files[0].name;
-                    } else {
-                        laporanFileName.textContent = files.length + " lampiran dipilih";
+                    var file = laporanLampiran.files && laporanLampiran.files[0];
+                    if (!file) return;
+                    if (selectedLaporanFiles.length >= 5) {
+                        alert("Lampiran maksimal 5 file.");
+                        return;
                     }
+                    if (selectedLampiranSize() + file.size > 10 * 1024 * 1024) {
+                        alert("Total lampiran maksimal 10MB.");
+                        return;
+                    }
+                    selectedLaporanFiles.push(file);
+                    renderSelectedLampiran();
                 });
             }
 
@@ -833,6 +869,15 @@
                 var approveBtn = e.target.closest(".js-report-approve");
                 if (approveBtn) {
                     approveLaporan(approveBtn.getAttribute("data-id"));
+                    return;
+                }
+                var removeLampiran = e.target.closest("[data-remove-lampiran]");
+                if (removeLampiran) {
+                    var index = Number(removeLampiran.getAttribute("data-remove-lampiran"));
+                    if (!isNaN(index)) {
+                        selectedLaporanFiles.splice(index, 1);
+                        renderSelectedLampiran();
+                    }
                     return;
                 }
                 var toggle = e.target.closest("[data-report-toggle]");
@@ -878,32 +923,16 @@
                 formData.append("id_bk", document.getElementById("laporan-tujuan").value);
                 formData.append("subjek", document.getElementById("laporan-subjek").value.trim());
                 formData.append("isi_laporan", document.getElementById("laporan-isi").value.trim());
-                var lampiran = document.getElementById("laporan-lampiran");
-                if (lampiran && lampiran.files && lampiran.files.length) {
-                    var files = Array.prototype.slice.call(lampiran.files);
-                    if (files.length > 5) {
-                        alert("Lampiran maksimal 5 file.");
-                        return;
-                    }
-                    var totalSize = files.reduce(function (sum, file) {
-                        return sum + file.size;
-                    }, 0);
-                    if (totalSize > 10 * 1024 * 1024) {
-                        alert("Total lampiran maksimal 10MB.");
-                        return;
-                    }
-                    files.forEach(function (file) {
-                        formData.append("lampiran[]", file, file.name);
-                    });
-                }
+                selectedLaporanFiles.forEach(function (file) {
+                    formData.append("lampiran[]", file, file.name);
+                });
 
                 fetch("laporan_api.php", { method: "POST", body: formData })
                     .then(parseJsonResponse)
                     .then(function () {
                         document.getElementById("laporan-subjek").value = "";
                         document.getElementById("laporan-isi").value = "";
-                        if (lampiran) lampiran.value = "";
-                        if (laporanFileName) laporanFileName.textContent = "Belum ada lampiran";
+                        clearSelectedLampiran();
                         msg.textContent = "Laporan terkirim.";
                         msg.classList.remove("hidden");
                         location.hash = "#laporan-inbox";

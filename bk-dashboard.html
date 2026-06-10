@@ -132,8 +132,14 @@
             function renderAttachmentLinks(item) {
                 var attachments = reportAttachments(item);
                 return attachments.length ? '<div class="report-attachment">' + attachments.map(function (path, index) {
-                    return '<a href="' + escapeHtml(path) + '" target="_blank" rel="noopener">Lihat lampiran ' + (index + 1) + '</a>';
+                    return '<a href="' + escapeHtml(attachmentHref(path)) + '" target="_blank" rel="noopener">Lihat lampiran ' + (index + 1) + '</a>';
                 }).join("") + '</div>' : '';
+            }
+
+            function attachmentHref(path) {
+                if (/^https?:\/\//i.test(String(path))) return path;
+                var appBase = window.location.origin + window.location.pathname.replace(/[^\/]*$/, "");
+                return new URL(String(path).replace(/^\/+/, ""), appBase).href;
             }
 
             function loadLaporan() {

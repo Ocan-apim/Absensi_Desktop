@@ -823,6 +823,12 @@
                 return [item.lampiran];
             }
 
+            function attachmentHref(path) {
+                if (/^https?:\/\//i.test(String(path))) return path;
+                var appBase = window.location.origin + window.location.pathname.replace(/[^\/]*$/, "");
+                return new URL(String(path).replace(/^\/+/, ""), appBase).href;
+            }
+
             function renderAdminBkReports() {
                 var list = document.getElementById("admin-bk-report-list");
                 if (!list) return;
@@ -843,12 +849,12 @@
                     var headerInfo = "Tanggal " + formatAdminDateInline(date) + " " + status;
                     var attachments = reportAttachments(item);
                     var attachment = attachments.length ? '<div class="report-attachment">' + attachments.map(function (path, index) {
-                        return '<a href="' + escapeAdminHtml(path) + '" target="_blank" rel="noopener">Lihat lampiran ' + (index + 1) + '</a>';
+                        return '<a href="' + escapeAdminHtml(attachmentHref(path)) + '" target="_blank" rel="noopener">Lihat lampiran ' + (index + 1) + '</a>';
                     }).join("") + '</div>' : '';
                     var replies = item.balasan && item.balasan.length ? item.balasan.map(function (b) {
                         return '<div class="report-reply"><div><strong>Balasan ' + escapeAdminHtml(b.pengirim_role || "-") + ':</strong> ' + escapeAdminHtml(b.isi_balasan || "") + '</div><span>' + escapeAdminHtml(b.created_at || "") + '</span></div>';
                     }).join("") : '<div class="report-reply">Belum ada balasan.</div>';
-                    return '<article class="report-card report-card--wide" data-report-card data-open="false"><button type="button" class="report-head" data-report-toggle="true"><span><span class="report-from">Dari: ' + escapeAdminHtml(from) + '</span><span class="report-meta">Subjek: ' + escapeAdminHtml(subject || "-") + '</span></span><span class="report-date">' + escapeAdminHtml(headerInfo) + '</span></button><div class="report-body"><div class="report-text">' + escapeAdminHtml(text || "Tidak ada detail.") + '</div>' + attachment + '<div class="report-subject" style="margin-top:0.95rem">Balasan</div><div class="report-replies">' + replies + '</div></div></article>';
+                    return '<article class="report-card report-card--wide" data-report-card data-open="false"><button type="button" class="report-head" data-report-toggle="true"><span><span class="report-from">Dari: ' + escapeAdminHtml(from) + '</span></span><span class="report-date">' + escapeAdminHtml(headerInfo) + '</span></button><div class="report-body"><div class="report-subject">Subjek: ' + escapeAdminHtml(subject || "-") + '</div><div class="report-text">' + escapeAdminHtml(text || "Tidak ada detail.") + '</div>' + attachment + '<div class="report-subject" style="margin-top:0.95rem">Balasan</div><div class="report-replies">' + replies + '</div></div></article>';
                 }).join("");
             }
 

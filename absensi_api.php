@@ -289,8 +289,8 @@ if (!$siswa) {
 $idSiswa = (int) $siswa["id_siswa"];
 
 if ($mode === "hadir") {
-    if (date("H:i") > "09:00") {
-        jsonResponse(["error" => "Absensi hadir hanya bisa dikirim sampai pukul 09:00"], 422);
+    if (date("H:i") < "05:00" || date("H:i") > "09:00") {
+        jsonResponse(["error" => "Absensi hadir hanya bisa dikirim pukul 05:00 sampai 09:00"], 422);
     }
 
     $stmt = $conn->prepare("SELECT id_hadir FROM hadir WHERE id_siswa = ? AND tanggal = ? LIMIT 1");
