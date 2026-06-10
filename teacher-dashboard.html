@@ -235,13 +235,12 @@
                             <textarea id="laporan-isi" placeholder="Tuliskan laporan untuk BK atau kesiswaan..." required></textarea>
                         </div>
                     </div>
-                    <div>
-                        <label class="field-label" for="laporan-lampiran">Add file</label>
-                        <div class="input-wrap">
-                            <input type="file" id="laporan-lampiran" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp,image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
-                        </div>
-                    </div>
-                    <div style="display:flex;justify-content:flex-end;gap:0.5rem;flex-wrap:wrap">
+                    <input type="file" id="laporan-lampiran" class="visually-hidden" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp,image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+                    <div class="file-upload-inline">
+                        <button type="button" class="file-attach-btn" id="laporan-attach-btn" aria-label="Tambahkan lampiran" title="Tambahkan lampiran">
+                            <span aria-hidden="true">📎</span>
+                        </button>
+                        <span id="laporan-file-name" class="file-attach-label">Belum ada lampiran</span>
                         <button type="submit" class="btn-primary">Kirim laporan</button>
                     </div>
                     <p id="laporan-msg" class="status-note hidden"></p>
@@ -593,7 +592,7 @@
                         actions += '<div class="input-wrap" style="margin-top:0.75rem"><textarea class="js-report-reply-text" data-id="' + item.id_laporan + '" placeholder="Tulis balasan ulang..."></textarea></div>' +
                             '<div style="display:flex;justify-content:flex-end;gap:0.5rem;flex-wrap:wrap;margin-top:0.5rem"><button type="button" class="btn-primary js-report-reply-send" data-id="' + item.id_laporan + '" data-role="walas">Balas lagi</button></div>';
                     } else {
-                        actions += '<p class="status-note" style="margin-top:0.75rem">Menunggu balasan dari BK...</p>';
+                        actions += '<p class="status-note" style="margin-top:0.75rem">Menunggu balasan dari ' + escapeHtml(item.bk_nama || item.bk_npsn || "BK") + '.</p>';
                     }
                 } else if (mode === "history") {
                     actions += '<div class="input-wrap" style="margin-top:0.75rem"><textarea class="js-report-reply-text" data-id="' + item.id_laporan + '" placeholder="Tulis balasan ulang..."></textarea></div>' +
@@ -782,6 +781,20 @@
             document.getElementById("btn-print-attendance").addEventListener("click", printAttendanceReport);
             document.getElementById("btn-download-attendance").addEventListener("click", printAttendanceReport);
 
+            var laporanLampiran = document.getElementById("laporan-lampiran");
+            var laporanAttachBtn = document.getElementById("laporan-attach-btn");
+            var laporanFileName = document.getElementById("laporan-file-name");
+            if (laporanAttachBtn && laporanLampiran) {
+                laporanAttachBtn.addEventListener("click", function () {
+                    laporanLampiran.click();
+                });
+            }
+            if (laporanLampiran && laporanFileName) {
+                laporanLampiran.addEventListener("change", function () {
+                    laporanFileName.textContent = laporanLampiran.files && laporanLampiran.files[0] ? laporanLampiran.files[0].name : "Belum ada lampiran";
+                });
+            }
+
             document.addEventListener("click", function (e) {
                 var replyBtn = e.target.closest(".js-report-reply-send");
                 if (replyBtn) {
@@ -853,6 +866,7 @@
                         document.getElementById("laporan-subjek").value = "";
                         document.getElementById("laporan-isi").value = "";
                         if (lampiran) lampiran.value = "";
+                        if (laporanFileName) laporanFileName.textContent = "Belum ada lampiran";
                         msg.textContent = "Laporan terkirim.";
                         msg.classList.remove("hidden");
                         location.hash = "#laporan-inbox";

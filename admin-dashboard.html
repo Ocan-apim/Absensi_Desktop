@@ -716,6 +716,14 @@
                 return date.toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" }) + "<br><span class=\"page-sub\" style=\"margin:0\">" + date.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) + "</span>";
             }
 
+            function formatAdminDateInline(value) {
+                if (!value) return "-";
+                var normalized = String(value).replace(" ", "T");
+                var date = new Date(normalized);
+                if (isNaN(date.getTime())) return String(value);
+                return String(date.getDate()).padStart(2, "0") + "-" + String(date.getMonth() + 1).padStart(2, "0") + "-" + date.getFullYear() + " " + String(date.getHours()).padStart(2, "0") + ":" + String(date.getMinutes()).padStart(2, "0");
+            }
+
             function activityLogDateValue(item) {
                 return item.created_at || item.updated_at || item.date || item.time || item.waktu || "";
             }
@@ -814,11 +822,12 @@
                     var date = item.created_at || item.updated_at || item.date || item.tanggal || "";
                     var text = item.message || item.isi_laporan || item.isi || item.keterangan || item.description || "";
                     var status = isFinishedBkReport(item) ? "Finished" : "Ongoing";
+                    var headerInfo = "Tanggal " + formatAdminDateInline(date) + " " + status;
                     var attachment = item.lampiran ? '<div class="report-attachment"><a href="' + escapeAdminHtml(item.lampiran) + '" target="_blank" rel="noopener">Lihat lampiran</a></div>' : '';
                     var replies = item.balasan && item.balasan.length ? item.balasan.map(function (b) {
                         return '<div class="report-reply"><div><strong>Balasan ' + escapeAdminHtml(b.pengirim_role || "-") + ':</strong> ' + escapeAdminHtml(b.isi_balasan || "") + '</div><span>' + escapeAdminHtml(b.created_at || "") + '</span></div>';
                     }).join("") : '<div class="report-reply">Belum ada balasan.</div>';
-                    return '<article class="report-card report-card--wide" data-report-card data-open="false"><button type="button" class="report-head" data-report-toggle="true"><span><span class="report-from">' + escapeAdminHtml(subject) + '</span><span class="report-meta">Dari: ' + escapeAdminHtml(from) + '</span></span><span class="report-date">' + escapeAdminHtml(status) + '</span></button><div class="report-body"><div class="report-meta">Tanggal: ' + formatAdminDate(date) + ' | Status: ' + escapeAdminHtml(status) + '</div><div class="report-subject">Isi laporan</div><div class="report-text">' + escapeAdminHtml(text || "Tidak ada detail.") + '</div>' + attachment + '<div class="report-subject" style="margin-top:0.95rem">Balasan</div><div class="report-replies">' + replies + '</div></div></article>';
+                    return '<article class="report-card report-card--wide" data-report-card data-open="false"><button type="button" class="report-head" data-report-toggle="true"><span><span class="report-from">Dari: ' + escapeAdminHtml(from) + '</span></span><span class="report-date">' + escapeAdminHtml(headerInfo) + '</span></button><div class="report-body"><div class="report-meta">Tanggal: ' + formatAdminDate(date) + ' | Status: ' + escapeAdminHtml(status) + '</div><div class="report-subject">Subjek</div><div class="report-text">' + escapeAdminHtml(subject || "-") + '</div><div class="report-subject">Isi laporan</div><div class="report-text">' + escapeAdminHtml(text || "Tidak ada detail.") + '</div>' + attachment + '<div class="report-subject" style="margin-top:0.95rem">Balasan</div><div class="report-replies">' + replies + '</div></div></article>';
                 }).join("");
             }
 

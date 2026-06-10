@@ -113,6 +113,9 @@ function collectLaporanItems($result) {
                 "created_at" => $row["created_at"],
                 "walas_nama" => $row["walas_nama"] ?? null,
                 "walas_npsn" => $row["walas_npsn"] ?? null,
+                "id_bk" => isset($row["id_bk"]) ? (int) $row["id_bk"] : null,
+                "bk_nama" => $row["bk_nama"] ?? null,
+                "bk_npsn" => $row["bk_npsn"] ?? null,
                 "latest_reply_role" => null,
                 "balasan" => [],
             ];
@@ -131,14 +134,16 @@ function collectLaporanItems($result) {
 
 function laporanSelectSql($replyTable, $whereSql) {
     return "
-        SELECT l.id_laporan, l.tujuan_role, l.subjek, l.isi_laporan, l.lampiran, l.status,
+        SELECT l.id_laporan, l.tujuan_role, l.id_bk, l.subjek, l.isi_laporan, l.lampiran, l.status,
                DATE_FORMAT(l.created_at, '%Y-%m-%d %H:%i') AS created_at,
                w.nama_lengkap AS walas_nama, w.npsn AS walas_npsn,
+               bk_target.nama_lengkap AS bk_nama, bk_target.npsn AS bk_npsn,
                b.isi_balasan,
                DATE_FORMAT(b.created_at, '%Y-%m-%d %H:%i') AS dibalas_at,
                b.pengirim_role
         FROM laporan l
         LEFT JOIN walas w ON w.id_walas = l.id_walas
+        LEFT JOIN bk bk_target ON bk_target.id_bk = l.id_bk
         LEFT JOIN `$replyTable` b ON b.id_laporan = l.id_laporan
         $whereSql
         ORDER BY l.created_at DESC, b.created_at ASC

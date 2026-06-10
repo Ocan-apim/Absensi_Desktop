@@ -54,6 +54,28 @@ function clean($key) {
     return trim($_POST[$key] ?? "");
 }
 
+function fetchCurrentRecord($conn, $table, $idField, $id, $fields) {
+    $columns = implode(", ", $fields);
+    $stmt = $conn->prepare("SELECT $columns FROM $table WHERE $idField = ? LIMIT 1");
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    return $row ?: null;
+}
+
+function changedFieldLabels($before, $after, $labels) {
+    $changed = [];
+    foreach ($labels as $field => $label) {
+        $old = trim((string) ($before[$field] ?? ""));
+        $new = trim((string) ($after[$field] ?? ""));
+        if ($old !== $new) {
+            $changed[] = $label;
+        }
+    }
+    return $changed;
+}
+
 function validJurusan($jurusan) {
     $allowed = ["pplg", "mplb", "dkv", "tjkt", "pm", "ph"];
     return in_array(strtolower(trim($jurusan)), $allowed, true);
@@ -116,7 +138,7 @@ if ($method === "GET") {
     $id = (int) ($_GET["id"] ?? 0);
 
     if ($id > 0) {
-        if ($type === "murid") {
+        if ($type === "murid" || $type === "siswa") {
             $stmt = $conn->prepare("SELECT id_siswa, nama_lengkap, nama_tampilan, nis, email, password, kelas, jurusan, rombel, tempat_lahir, tanggal_lahir, created_at FROM siswa WHERE id_siswa = ? LIMIT 1");
         } elseif ($type === "walas") {
             $stmt = $conn->prepare("SELECT id_walas, nama_lengkap, npsn, email, password, kelas, jurusan, rombel, tempat_lahir, tanggal_lahir, created_at FROM walas WHERE id_walas = ? LIMIT 1");
@@ -131,7 +153,7 @@ if ($method === "GET") {
         jsonResponse(["record" => $row]);
     }
 
-    if ($type === "murid") {
+    if ($type === "murid" || $type === "siswa") {
         $kelas = trim($_GET["kelas"] ?? "");
         $jurusan = trim($_GET["jurusan"] ?? "");
         $sql = "SELECT id_siswa, nama_lengkap, nama_tampilan, nis, email, kelas, jurusan, rombel, tempat_lahir, tanggal_lahir, created_at FROM siswa WHERE 1=1";
@@ -300,8 +322,9 @@ if ($action === "create") {
 if ($action === "update") {
     if ($id < 1) jsonResponse(["error" => "ID tidak valid"], 422);
 
-    if ($type === "murid") {
+    if ($type === "murid" || $type === "siswa") {
         $nama = clean("nama_lengkap");
+        $namaTampilan = clean("nama_tampilan");
         $nis = clean("nis");
         $email = clean("email");
         $kelas = clean("kelas");
@@ -323,6 +346,32 @@ if ($action === "update") {
             jsonResponse(["error" => "Rombel tidak valid"], 422);
         }
         $jurusan = normalizeJurusan($jurusan);
+        $before = fetchCurrentRecord($conn, "siswa", "id_siswa", $id, ["nama_lengkap", "nama_tampilan", "nis", "email", "password", "kelas", "jurusan", "rombel", "tempat_lahir", "tanggal_lahir"]);
+        if (!$before) jsonResponse(["error" => "Data tidak ditemukan"], 404);
+        $after = [
+            "nama_lengkap" => $nama,
+            "nama_tampilan" => $namaTampilan,
+            "nis" => $nis,
+            "email" => $email,
+            "password" => $password,
+            "kelas" => $kelas,
+            "jurusan" => $jurusan,
+            "rombel" => $rombel,
+            "tempat_lahir" => $tempat,
+            "tanggal_lahir" => $tanggal,
+        ];
+        $changedLabels = changedFieldLabels($before, $after, [
+            "nama_lengkap" => "nama lengkap",
+            "nama_tampilan" => "nama tampilan",
+            "nis" => "NIS",
+            "email" => "email",
+            "password" => "password",
+            "kelas" => "kelas",
+            "jurusan" => "jurusan",
+            "rombel" => "rombel",
+            "tempat_lahir" => "tempat lahir",
+            "tanggal_lahir" => "tanggal lahir",
+        ]);
         $stmt = $conn->prepare("UPDATE siswa SET nama_lengkap=?, nama_tampilan=?, nis=?, email=?, password=?, kelas=?, jurusan=?, rombel=?, tempat_lahir=?, tanggal_lahir=? WHERE id_siswa=?");
         $stmt->bind_param("ssssssssssi", $nama, $namaTampilan, $nis, $email, $password, $kelas, $jurusan, $rombel, $tempat, $tanggal, $id);
         $label = $nama;
@@ -353,9 +402,51 @@ if ($action === "update") {
                 jsonResponse(["error" => "Rombel walas tidak valid", "field" => "rombel", "allowed" => ["1","2"]], 422);
             }
             $jurusan = normalizeJurusan($jurusan);
+            $before = fetchCurrentRecord($conn, "walas", "id_walas", $id, ["nama_lengkap", "npsn", "email", "password", "kelas", "jurusan", "rombel", "tempat_lahir", "tanggal_lahir"]);
+            if (!$before) jsonResponse(["error" => "Data tidak ditemukan"], 404);
+            $after = [
+                "nama_lengkap" => $nama,
+                "npsn" => $npsn,
+                "email" => $email,
+                "password" => $password,
+                "kelas" => $kelas,
+                "jurusan" => $jurusan,
+                "rombel" => $rombel,
+                "tempat_lahir" => $tempat,
+                "tanggal_lahir" => $tanggal,
+            ];
+            $changedLabels = changedFieldLabels($before, $after, [
+                "nama_lengkap" => "nama lengkap",
+                "npsn" => "NPSN",
+                "email" => "email",
+                "password" => "password",
+                "kelas" => "kelas",
+                "jurusan" => "jurusan",
+                "rombel" => "rombel",
+                "tempat_lahir" => "tempat lahir",
+                "tanggal_lahir" => "tanggal lahir",
+            ]);
             $stmt = $conn->prepare("UPDATE " . $meta["table"] . " SET nama_lengkap=?, npsn=?, email=?, password=?, kelas=?, jurusan=?, rombel=?, tempat_lahir=?, tanggal_lahir=? WHERE " . $meta["id"] . "=?");
             $stmt->bind_param("sssssssssi", $nama, $npsn, $email, $password, $kelas, $jurusan, $rombel, $tempat, $tanggal, $id);
         } else {
+            $before = fetchCurrentRecord($conn, "bk", "id_bk", $id, ["nama_lengkap", "npsn", "email", "password", "tempat_lahir", "tanggal_lahir"]);
+            if (!$before) jsonResponse(["error" => "Data tidak ditemukan"], 404);
+            $after = [
+                "nama_lengkap" => $nama,
+                "npsn" => $npsn,
+                "email" => $email,
+                "password" => $password,
+                "tempat_lahir" => $tempat,
+                "tanggal_lahir" => $tanggal,
+            ];
+            $changedLabels = changedFieldLabels($before, $after, [
+                "nama_lengkap" => "nama lengkap",
+                "npsn" => "NPSN",
+                "email" => "email",
+                "password" => "password",
+                "tempat_lahir" => "tempat lahir",
+                "tanggal_lahir" => "tanggal lahir",
+            ]);
             $stmt = $conn->prepare("UPDATE " . $meta["table"] . " SET nama_lengkap=?, npsn=?, email=?, password=?, tempat_lahir=?, tanggal_lahir=? WHERE " . $meta["id"] . "=?");
             $stmt->bind_param("ssssssi", $nama, $npsn, $email, $password, $tempat, $tanggal, $id);
         }
@@ -364,7 +455,8 @@ if ($action === "update") {
 
     $stmt->execute();
     $stmt->close();
-    addLog($conn, $admin, "edited", $type, $id, $label, "Akun diedit. Klik untuk melihat detail data terbaru.");
+    $detailText = $changedLabels ? "Akun diedit: " . implode(", ", $changedLabels) . "." : "Akun diedit: tidak ada perubahan data.";
+    addLog($conn, $admin, "edited", $type, $id, $label, $detailText);
     jsonResponse(["ok" => true]);
 }
 
