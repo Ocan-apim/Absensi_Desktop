@@ -21,7 +21,7 @@
                 <div class="nav-group" data-nav-group="laporan">
                     <button type="button" class="nav-group-toggle" data-nav-parent="laporan" data-nav-default="laporan-inbox" aria-expanded="true">Laporan</button>
                     <div class="nav-submenu">
-                        <a href="#laporan-inbox" data-view="laporan-inbox">Inbox</a>
+                        <a href="#laporan-inbox" data-view="laporan-inbox">Kotak masuk</a>
                         <a href="#rekap-laporan" data-view="rekap-laporan">Rekap laporan</a>
                     </div>
                 </div>
@@ -49,12 +49,12 @@
                 <p class="page-sub" style="margin-top:0.35rem">Pantau laporan masuk dan tindak lanjut BK.</p>
                 <div class="stub-grid">
                     <div class="stub-card">Laporan baru: <strong id="bk-count-new">0</strong></div>
-                    <div class="stub-card">Ongoing: <strong id="bk-count-ongoing">0</strong></div>
-                    <div class="stub-card">Finished: <strong id="bk-count-finished">0</strong></div>
+                    <div class="stub-card">Berlanjut: <strong id="bk-count-ongoing">0</strong></div>
+                    <div class="stub-card">Selesai: <strong id="bk-count-finished">0</strong></div>
                 </div>
                 <div class="section-head" style="margin-top:1.25rem">
                     <div class="section-head-main">
-                        <h2>Prioritas inbox</h2>
+                        <h2>Prioritas kotak masuk</h2>
                         <p class="page-sub" style="margin-bottom:0">Laporan terbaru yang belum dibalas.</p>
                     </div>
                 </div>
@@ -62,7 +62,7 @@
             </section>
 
             <section id="view-laporan-inbox" class="view-panel panel wide-panel is-hidden" data-view-panel="laporan-inbox" hidden>
-                <h2>Inbox laporan</h2>
+                <h2>Kotak masuk laporan</h2>
                 <p class="page-sub" style="margin-top:0.35rem">Balas laporan dari walas.</p>
                 <div id="laporan-list" class="stack"></div>
             </section>
@@ -115,6 +115,27 @@
                 return status === "diselesaikan" || status === "selesai" || status === "finished" || status === "resolved" || status === "closed";
             }
 
+            function statusLabel(status) {
+                return isFinishedReport({ status: status }) ? "Selesai" : (String(status || "").toLowerCase() === "dibalas" ? "Dibalas" : "Dikirim");
+            }
+
+            function reportAttachments(item) {
+                if (Array.isArray(item.lampiran_list)) return item.lampiran_list.filter(Boolean);
+                if (!item.lampiran) return [];
+                try {
+                    var parsed = JSON.parse(item.lampiran);
+                    if (Array.isArray(parsed)) return parsed.filter(Boolean);
+                } catch (err) {}
+                return [item.lampiran];
+            }
+
+            function renderAttachmentLinks(item) {
+                var attachments = reportAttachments(item);
+                return attachments.length ? '<div class="report-attachment">' + attachments.map(function (path, index) {
+                    return '<a href="' + escapeHtml(path) + '" target="_blank" rel="noopener">Lihat lampiran ' + (index + 1) + '</a>';
+                }).join("") + '</div>' : '';
+            }
+
             function loadLaporan() {
                 return fetch("laporan_api.php?role=bk")
                     .then(function (res) { return res.json(); })
@@ -144,8 +165,8 @@
                 if (!list) return;
                 var priority = baru.slice(0, 5);
                 list.innerHTML = priority.length ? priority.map(function (item) {
-                    var attachment = item.lampiran ? '<div class="report-attachment"><a href="' + escapeHtml(item.lampiran) + '" target="_blank" rel="noopener">Lihat lampiran</a></div>' : '';
-                    return '<article class="report-card" data-report-card data-open="false"><span class="report-badge" aria-label="Laporan baru"></span><button type="button" class="report-head" data-report-toggle><span class="report-from">' + escapeHtml(item.walas_nama || item.walas_npsn || "-") + '</span><span class="report-date">' + escapeHtml(item.created_at) + '</span></button><div class="report-body"><div class="report-subject">' + escapeHtml(item.subjek) + '</div><div class="report-meta">Status: ' + escapeHtml(item.status) + '</div><div class="report-text">' + escapeHtml(item.isi_laporan) + '</div>' + attachment + '</div></article>';
+                    var attachment = renderAttachmentLinks(item);
+                    return '<article class="report-card" data-report-card data-open="false"><span class="report-badge" aria-label="Laporan baru"></span><button type="button" class="report-head" data-report-toggle><span class="report-from">' + escapeHtml(item.walas_nama || item.walas_npsn || "-") + '</span><span class="report-date">' + escapeHtml(item.created_at) + '</span></button><div class="report-body"><div class="report-subject">' + escapeHtml(item.subjek) + '</div><div class="report-meta">Status: ' + escapeHtml(statusLabel(item.status)) + '</div><div class="report-text">' + escapeHtml(item.isi_laporan) + '</div>' + attachment + '</div></article>';
                 }).join("") : '<p class="status-note">Tidak ada laporan prioritas.</p>';
             }
 
@@ -157,7 +178,7 @@
                 list.innerHTML = inboxItems.length ? inboxItems.map(function (item) {
                     var hasNewReplyFromWalas = item.status === "dikirim" || item.latest_reply_role === "walas";
                     var badge = hasNewReplyFromWalas ? '<span class="report-badge" aria-label="Balasan baru dari walas"></span>' : '';
-                    var attachment = item.lampiran ? '<div class="report-attachment"><a href="' + escapeHtml(item.lampiran) + '" target="_blank" rel="noopener">Lihat lampiran</a></div>' : '';
+                    var attachment = renderAttachmentLinks(item);
                     var replies = item.balasan && item.balasan.length ? item.balasan.map(function (b) {
                         return '<div class="report-reply"><div><strong>Balasan ' + escapeHtml(b.pengirim_role) + ':</strong> ' + escapeHtml(b.isi_balasan) + '</div><span>' + escapeHtml(b.created_at) + '</span></div>';
                     }).join("") : '<div class="report-reply">Belum ada balasan.</div>';
@@ -171,12 +192,12 @@
                     return '<article class="report-card report-card--wide" data-report-card data-open="false" data-id="' + item.id_laporan + '">' +
                         badge +
                         '<button type="button" class="report-head" data-report-toggle>' +
-                            '<span class="report-from">From: ' + escapeHtml(item.walas_nama || item.walas_npsn) + '</span>' +
+                            '<span class="report-from">Dari: ' + escapeHtml(item.walas_nama || item.walas_npsn) + '</span>' +
                             '<span class="report-date">' + escapeHtml(item.created_at) + '</span>' +
                         '</button>' +
                         '<div class="report-body">' +
-                            '<div class="report-subject">Subject: ' + escapeHtml(item.subjek) + '</div>' +
-                            '<div class="report-meta">Tujuan: ' + escapeHtml(item.tujuan_role) + ' | Status: ' + escapeHtml(item.status) + '</div>' +
+                            '<div class="report-subject">Subjek: ' + escapeHtml(item.subjek) + '</div>' +
+                            '<div class="report-meta">Tujuan: ' + escapeHtml(item.tujuan_role) + ' | Status: ' + escapeHtml(statusLabel(item.status)) + '</div>' +
                             '<div class="report-text">' + escapeHtml(item.isi_laporan) + '</div>' +
                             attachment +
                             '<div class="report-replies">' + replies + '</div>' +
@@ -189,7 +210,7 @@
             function renderRekap() {
                 var body = document.getElementById("rekap-laporan-body");
                 body.innerHTML = cachedLaporan.length ? cachedLaporan.map(function (item) {
-                    return "<tr><td>" + escapeHtml(item.walas_nama || item.walas_npsn) + "</td><td>" + escapeHtml(item.subjek) + "</td><td>" + escapeHtml(item.status) + "</td><td>" + escapeHtml(item.created_at) + "</td></tr>";
+                    return "<tr><td>" + escapeHtml(item.walas_nama || item.walas_npsn) + "</td><td>" + escapeHtml(item.subjek) + "</td><td>" + escapeHtml(statusLabel(item.status)) + "</td><td>" + escapeHtml(item.created_at) + "</td></tr>";
                 }).join("") : '<tr><td class="empty-row" colspan="4">Belum ada laporan.</td></tr>';
             }
 
@@ -245,7 +266,7 @@
             var VIEW_IDS = ["beranda", "laporan-inbox", "rekap-laporan"];
             var TOOLBAR = {
                 beranda: { title: "Dashboard BK / Kesiswaan", desc: "Beranda masih kosong." },
-                "laporan-inbox": { title: "Inbox Laporan", desc: "Balas laporan yang dikirim oleh walas." },
+                "laporan-inbox": { title: "Kotak masuk laporan", desc: "Balas laporan yang dikirim oleh walas." },
                 "rekap-laporan": { title: "Rekap laporan", desc: "Ringkasan semua laporan walas." }
             };
 

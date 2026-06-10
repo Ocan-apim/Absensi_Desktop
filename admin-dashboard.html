@@ -163,8 +163,8 @@
                     </div>
                     <div class="section-head-meta">
                         <div class="mode-tabs" role="tablist" aria-label="Filter laporan BK">
-                            <button type="button" class="mode-tab is-active" data-bk-report-filter="ongoing">Ongoing</button>
-                            <button type="button" class="mode-tab" data-bk-report-filter="finished">Finished</button>
+                            <button type="button" class="mode-tab is-active" data-bk-report-filter="ongoing">Berlanjut</button>
+                            <button type="button" class="mode-tab" data-bk-report-filter="finished">Selesai</button>
                         </div>
                     </div>
                 </div>
@@ -259,7 +259,7 @@
                 "data-staff": { title: "Data staff", desc: "Kelola akun BK/Kesiswaan dan walas." },
                 "data-murid": { title: "Data murid", desc: "Kelola akun murid berdasarkan kelas dan jurusan." },
                 "laporan-aktivitas": { title: "Aktivitas", desc: "Catatan perubahan akun oleh admin." },
-                "laporan-bk": { title: "Laporan BK", desc: "Pantau laporan BK ongoing dan finished." }
+                "laporan-bk": { title: "Laporan BK", desc: "Pantau laporan BK yang berlanjut dan selesai." }
             };
 
             document.getElementById("user-label").textContent = session.username || "Admin";
@@ -805,6 +805,24 @@
                 return status === "finished" || status === "selesai" || status === "diselesaikan" || status === "closed" || status === "resolved";
             }
 
+            function adminReportStatusLabel(item) {
+                return isFinishedBkReport(item) ? "Selesai" : "Berlanjut";
+            }
+
+            function adminFilterLabel(filter) {
+                return filter === "finished" ? "selesai" : "berlanjut";
+            }
+
+            function reportAttachments(item) {
+                if (Array.isArray(item.lampiran_list)) return item.lampiran_list.filter(Boolean);
+                if (!item.lampiran) return [];
+                try {
+                    var parsed = JSON.parse(item.lampiran);
+                    if (Array.isArray(parsed)) return parsed.filter(Boolean);
+                } catch (err) {}
+                return [item.lampiran];
+            }
+
             function renderAdminBkReports() {
                 var list = document.getElementById("admin-bk-report-list");
                 if (!list) return;
@@ -813,7 +831,7 @@
                     return adminBkFilter === "finished" ? done : !done;
                 });
                 if (!rows.length) {
-                    list.innerHTML = '<div class="stub-card">Tidak ada laporan ' + escapeAdminHtml(adminBkFilter) + '.</div>';
+                    list.innerHTML = '<div class="stub-card">Tidak ada laporan ' + escapeAdminHtml(adminFilterLabel(adminBkFilter)) + '.</div>';
                     return;
                 }
                 list.innerHTML = rows.map(function (item) {
@@ -821,13 +839,16 @@
                     var from = item.from || item.walas || item.walas_nama || item.teacher || item.pelapor || item.nama || "-";
                     var date = item.created_at || item.updated_at || item.date || item.tanggal || "";
                     var text = item.message || item.isi_laporan || item.isi || item.keterangan || item.description || "";
-                    var status = isFinishedBkReport(item) ? "Finished" : "Ongoing";
+                    var status = adminReportStatusLabel(item);
                     var headerInfo = "Tanggal " + formatAdminDateInline(date) + " " + status;
-                    var attachment = item.lampiran ? '<div class="report-attachment"><a href="' + escapeAdminHtml(item.lampiran) + '" target="_blank" rel="noopener">Lihat lampiran</a></div>' : '';
+                    var attachments = reportAttachments(item);
+                    var attachment = attachments.length ? '<div class="report-attachment">' + attachments.map(function (path, index) {
+                        return '<a href="' + escapeAdminHtml(path) + '" target="_blank" rel="noopener">Lihat lampiran ' + (index + 1) + '</a>';
+                    }).join("") + '</div>' : '';
                     var replies = item.balasan && item.balasan.length ? item.balasan.map(function (b) {
                         return '<div class="report-reply"><div><strong>Balasan ' + escapeAdminHtml(b.pengirim_role || "-") + ':</strong> ' + escapeAdminHtml(b.isi_balasan || "") + '</div><span>' + escapeAdminHtml(b.created_at || "") + '</span></div>';
                     }).join("") : '<div class="report-reply">Belum ada balasan.</div>';
-                    return '<article class="report-card report-card--wide" data-report-card data-open="false"><button type="button" class="report-head" data-report-toggle="true"><span><span class="report-from">Dari: ' + escapeAdminHtml(from) + '</span></span><span class="report-date">' + escapeAdminHtml(headerInfo) + '</span></button><div class="report-body"><div class="report-meta">Tanggal: ' + formatAdminDate(date) + ' | Status: ' + escapeAdminHtml(status) + '</div><div class="report-subject">Subjek</div><div class="report-text">' + escapeAdminHtml(subject || "-") + '</div><div class="report-subject">Isi laporan</div><div class="report-text">' + escapeAdminHtml(text || "Tidak ada detail.") + '</div>' + attachment + '<div class="report-subject" style="margin-top:0.95rem">Balasan</div><div class="report-replies">' + replies + '</div></div></article>';
+                    return '<article class="report-card report-card--wide" data-report-card data-open="false"><button type="button" class="report-head" data-report-toggle="true"><span><span class="report-from">Dari: ' + escapeAdminHtml(from) + '</span><span class="report-meta">Subjek: ' + escapeAdminHtml(subject || "-") + '</span></span><span class="report-date">' + escapeAdminHtml(headerInfo) + '</span></button><div class="report-body"><div class="report-text">' + escapeAdminHtml(text || "Tidak ada detail.") + '</div>' + attachment + '<div class="report-subject" style="margin-top:0.95rem">Balasan</div><div class="report-replies">' + replies + '</div></div></article>';
                 }).join("");
             }
 

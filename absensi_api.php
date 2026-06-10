@@ -343,6 +343,13 @@ if ($mode === "pulang") {
 }
 
 if (in_array($mode, ["sakit", "izin", "dispen"], true)) {
+    if (in_array($mode, ["sakit", "izin"], true) && date("H:i") > "12:00") {
+        jsonResponse(["error" => "Pengajuan sakit atau izin hanya bisa dikirim sampai pukul 12:00"], 422);
+    }
+    if ($mode === "dispen" && date("H:i") > "14:00") {
+        jsonResponse(["error" => "Pengajuan dispen hanya bisa dikirim sampai pukul 14:00"], 422);
+    }
+
     if (strlen($keterangan) < 10) {
         jsonResponse(["error" => "Keterangan minimal 10 karakter"], 422);
     }

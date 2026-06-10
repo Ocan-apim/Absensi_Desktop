@@ -680,6 +680,12 @@
                 return check.getHours() < 9 || (check.getHours() === 9 && check.getMinutes() === 0 && check.getSeconds() === 0);
             }
 
+            function canSubmitNonHadir(mode) {
+                var check = new Date();
+                var limitHour = mode === "dispen" ? 14 : 12;
+                return check.getHours() < limitHour || (check.getHours() === limitHour && check.getMinutes() === 0 && check.getSeconds() === 0);
+            }
+
             function updateHadirLock() {
                 var submit = document.getElementById("hadir-submit");
                 var banner = document.getElementById("hadir-time-banner");
@@ -696,11 +702,20 @@
                 if (banner) banner.classList.toggle("hidden", !locked);
             }
 
+            function updateNonHadirLocks() {
+                ["sakit", "izin", "dispen"].forEach(function (mode) {
+                    var submit = document.getElementById(mode + "-submit");
+                    if (submit) submit.disabled = !isWeekday || !canSubmitNonHadir(mode);
+                });
+            }
+
             updateAttendanceNav();
             updateHadirLock();
             updatePulangLock();
+            updateNonHadirLocks();
             setInterval(updateHadirLock, 30000);
             setInterval(updatePulangLock, 30000);
+            setInterval(updateNonHadirLocks, 30000);
             loadAttendanceStatus();
 
             function formatTanggal(value) {
@@ -845,6 +860,11 @@
 
             function bindAbsensiNonHadir(prefix, mode) {
                 document.getElementById(prefix + "-submit").addEventListener("click", function () {
+                    updateNonHadirLocks();
+                    if (!canSubmitNonHadir(mode)) {
+                        alert(mode === "dispen" ? "Pengajuan dispen hanya bisa dikirim sampai pukul 14:00." : "Pengajuan sakit atau izin hanya bisa dikirim sampai pukul 12:00.");
+                        return;
+                    }
                     showErr(prefix + "-dokumen-error", false);
                     showErr(prefix + "-ket-error", false);
                     var dok = document.getElementById(prefix + "-dokumen").files;

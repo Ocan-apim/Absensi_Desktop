@@ -28,9 +28,9 @@
                 <div class="nav-group" data-nav-group="laporan">
                     <button type="button" class="nav-group-toggle" data-nav-parent="laporan" data-nav-default="laporan-inbox" aria-expanded="true">Laporan</button>
                     <div class="nav-submenu">
-                        <a href="#laporan-inbox" data-view="laporan-inbox">Inbox</a>
-                        <a href="#laporan-baru" data-view="laporan-baru">Laporan Baru</a>
-                        <a href="#laporan-riwayat" data-view="laporan-riwayat">Riwayat Laporan</a>
+                        <a href="#laporan-inbox" data-view="laporan-inbox">Kotak masuk</a>
+                        <a href="#laporan-baru" data-view="laporan-baru">Laporan baru</a>
+                        <a href="#laporan-riwayat" data-view="laporan-riwayat">Riwayat laporan</a>
                     </div>
                 </div>
                 <a href="teacher-profil.html">Profil</a>
@@ -68,7 +68,7 @@
                     </div>
                     <div class="section-head-meta">
                         <button type="button" class="btn-secondary" id="btn-print-attendance">Cetak PDF</button>
-                        <button type="button" class="btn-secondary" id="btn-download-attendance">Download PDF</button>
+                        <button type="button" class="btn-secondary" id="btn-download-attendance">Unduh PDF</button>
                         <div class="class-pill" id="rekap-class-pill">XI PPLG 2</div>
                         <div class="attendance-pill">
                             <span class="attendance-pill-label">Kehadiran</span>
@@ -77,8 +77,8 @@
                     </div>
                 </div>
                 <div class="mode-tabs" role="tablist" aria-label="Mode rekap">
-                    <button type="button" class="mode-tab is-active" data-report-mode="daily">Daily</button>
-                    <button type="button" class="mode-tab" data-report-mode="weekly">Weekly</button>
+                    <button type="button" class="mode-tab is-active" data-report-mode="daily">Harian</button>
+                    <button type="button" class="mode-tab" data-report-mode="weekly">Mingguan</button>
                     <button type="button" class="mode-tab" data-report-mode="monthly">Bulanan</button>
                 </div>
                 <div id="rekap-daily" class="attendance-layout report-mode-panel" data-report-panel="daily">
@@ -127,7 +127,7 @@
 
                 <div id="rekap-weekly" class="report-mode-panel is-hidden" data-report-panel="weekly">
                     <div class="table-card">
-                        <h3>Weekly</h3>
+                        <h3>Mingguan</h3>
                         <div class="table-scroll">
                             <table class="data-table">
                                 <thead>
@@ -200,7 +200,7 @@
             <section id="view-laporan-inbox" class="view-panel panel wide-panel is-hidden" data-view-panel="laporan-inbox" hidden>
                 <div class="section-head section-head--rekap">
                     <div class="section-head-main">
-                        <h2>Inbox laporan</h2>
+                        <h2>Kotak masuk laporan</h2>
                         <p class="page-sub" style="margin-bottom:0"></p>
                     </div>
                 </div>
@@ -235,7 +235,7 @@
                             <textarea id="laporan-isi" placeholder="Tuliskan laporan untuk BK atau kesiswaan..." required></textarea>
                         </div>
                     </div>
-                    <input type="file" id="laporan-lampiran" class="visually-hidden" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp,image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+                    <input type="file" id="laporan-lampiran" class="visually-hidden" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp,image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
                     <div class="file-upload-inline">
                         <button type="button" class="file-attach-btn" id="laporan-attach-btn" aria-label="Tambahkan lampiran" title="Tambahkan lampiran">
                             <span aria-hidden="true">📎</span>
@@ -580,7 +580,10 @@
             function renderReportCard(item, mode) {
                 var hasNewReplyFromBk = item.latest_reply_role === "bk";
                 var badge = mode === "inbox" && hasNewReplyFromBk ? '<span class="report-badge" aria-label="Balasan baru dari BK"></span>' : '';
-                var attachment = item.lampiran ? '<div class="report-attachment"><a href="' + escapeHtml(item.lampiran) + '" target="_blank" rel="noopener">Lihat lampiran</a></div>' : '';
+                var attachments = reportAttachments(item);
+                var attachment = attachments.length ? '<div class="report-attachment">' + attachments.map(function (path, index) {
+                    return '<a href="' + escapeHtml(path) + '" target="_blank" rel="noopener">Lihat lampiran ' + (index + 1) + '</a>';
+                }).join("") + '</div>' : '';
                 var replies = item.balasan && item.balasan.length ? item.balasan.map(function (b) {
                     return '<div class="report-reply"><div><strong>' + escapeHtml((b.pengirim_role || "").toUpperCase()) + ':</strong> ' + escapeHtml(b.isi_balasan) + '</div><span>' + escapeHtml(b.created_at) + '</span></div>';
                 }).join("") : '<div class="report-reply">Belum ada balasan.</div>';
@@ -603,12 +606,12 @@
                 return '<article class="report-card report-card--wide" data-report-card data-open="false" data-id="' + item.id_laporan + '">' +
                     badge +
                     '<button type="button" class="report-head" data-report-toggle>' +
-                        '<span class="report-from">From: ' + escapeHtml(item.walas_nama || item.walas_npsn || "Walas") + '</span>' +
+                        '<span class="report-from">Dari: ' + escapeHtml(item.walas_nama || item.walas_npsn || "Walas") + '</span>' +
                         '<span class="report-date">' + escapeHtml(item.created_at) + '</span>' +
                     '</button>' +
                     '<div class="report-body">' +
-                        '<div class="report-subject">Subject: ' + escapeHtml(item.subjek) + '</div>' +
-                        '<div class="report-meta">Status: ' + escapeHtml(item.status) + '</div>' +
+                        '<div class="report-subject">Subjek: ' + escapeHtml(item.subjek) + '</div>' +
+                        '<div class="report-meta">Status: ' + escapeHtml(reportStatusLabel(item.status)) + '</div>' +
                         '<div class="report-text">' + escapeHtml(item.isi_laporan) + '</div>' +
                         attachment +
                         '<div class="report-replies">' + replies + '</div>' +
@@ -625,10 +628,27 @@
                 }).join("") : '<p class="status-note">' + emptyText + '</p>';
             }
 
+            function reportAttachments(item) {
+                if (Array.isArray(item.lampiran_list)) return item.lampiran_list.filter(Boolean);
+                if (!item.lampiran) return [];
+                try {
+                    var parsed = JSON.parse(item.lampiran);
+                    if (Array.isArray(parsed)) return parsed.filter(Boolean);
+                } catch (err) {}
+                return [item.lampiran];
+            }
+
+            function reportStatusLabel(status) {
+                var value = String(status || "").toLowerCase();
+                if (value === "diselesaikan" || value === "selesai" || value === "finished") return "Selesai";
+                if (value === "dibalas") return "Dibalas";
+                return "Dikirim";
+            }
+
             function renderLaporanViews() {
                 renderReportList("laporan-inbox-list", cachedReports.filter(function (item) {
                     return item.status === "dikirim" || item.status === "dibalas";
-                }), "inbox", "Belum ada inbox laporan.");
+                }), "inbox", "Belum ada laporan masuk.");
                 renderReportList("laporan-riwayat-list", cachedReports.filter(function (item) {
                     return item.status === "diselesaikan";
                 }), "history", "Belum ada riwayat laporan.");
@@ -679,9 +699,9 @@
             var VIEW_IDS = ["beranda", "rekap", "daftar-siswa", "laporan-inbox", "laporan-baru", "laporan-riwayat"];
             var TOOLBAR = {
                 beranda: { title: "Dashboard guru / walas", desc: "Halo, " + (session.username || "Guru") + ". Pantau kiriman absensi siswa hari ini." },
-                rekap: { title: "Rekap absensi", desc: "Lihat rekap daily, weekly, atau bulanan." },
+                rekap: { title: "Rekap absensi", desc: "Lihat rekap harian, mingguan, atau bulanan." },
                 "daftar-siswa": { title: "Daftar siswa", desc: "Daftar siswa dalam kelas wali." },
-                "laporan-inbox": { title: "Inbox laporan", desc: "Balasan BK yang sudah masuk dan menunggu tindak lanjut." },
+                "laporan-inbox": { title: "Kotak masuk laporan", desc: "Balasan BK yang sudah masuk dan menunggu tindak lanjut." },
                 "laporan-baru": { title: "Laporan baru", desc: "Buat laporan baru ke BK atau kesiswaan." },
                 "laporan-riwayat": { title: "Riwayat laporan", desc: "Laporan yang sudah diselesaikan." }
             };
@@ -791,7 +811,14 @@
             }
             if (laporanLampiran && laporanFileName) {
                 laporanLampiran.addEventListener("change", function () {
-                    laporanFileName.textContent = laporanLampiran.files && laporanLampiran.files[0] ? laporanLampiran.files[0].name : "Belum ada lampiran";
+                    var files = Array.prototype.slice.call(laporanLampiran.files || []);
+                    if (!files.length) {
+                        laporanFileName.textContent = "Belum ada lampiran";
+                    } else if (files.length === 1) {
+                        laporanFileName.textContent = files[0].name;
+                    } else {
+                        laporanFileName.textContent = files.length + " lampiran dipilih";
+                    }
                 });
             }
 
@@ -838,7 +865,7 @@
                         select.innerHTML = options;
                     })
                     .catch(function (err) {
-                        select.innerHTML = '<option value="">Error memuat data BK</option>';
+                        select.innerHTML = '<option value="">Gagal memuat data BK</option>';
                     });
             }
 
@@ -852,12 +879,22 @@
                 formData.append("subjek", document.getElementById("laporan-subjek").value.trim());
                 formData.append("isi_laporan", document.getElementById("laporan-isi").value.trim());
                 var lampiran = document.getElementById("laporan-lampiran");
-                if (lampiran && lampiran.files && lampiran.files[0]) {
-                    if (lampiran.files[0].size > 10 * 1024 * 1024) {
-                        alert("Lampiran maksimal 10MB.");
+                if (lampiran && lampiran.files && lampiran.files.length) {
+                    var files = Array.prototype.slice.call(lampiran.files);
+                    if (files.length > 5) {
+                        alert("Lampiran maksimal 5 file.");
                         return;
                     }
-                    formData.append("lampiran", lampiran.files[0], lampiran.files[0].name);
+                    var totalSize = files.reduce(function (sum, file) {
+                        return sum + file.size;
+                    }, 0);
+                    if (totalSize > 10 * 1024 * 1024) {
+                        alert("Total lampiran maksimal 10MB.");
+                        return;
+                    }
+                    files.forEach(function (file) {
+                        formData.append("lampiran[]", file, file.name);
+                    });
                 }
 
                 fetch("laporan_api.php", { method: "POST", body: formData })

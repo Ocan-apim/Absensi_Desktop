@@ -30,7 +30,9 @@ function ensureLaporanSchema($conn) {
         @$conn->query("ALTER TABLE laporan MODIFY status enum('dikirim','dibalas','diselesaikan') NOT NULL DEFAULT 'dikirim'");
         $hasLampiran = $conn->query("SHOW COLUMNS FROM laporan LIKE 'lampiran'");
         if ($hasLampiran && $hasLampiran->num_rows < 1) {
-            @$conn->query("ALTER TABLE laporan ADD COLUMN lampiran VARCHAR(255) NULL AFTER isi_laporan");
+            @$conn->query("ALTER TABLE laporan ADD COLUMN lampiran TEXT NULL AFTER isi_laporan");
+        } else {
+            @$conn->query("ALTER TABLE laporan MODIFY lampiran TEXT NULL");
         }
     }
 
@@ -43,21 +45,7 @@ function ensureLaporanSchema($conn) {
 ensureLaporanSchema($conn);
 $replyTable = replyTable($conn);
 
-function saveLaporanLampiran($field) {
-    if (empty($_FILES[$field]) || ($_FILES[$field]["error"] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
-        return null;
-    }
-    if (($_FILES[$field]["error"] ?? UPLOAD_ERR_OK) !== UPLOAD_ERR_OK) {
-        jsonResponse(["error" => "Gagal mengunggah lampiran. Pastikan ukuran file maksimal 10MB."], 422);
-    }
-    if (!is_uploaded_file($_FILES[$field]["tmp_name"])) {
-        jsonResponse(["error" => "Lampiran tidak valid"], 422);
-    }
-
-    if ((int) ($_FILES[$field]["size"] ?? 0) > 10 * 1024 * 1024) {
-        jsonResponse(["error" => "Lampiran maksimal 10MB"], 422);
-    }
-
+function allowedLampiranExtension($tmpName, $originalName) {
     $allowed = [
         "image/jpeg" => "jpg",
         "image/png" => "png",
@@ -66,14 +54,59 @@ function saveLaporanLampiran($field) {
         "application/msword" => "doc",
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document" => "docx",
     ];
-    $mime = mime_content_type($_FILES[$field]["tmp_name"]);
-    if (!isset($allowed[$mime])) {
-        $ext = strtolower(pathinfo($_FILES[$field]["name"] ?? "", PATHINFO_EXTENSION));
-        $extMap = ["jpg" => "jpg", "jpeg" => "jpg", "png" => "png", "webp" => "webp", "pdf" => "pdf", "doc" => "doc", "docx" => "docx"];
-        if (!isset($extMap[$ext])) {
-            jsonResponse(["error" => "Lampiran harus berupa PNG, JPG, WEBP, PDF, DOC, atau DOCX"], 422);
+    $mime = mime_content_type($tmpName);
+    if (isset($allowed[$mime])) {
+        return $allowed[$mime];
+    }
+    $ext = strtolower(pathinfo($originalName ?? "", PATHINFO_EXTENSION));
+    $extMap = ["jpg" => "jpg", "jpeg" => "jpg", "png" => "png", "webp" => "webp", "pdf" => "pdf", "doc" => "doc", "docx" => "docx"];
+    if (!isset($extMap[$ext])) {
+        jsonResponse(["error" => "Lampiran harus berupa PNG, JPG, WEBP, PDF, DOC, atau DOCX"], 422);
+    }
+    return $extMap[$ext];
+}
+
+function normalizeLampiranFiles($field) {
+    if (empty($_FILES[$field])) {
+        return null;
+    }
+    $file = $_FILES[$field];
+    if (is_array($file["name"] ?? null)) {
+        $items = [];
+        foreach ($file["name"] as $index => $name) {
+            $error = $file["error"][$index] ?? UPLOAD_ERR_NO_FILE;
+            if ($error === UPLOAD_ERR_NO_FILE) continue;
+            $items[] = [
+                "name" => $name,
+                "tmp_name" => $file["tmp_name"][$index] ?? "",
+                "size" => (int) ($file["size"][$index] ?? 0),
+                "error" => $error,
+            ];
         }
-        $allowed[$mime] = $extMap[$ext];
+        return $items;
+    }
+    if (($file["error"] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
+        return null;
+    }
+    return [[
+        "name" => $file["name"] ?? "",
+        "tmp_name" => $file["tmp_name"] ?? "",
+        "size" => (int) ($file["size"] ?? 0),
+        "error" => $file["error"] ?? UPLOAD_ERR_OK,
+    ]];
+}
+
+function saveLaporanLampiran($field) {
+    $files = normalizeLampiranFiles($field);
+    if (!$files) return null;
+    if (count($files) > 5) {
+        jsonResponse(["error" => "Lampiran maksimal 5 file"], 422);
+    }
+    $totalSize = array_sum(array_map(function ($file) {
+        return (int) ($file["size"] ?? 0);
+    }, $files));
+    if ($totalSize > 10 * 1024 * 1024) {
+        jsonResponse(["error" => "Total lampiran maksimal 10MB"], 422);
     }
 
     $dir = __DIR__ . "/uploads/laporan";
@@ -81,12 +114,34 @@ function saveLaporanLampiran($field) {
         mkdir($dir, 0775, true);
     }
 
-    $name = "laporan_" . date("Ymd_His") . "_" . bin2hex(random_bytes(4)) . "." . $allowed[$mime];
-    $target = $dir . "/" . $name;
-    if (!move_uploaded_file($_FILES[$field]["tmp_name"], $target)) {
-        jsonResponse(["error" => "Gagal mengunggah lampiran"], 500);
+    $paths = [];
+    foreach ($files as $file) {
+        if (($file["error"] ?? UPLOAD_ERR_OK) !== UPLOAD_ERR_OK) {
+            jsonResponse(["error" => "Gagal mengunggah lampiran. Pastikan total ukuran file maksimal 10MB."], 422);
+        }
+        if (!is_uploaded_file($file["tmp_name"] ?? "")) {
+            jsonResponse(["error" => "Lampiran tidak valid"], 422);
+        }
+        $ext = allowedLampiranExtension($file["tmp_name"], $file["name"]);
+        $name = "laporan_" . date("Ymd_His") . "_" . bin2hex(random_bytes(4)) . "." . $ext;
+        $target = $dir . "/" . $name;
+        if (!move_uploaded_file($file["tmp_name"], $target)) {
+            jsonResponse(["error" => "Gagal mengunggah lampiran"], 500);
+        }
+        $paths[] = "uploads/laporan/" . $name;
     }
-    return "uploads/laporan/" . $name;
+    return count($paths) === 1 ? $paths[0] : json_encode($paths);
+}
+
+function lampiranList($value) {
+    if (!$value) return [];
+    $decoded = json_decode($value, true);
+    if (is_array($decoded)) {
+        return array_values(array_filter($decoded, function ($item) {
+            return is_string($item) && trim($item) !== "";
+        }));
+    }
+    return [trim((string) $value)];
 }
 
 function findWalas($conn, $username) {
@@ -109,6 +164,7 @@ function collectLaporanItems($result) {
                 "subjek" => $row["subjek"],
                 "isi_laporan" => $row["isi_laporan"],
                 "lampiran" => $row["lampiran"] ?? null,
+                "lampiran_list" => lampiranList($row["lampiran"] ?? null),
                 "status" => $row["status"],
                 "created_at" => $row["created_at"],
                 "walas_nama" => $row["walas_nama"] ?? null,
