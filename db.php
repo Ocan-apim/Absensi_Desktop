@@ -13,14 +13,15 @@ function db() {
     $database = getenv("MYSQLDATABASE") ?: getenv("DB_NAME") ?: (defined("DB_NAME") ? DB_NAME : "absensi");
     $port = (int) (getenv("MYSQLPORT") ?: getenv("DB_PORT") ?: (defined("DB_PORT") ? DB_PORT : 3306));
 
-    $conn = new mysqli($host, $user, $password, $database, $port);
-     if ($conn->connect_error) {
-        http_response_code(500);
+    try {
+        $conn = new mysqli($host, $user, $password, $database, $port);
+    } catch (mysqli_sql_exception $e) {        http_response_code(500);
         echo json_encode(["error" => "Koneksi database gagal"]);
         exit;
     }
 
     $conn->set_charset("utf8mb4");
+    ensureAdminProfileColumn($conn);
     ensureWalasEmailColumn($conn);
     ensureBkEmailColumn($conn);
     return $conn;
@@ -61,6 +62,12 @@ function ensureStudentProfileColumns($conn) {
           AND kelas = '11'
           AND LOWER(jurusan) = 'pplg'
     ");
+}
+
+function ensureAdminProfileColumn($conn) {
+    if (!dbColumnExists($conn, "admin", "nama_lengkap")) {
+        dbTryAlter($conn, "ALTER TABLE admin ADD COLUMN nama_lengkap varchar(100) DEFAULT NULL AFTER id_admin");
+    }
 }
 
 function ensureWalasRombelColumn($conn) {

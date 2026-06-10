@@ -1707,7 +1707,7 @@ body[data-profile-sidebar="closed"] .nav-group.is-open .nav-submenu {
     content: "";
     background: currentColor;
     -webkit-mask: url("assets/sidebarIcon/material-symbols--home-rounded.svg") center / contain no-repeat;
-    mask: url("assets/sidebaricon/material-symbols--home-rounded.svg") center / contain no-repeat;
+    mask: url("assets/sidebarIcon/material-symbols--home-rounded.svg") center / contain no-repeat;
 }
 
 .nav-group[data-nav-group="laporan"] .nav-group-toggle::before {

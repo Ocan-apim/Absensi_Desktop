@@ -110,6 +110,11 @@
                 });
             }
 
+            function isFinishedReport(item) {
+                var status = String(item.status || "").toLowerCase().trim();
+                return status === "diselesaikan" || status === "selesai" || status === "finished" || status === "resolved" || status === "closed";
+            }
+
             function loadLaporan() {
                 return fetch("laporan_api.php?role=bk")
                     .then(function (res) { return res.json(); })
@@ -123,13 +128,13 @@
 
             function renderBeranda() {
                 var baru = cachedLaporan.filter(function (item) {
-                    return item.status === "dikirim" || item.latest_reply_role === "walas";
+                    return !isFinishedReport(item) && (item.status === "dikirim" || item.latest_reply_role === "walas");
                 });
                 var ongoing = cachedLaporan.filter(function (item) {
-                    return item.status !== "diselesaikan";
+                    return !isFinishedReport(item);
                 });
                 var finished = cachedLaporan.filter(function (item) {
-                    return item.status === "diselesaikan";
+                    return isFinishedReport(item);
                 });
                 document.getElementById("bk-count-new").textContent = baru.length;
                 document.getElementById("bk-count-ongoing").textContent = ongoing.length;
@@ -146,7 +151,7 @@
             function renderLaporan() {
                 var list = document.getElementById("laporan-list");
                 var inboxItems = cachedLaporan.filter(function (item) {
-                    return item.status !== "diselesaikan";
+                    return !isFinishedReport(item);
                 });
                 list.innerHTML = inboxItems.length ? inboxItems.map(function (item) {
                     var hasNewReplyFromWalas = item.status === "dikirim" || item.latest_reply_role === "walas";
