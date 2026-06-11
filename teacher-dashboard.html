@@ -82,24 +82,6 @@
                     <button type="button" class="mode-tab" data-report-mode="monthly">Bulanan</button>
                 </div>
                 <div class="period-controls" aria-label="Pilih periode rekap">
-                    <div class="period-control" data-period-control="weekly">
-                        <label class="field-label" for="weekly-month">Pilih bulan</label>
-                        <div class="input-wrap">
-                            <input type="month" id="weekly-month">
-                        </div>
-                    </div>
-                    <div class="period-control" data-period-control="weekly">
-                        <label class="field-label" for="weekly-number">Minggu ke</label>
-                        <div class="input-wrap">
-                            <select id="weekly-number">
-                                <option value="1">Minggu 1</option>
-                                <option value="2">Minggu 2</option>
-                                <option value="3">Minggu 3</option>
-                                <option value="4">Minggu 4</option>
-                                <option value="5">Minggu 5</option>
-                            </select>
-                        </div>
-                    </div>
                     <div class="period-control is-hidden" data-period-control="monthly">
                         <label class="field-label" for="monthly-date">Pilih bulan</label>
                         <div class="input-wrap">
@@ -296,8 +278,6 @@
             var cachedReports = [];
             var reportMode = "daily";
             var reportCache = { weekly: null, monthly: null, students: null };
-            var selectedWeekMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-            var selectedWeekNumber = Math.min(5, Math.max(1, Math.ceil(now.getDate() / 7)));
             var selectedMonthDate = new Date(now.getFullYear(), now.getMonth(), 1);
 
             function mapClassLabel(kelas) {
@@ -550,8 +530,7 @@
             }
 
             function selectedWeekStartDate() {
-                var day = ((selectedWeekNumber - 1) * 7) + 1;
-                return new Date(selectedWeekMonth.getFullYear(), selectedWeekMonth.getMonth(), day);
+                return weekStartDate(new Date());
             }
 
             function renderWeekly(data, startDate, endDate) {
@@ -649,19 +628,15 @@
                 if (mode === "weekly") {
                     var startWeek = selectedWeekStartDate();
                     var endWeek = new Date(startWeek.getFullYear(), startWeek.getMonth(), startWeek.getDate() + 4);
-                    var endOfMonth = monthEnd(selectedWeekMonth);
-                    if (endWeek > endOfMonth) endWeek = endOfMonth;
-                    return fetchRange(formatDateISO(startWeek), formatDateISO(endWeek), "weekly").then(function (data) {
+                    return fetchWeeklySummary(formatDateISO(startWeek), "weekly").then(function (data) {
                         renderWeekly(data, startWeek, endWeek);
-                        renderStudentList(data.students || []);
+                        renderStudentList(studentsFromSummaryRows(data.rows));
                     });
                 }
                 if (mode === "monthly") {
-                    var start = formatDateISO(monthStart(selectedMonthDate));
-                    var end = formatDateISO(monthEnd(selectedMonthDate));
-                    return fetchRange(start, end, "monthly").then(function (data) {
+                    return fetchMonthlySummary(monthInputValue(selectedMonthDate), "monthly").then(function (data) {
                         renderMonthly(data);
-                        renderStudentList(data.students || []);
+                        renderStudentList(studentsFromSummaryRows(data.rows));
                     });
                 }
                 if (mode === "students") {
@@ -899,18 +874,7 @@
                 });
             });
 
-            document.getElementById("weekly-month").value = monthInputValue(selectedWeekMonth);
-            document.getElementById("weekly-number").value = String(selectedWeekNumber);
             document.getElementById("monthly-date").value = monthInputValue(selectedMonthDate);
-            document.getElementById("weekly-month").addEventListener("change", function () {
-                if (!this.value) return;
-                selectedWeekMonth = parseDateInput(this.value + "-01");
-                if (reportMode === "weekly") refreshModeData("weekly");
-            });
-            document.getElementById("weekly-number").addEventListener("change", function () {
-                selectedWeekNumber = Number(this.value || 1);
-                if (reportMode === "weekly") refreshModeData("weekly");
-            });
             document.getElementById("monthly-date").addEventListener("change", function () {
                 if (!this.value) return;
                 selectedMonthDate = parseDateInput(this.value + "-01");
@@ -938,9 +902,7 @@
                 if (reportMode === "weekly") {
                     var startWeek = selectedWeekStartDate();
                     var endWeek = new Date(startWeek.getFullYear(), startWeek.getMonth(), startWeek.getDate() + 4);
-                    var endOfMonth = monthEnd(selectedWeekMonth);
-                    if (endWeek > endOfMonth) endWeek = endOfMonth;
-                    return "Minggu " + selectedWeekNumber + ", " + selectedWeekMonth.toLocaleDateString("id-ID", { month: "long", year: "numeric" }) + " (" + shortDateLabel(startWeek) + " - " + shortDateLabel(endWeek) + ")";
+                    return "Minggu berjalan (" + shortDateLabel(startWeek) + " - " + shortDateLabel(endWeek) + ")";
                 }
                 if (reportMode === "monthly") {
                     return selectedMonthDate.toLocaleDateString("id-ID", { month: "long", year: "numeric" });
