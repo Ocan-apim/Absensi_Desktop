@@ -1371,27 +1371,30 @@ html[data-theme="light"] .data-table td {
 }
 
 .monthly-book-table {
-    min-width: 1180px;
+    min-width: 1320px;
+    border-collapse: collapse;
+    table-layout: fixed;
 }
 
 .monthly-book-table th,
 .monthly-book-table td {
-    padding: 0.48rem 0.42rem;
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    padding: 0.48rem 0.34rem;
     text-align: center;
     vertical-align: middle;
 }
 
 .report-mode-panel .table-card {
-    min-height: 340px;
+    min-height: 420px;
 }
 
 .monthly-book-table tbody tr,
 #weekly-table-body tr {
-    height: 58px;
+    height: 64px;
 }
 
 .monthly-book-table .week-boundary {
-    border-left: 2px solid rgba(148, 163, 184, 0.55);
+    border-left: 2px solid rgba(148, 163, 184, 0.72);
 }
 
 .monthly-book-table .summary-boundary {
@@ -1399,22 +1402,19 @@ html[data-theme="light"] .data-table td {
 }
 
 .monthly-book-table .percent-boundary {
-    border-left: 2px solid rgba(148, 163, 184, 0.65);
+    border-left: 2px solid rgba(148, 163, 184, 0.72);
+}
+
+.monthly-book-table th:first-child,
+.monthly-book-table td:first-child {
+    width: 3rem;
 }
 
 .monthly-book-table th:nth-child(2),
 .monthly-book-table td:nth-child(2) {
-    min-width: 180px;
+    width: 13rem;
     text-align: left;
-    position: sticky;
-    left: 0;
-    z-index: 1;
-    background: rgba(15, 23, 42, 0.92);
-}
-
-html[data-theme="light"] .monthly-book-table th:nth-child(2),
-html[data-theme="light"] .monthly-book-table td:nth-child(2) {
-    background: rgba(248, 250, 252, 0.98);
+    white-space: normal;
 }
 
 html[data-theme="light"] .monthly-book-table .week-boundary {

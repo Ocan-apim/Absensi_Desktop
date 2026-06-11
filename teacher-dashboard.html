@@ -538,15 +538,14 @@
                 var head = document.getElementById("weekly-table-head");
                 var body = document.getElementById("weekly-table-body");
                 var daysInWeek = weekdaysBetween(startDate, endDate);
-                head.innerHTML = '<tr><th>No</th><th>Nama lengkap</th><th>NIS</th>' +
+                head.innerHTML = '<tr><th>No</th><th>Nama</th>' +
                     daysInWeek.map(function (dateKey) {
                         var date = parseDateInput(dateKey);
                         var dayName = date.toLocaleDateString("id-ID", { weekday: "long" });
                         return '<th>' + escapeHtml(dayName) + '<br><span class="table-subdate">' + escapeHtml(formatTanggal(dateKey)) + '</span></th>';
-                    }).join("") +
-                    '<th>Total</th></tr>';
+                    }).join("") + '</tr>';
                 if (!rows.length) {
-                    body.innerHTML = emptyRow(daysInWeek.length + 4, "Belum ada siswa.");
+                    body.innerHTML = emptyRow(daysInWeek.length + 2, "Belum ada siswa.");
                     updatePercent(0);
                     return;
                 }
@@ -558,7 +557,7 @@
                     });
                     var counts = summarizeCodes(cols);
                     totalPresent += counts.H;
-                    return "<tr><td>" + (row.no || (idx + 1)) + "</td><td>" + escapeHtml(row.nama || "-") + "</td><td>" + escapeHtml(row.nis || "-") + "</td>" + cols.map(function (code) { return "<td>" + escapeHtml(code) + "</td>"; }).join("") + "<td>" + counts.percent + "</td></tr>";
+                    return "<tr><td>" + (row.no || (idx + 1)) + "</td><td>" + escapeHtml(row.nama || "-") + "</td>" + cols.map(function (code) { return "<td>" + escapeHtml(code) + "</td>"; }).join("") + "</tr>";
                 }).join("");
 
                 var percent = (totalPresent / Math.max(1, rows.length * daysInWeek.length)) * 100;
@@ -1016,7 +1015,9 @@
                         alert("Pop-up diblokir. Izinkan pop-up untuk mencetak laporan.");
                         return;
                     }
-                    win.document.write("<!doctype html><html><head><title>" + title + "</title><style>body{font-family:Arial,sans-serif;color:#111;margin:32px}h1{font-size:20px;text-align:center;margin:0 0 8px}p{line-height:1.5}.meta{margin:18px 0}.table-card{border:0}.selfie-list,img,button,a{display:none!important}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{border:1px solid #333;padding:7px;font-size:12px;text-align:left}th{background:#eee}.ttd{margin-top:48px;width:260px;margin-left:auto;text-align:center}@page{size:A4;margin:18mm}</style></head><body>");
+                    var pageCss = reportMode === "daily" ? "@page{size:A4;margin:18mm}" : "@page{size:A4 landscape;margin:10mm}";
+                    var printCss = "body{font-family:Arial,sans-serif;color:#111;margin:24px}h1{font-size:18px;text-align:center;margin:0 0 8px}p{line-height:1.45}.meta{margin:12px 0}.table-card{border:0}.table-card h3{display:none}.table-scroll{overflow:visible}.selfie-list,img,button,a{display:none!important}table{width:100%;border-collapse:collapse;margin-top:10px;table-layout:auto}th,td{border:1px solid #222;padding:6px;font-size:11px;text-align:center;vertical-align:middle}th{background:#f2f2f2;font-weight:700}td:nth-child(2),th:nth-child(2){text-align:left}.table-subdate{display:block;font-size:8px;font-weight:400}.monthly-book-table{table-layout:fixed;font-size:7px}.monthly-book-table th,.monthly-book-table td{border:1px solid #111;padding:2px 3px;font-size:7px;text-align:center}.monthly-book-table th:first-child,.monthly-book-table td:first-child{width:22px}.monthly-book-table th:nth-child(2),.monthly-book-table td:nth-child(2){width:92px;text-align:left;position:static;background:#fff}.monthly-book-table .week-boundary,.monthly-book-table .summary-boundary,.monthly-book-table .percent-boundary{border-left:2px solid #111!important}.ttd{margin-top:32px;width:240px;margin-left:auto;text-align:center}" + pageCss;
+                    win.document.write("<!doctype html><html><head><title>" + title + "</title><style>" + printCss + "</style></head><body>");
                     win.document.write("<h1>" + title + "</h1>");
                     win.document.write("<p class='meta'>Dengan hormat, berikut disampaikan rekapitulasi kehadiran peserta didik kelas " + CLASS_LABEL + " untuk periode " + titleMap[reportMode].toLowerCase() + ". Laporan ini dicetak pada " + printedAt + " dan digunakan sebagai dokumen administrasi wali kelas.</p>");
                     win.document.write(activeAttendanceTableHtml());
