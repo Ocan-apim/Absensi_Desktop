@@ -538,14 +538,15 @@
                 var head = document.getElementById("weekly-table-head");
                 var body = document.getElementById("weekly-table-body");
                 var daysInWeek = weekdaysBetween(startDate, endDate);
-                head.innerHTML = '<tr><th>No</th><th>Nama</th>' +
+                head.innerHTML = '<tr><th>No</th><th>Nama lengkap</th><th>NIS</th>' +
                     daysInWeek.map(function (dateKey) {
                         var date = parseDateInput(dateKey);
                         var dayName = date.toLocaleDateString("id-ID", { weekday: "long" });
-                        return '<th>' + escapeHtml(dayName) + '<br><span class="table-subdate">' + escapeHtml(formatTanggal(dateKey)) + '</span></th>';
-                    }).join("") + '</tr>';
+                        return '<th>' + escapeHtml(dayName) + '</th>';
+                    }).join("") +
+                    '<th>Total</th></tr>';
                 if (!rows.length) {
-                    body.innerHTML = emptyRow(daysInWeek.length + 2, "Belum ada siswa.");
+                    body.innerHTML = emptyRow(daysInWeek.length + 4, "Belum ada siswa.");
                     updatePercent(0);
                     return;
                 }
@@ -557,7 +558,7 @@
                     });
                     var counts = summarizeCodes(cols);
                     totalPresent += counts.H;
-                    return "<tr><td>" + (row.no || (idx + 1)) + "</td><td>" + escapeHtml(row.nama || "-") + "</td>" + cols.map(function (code) { return "<td>" + escapeHtml(code) + "</td>"; }).join("") + "</tr>";
+                    return "<tr><td>" + (row.no || (idx + 1)) + "</td><td>" + escapeHtml(row.nama || "-") + "</td><td>" + escapeHtml(row.nis || "-") + "</td>" + cols.map(function (code) { return "<td>" + escapeHtml(code) + "</td>"; }).join("") + "<td>" + counts.percent + "</td></tr>";
                 }).join("");
 
                 var percent = (totalPresent / Math.max(1, rows.length * daysInWeek.length)) * 100;
