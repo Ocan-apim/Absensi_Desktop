@@ -138,6 +138,68 @@ function ensureBkEmailColumn($conn) {
     }
 }
 
+function ensureAppSettings($conn) {
+    $conn->query("
+        CREATE TABLE IF NOT EXISTS app_settings (
+            setting_key varchar(80) NOT NULL,
+            setting_value varchar(255) NOT NULL,
+            updated_at timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (setting_key)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    ");
+}
+
+function validTimeValue($value) {
+    if (!preg_match('/^\d{2}:\d{2}$/', $value)) {
+        return false;
+    }
+    [$hour, $minute] = array_map('intval', explode(':', $value));
+    return $hour >= 0 && $hour <= 23 && $minute >= 0 && $minute <= 59;
+}
+
+function timeToMinutes($value) {
+    [$hour, $minute] = array_map('intval', explode(':', $value));
+    return ($hour * 60) + $minute;
+}
+
+function getAttendanceSettings($conn) {
+    ensureAppSettings($conn);
+    $settings = [
+        "hadir_start" => "05:00",
+        "hadir_end" => "09:00"
+    ];
+    $result = $conn->query("SELECT setting_key, setting_value FROM app_settings WHERE setting_key IN ('hadir_start', 'hadir_end')");
+    if ($result) {
+        while ($row = $result->fetch_assoc()) {
+            if (isset($settings[$row["setting_key"]]) && validTimeValue($row["setting_value"])) {
+                $settings[$row["setting_key"]] = $row["setting_value"];
+            }
+        }
+    }
+    return $settings;
+}
+
+function saveAttendanceSettings($conn, $start, $end) {
+    ensureAppSettings($conn);
+    if (!validTimeValue($start) || !validTimeValue($end)) {
+        jsonResponse(["error" => "Format jam harus HH:MM"], 422);
+    }
+    if (timeToMinutes($start) >= timeToMinutes($end)) {
+        jsonResponse(["error" => "Jam minimal harus lebih awal dari jam maksimal"], 422);
+    }
+    $stmt = $conn->prepare("
+        INSERT INTO app_settings (setting_key, setting_value)
+        VALUES (?, ?)
+        ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)
+    ");
+    foreach (["hadir_start" => $start, "hadir_end" => $end] as $key => $value) {
+        $stmt->bind_param("ss", $key, $value);
+        $stmt->execute();
+    }
+    $stmt->close();
+    return getAttendanceSettings($conn);
+}
+
 function jsonResponse($data, $status = 200) {
     http_response_code($status);
     header("Content-Type: application/json");

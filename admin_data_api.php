@@ -118,6 +118,10 @@ ensureAdminLogs($conn);
 if ($method === "GET") {
     $action = $_GET["action"] ?? "list";
 
+    if ($action === "attendance_settings") {
+        jsonResponse(["settings" => getAttendanceSettings($conn)]);
+    }
+
     if ($action === "logs") {
         $result = $conn->query("
             SELECT id_log, admin_username, action, target_type, target_id, target_label, details,
@@ -208,8 +212,15 @@ if ($method !== "POST") {
 }
 
 $action = $_POST["action"] ?? "";
-$type = $_POST["type"] ?? "";
 $admin = clean("admin_username");
+
+if ($action === "attendance_settings") {
+    $settings = saveAttendanceSettings($conn, clean("hadir_start"), clean("hadir_end"));
+    addLog($conn, $admin, "settings_updated", "setting", 0, "Jam absensi hadir", "Jam hadir diubah: " . $settings["hadir_start"] . " sampai " . $settings["hadir_end"] . ".");
+    jsonResponse(["ok" => true, "settings" => $settings]);
+}
+
+$type = $_POST["type"] ?? "";
 $meta = tableMeta($type);
 $id = (int) ($_POST["id"] ?? 0);
 

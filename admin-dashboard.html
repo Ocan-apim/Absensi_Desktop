@@ -32,6 +32,7 @@
                         <a href="#laporan-bk" data-view="laporan-bk">BK</a>
                     </div>
                 </div>
+                <a href="#pengaturan" data-view="pengaturan">Pengaturan</a>
                 <a href="register.html">Membuat Akun Baru</a>
                 <a href="admin-profil.html">Profil</a>
             </nav>
@@ -228,6 +229,27 @@
                 <div id="admin-log-list" class="stack"></div>
             </section>
 
+            <section id="view-pengaturan" class="view-panel panel wide-panel is-hidden" data-view-panel="pengaturan" hidden>
+                <div class="section-head">
+                    <div class="section-head-main">
+                        <h2>Pengaturan absensi</h2>
+                        <p class="page-sub">Atur batas waktu selfie absensi hadir siswa.</p>
+                    </div>
+                </div>
+                <form id="attendance-settings-form" class="stack" style="max-width:520px">
+                    <div>
+                        <label class="field-label" for="hadir-start">Jam minimal hadir</label>
+                        <div class="input-wrap"><input type="time" id="hadir-start" name="hadir_start" required></div>
+                    </div>
+                    <div>
+                        <label class="field-label" for="hadir-end">Jam maksimal hadir</label>
+                        <div class="input-wrap"><input type="time" id="hadir-end" name="hadir_end" required></div>
+                    </div>
+                    <button type="submit" class="btn-primary">Simpan pengaturan</button>
+                    <p id="attendance-settings-msg" class="page-sub hidden" style="margin:0;color:var(--success)">Pengaturan tersimpan.</p>
+                </form>
+            </section>
+
             <div id="admin-edit-panel" class="modal-backdrop is-hidden" hidden>
                 <section class="panel wide-panel modal-panel" role="dialog" aria-modal="true" aria-labelledby="edit-title">
                     <h2 id="edit-title">Edit data</h2>
@@ -253,13 +275,14 @@
                 selectedWeekDate: new Date(),
                 calendarMonth: new Date()
             };
-            var VIEW_IDS = ["beranda", "data-staff", "data-murid", "laporan-aktivitas", "laporan-bk"];
+            var VIEW_IDS = ["beranda", "data-staff", "data-murid", "laporan-aktivitas", "laporan-bk", "pengaturan"];
             var TOOLBAR = {
                 beranda: { title: "Dashboard admin", desc: "Halo, " + (session.username || "Admin") + ". Grafik di bawah memakai data MySQL." },
                 "data-staff": { title: "Data staff", desc: "Kelola akun BK/Kesiswaan dan walas." },
                 "data-murid": { title: "Data murid", desc: "Kelola akun murid berdasarkan kelas dan jurusan." },
                 "laporan-aktivitas": { title: "Aktivitas", desc: "Catatan perubahan akun oleh admin." },
-                "laporan-bk": { title: "Laporan BK", desc: "Pantau laporan BK yang berlanjut dan selesai." }
+                "laporan-bk": { title: "Laporan BK", desc: "Pantau laporan BK yang berlanjut dan selesai." },
+                pengaturan: { title: "Pengaturan", desc: "Kelola batas jam absensi hadir siswa." }
             };
 
             document.getElementById("user-label").textContent = session.username || "Admin";
