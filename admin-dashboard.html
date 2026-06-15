@@ -881,6 +881,19 @@
                 }).join("");
             }
 
+            function loadAttendanceSettings() {
+                fetch("admin_data_api.php?action=attendance_settings")
+                    .then(parseJson)
+                    .then(function (data) {
+                        var settings = data.settings || {};
+                        document.getElementById("hadir-start").value = settings.hadir_start || "05:00";
+                        document.getElementById("hadir-end").value = settings.hadir_end || "09:00";
+                    })
+                    .catch(function (err) {
+                        alert(err.message || "Gagal memuat pengaturan absensi.");
+                    });
+            }
+
             function loadAdminBkReports() {
                 if (adminBkReportsLoaded) {
                     renderAdminBkReports();
@@ -942,6 +955,7 @@
                 if (id === "beranda") loadAdminCharts();
                 if (id === "laporan-aktivitas") loadActivityLog();
                 if (id === "laporan-bk") loadAdminBkReports();
+                if (id === "pengaturan") loadAttendanceSettings();
                 if (window.AbsensiTheme && AbsensiTheme.syncFooter) AbsensiTheme.syncFooter();
             }
 
@@ -965,6 +979,26 @@
             document.getElementById("murid-rombel").addEventListener("change", loadMurid);
             document.getElementById("admin-attendance-major").addEventListener("change", loadAdminCharts);
             document.getElementById("admin-edit-form").addEventListener("submit", submitEdit);
+            document.getElementById("attendance-settings-form").addEventListener("submit", function (e) {
+                e.preventDefault();
+                var msg = document.getElementById("attendance-settings-msg");
+                msg.classList.add("hidden");
+                var formData = new FormData(e.currentTarget);
+                formData.append("action", "attendance_settings");
+                formData.append("admin_username", session.username || "");
+                fetch("admin_data_api.php", { method: "POST", body: formData })
+                    .then(parseJson)
+                    .then(function () {
+                        msg.textContent = "Pengaturan tersimpan.";
+                        msg.style.color = "var(--success)";
+                        msg.classList.remove("hidden");
+                        setTimeout(function () { msg.classList.add("hidden"); }, 2200);
+                        loadLogs();
+                    })
+                    .catch(function (err) {
+                        alert(err.message || "Gagal menyimpan pengaturan.");
+                    });
+            });
             document.getElementById("admin-edit-panel").addEventListener("click", function (e) {
                 if (e.target.id === "admin-edit-panel") closeEdit();
             });

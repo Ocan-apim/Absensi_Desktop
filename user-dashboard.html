@@ -52,9 +52,7 @@
                     <p class="page-sub" style="margin:0" id="hari-line-hadir"></p>
                     <p class="page-sub" style="margin:0;font-family:monospace;font-weight:600" id="timestamp-hadir">00:00:00</p>
                 </div>
-                <div id="hadir-time-banner" class="banner-info banner-warn hidden" role="status">
-                    Absensi hadir hanya bisa dikirim pukul 05:00 sampai 09:00.
-                </div>
+                <div id="hadir-time-banner" class="banner-info banner-warn hidden" role="status"></div>
                 <div data-weekday-only="true">
                     <div class="selfie-box">
                         <span class="field-label">Selfie kehadiran</span>
@@ -675,10 +673,41 @@
                 return check.getHours() >= 14;
             }
 
+            var hadirTimeSettings = { start: "05:00", end: "09:00" };
+
+            function timeToMinutes(value) {
+                var parts = String(value || "00:00").split(":");
+                return parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+            }
+
+            function hadirWindowText() {
+                return "Absensi hadir hanya bisa dikirim pukul " + hadirTimeSettings.start + " sampai " + hadirTimeSettings.end + ".";
+            }
+
+            function updateHadirBanner() {
+                var banner = document.getElementById("hadir-time-banner");
+                if (banner) banner.textContent = hadirWindowText();
+            }
+
             function canSubmitHadir() {
                 var check = new Date();
                 var minutes = check.getHours() * 60 + check.getMinutes();
-                return minutes >= 5 * 60 && minutes <= 9 * 60;
+                return minutes >= timeToMinutes(hadirTimeSettings.start) && minutes <= timeToMinutes(hadirTimeSettings.end);
+            }
+
+            function loadHadirTimeSettings() {
+                return fetch("absensi_api.php?action=settings")
+                    .then(parseApiJson)
+                    .then(function (data) {
+                        if (data.settings) {
+                            hadirTimeSettings.start = data.settings.hadir_start || hadirTimeSettings.start;
+                            hadirTimeSettings.end = data.settings.hadir_end || hadirTimeSettings.end;
+                        }
+                        updateHadirBanner();
+                    })
+                    .catch(function () {
+                        updateHadirBanner();
+                    });
             }
 
             function canSubmitNonHadir(mode) {
@@ -711,7 +740,9 @@
             }
 
             updateAttendanceNav();
-            updateHadirLock();
+            loadHadirTimeSettings().then(function () {
+                updateHadirLock();
+            });
             updatePulangLock();
             updateNonHadirLocks();
             setInterval(updateHadirLock, 30000);
@@ -793,7 +824,7 @@
                 showErr("hadir-foto-error", false);
                 updateHadirLock();
                 if (!canSubmitHadir()) {
-                    alert("Absensi hadir hanya bisa dikirim pukul 05:00 sampai 09:00.");
+                    alert(hadirWindowText());
                     return;
                 }
                 if (hasTodayMode("hadir")) {

@@ -379,6 +379,10 @@ if ($method === "GET") {
         ]);
     }
 
+    if ($action === "settings") {
+        jsonResponse(["settings" => getAttendanceSettings($conn)]);
+    }
+
     if ($action === "status") {
         $username = trim($_GET["username"] ?? "");
         $siswa = findSiswa($conn, $username);
